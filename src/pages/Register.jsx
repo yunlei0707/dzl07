@@ -1,13 +1,13 @@
 /**
  * 注册页面
  * 温馨可爱的UI风格，与宝贝时光主题一致
- * 支持头像选择
+ * 支持头像选择和安全问题设置
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart, User, Lock, Eye, EyeOff, Baby, Check, X, Image } from 'lucide-react';
-import { registerUser, PRESET_AVATARS } from '../utils/db';
+import { Heart, User, Lock, Eye, EyeOff, Baby, Check, X, Image, Shield } from 'lucide-react';
+import { registerUser, updateSecurityQuestion, PRESET_AVATARS } from '../utils/db';
 
 export function RegisterPage({ onRegister }) {
   const navigate = useNavigate();
@@ -20,9 +20,22 @@ export function RegisterPage({ onRegister }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // 1: 基本信息, 2: 完善资料
+  const [step, setStep] = useState(1); // 1: 基本信息, 2: 完善资料, 3: 安全问题
+  
+  // 安全问题
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
+  
+  // 安全问题选项
+  const securityQuestions = [
+    '你最喜欢的宠物是什么？',
+    '你小学班主任的名字是？',
+    '你最喜欢看的动画片是？',
+    '你第一次上学的地方是？',
+    '你最爱的食物是什么？',
+  ];
 
-  const fileInputRef = useState(null);
+  const fileInputRef = useRef(null);
 
   // 密码强度检查
   const getPasswordStrength = (pwd) => {
@@ -111,7 +124,8 @@ export function RegisterPage({ onRegister }) {
     setAvatar(PRESET_AVATARS[randomIndex]);
   };
 
-  const handleSubmit = async (e) => {
+  // 完成注册
+  const handleRegister = async (e) => {
     e?.preventDefault();
     setError('');
 
@@ -121,6 +135,11 @@ export function RegisterPage({ onRegister }) {
         nickname: nickname || username,
         avatar: avatar,
       });
+      
+      // 如果设置了安全问题，保存
+      if (securityQuestion && securityAnswer) {
+        await updateSecurityQuestion(user.id, securityQuestion, securityAnswer.toLowerCase());
+      }
       
       // 注册成功后自动登录，保存登录状态到 localStorage
       localStorage.setItem('isLoggedIn', 'true');
@@ -164,16 +183,17 @@ export function RegisterPage({ onRegister }) {
       
       {/* 标题 */}
       <h1 className="text-2xl font-bold text-gray-800 mb-1">
-        {step === 1 ? '创建账号' : '完善资料'}
+        {step === 1 ? '创建账号' : step === 2 ? '完善资料' : '设置安全问题'}
       </h1>
       <p className="text-gray-500 mb-6">
-        {step === 1 ? '开启宝宝成长记录之旅' : '选一个喜欢的头像吧'}
+        {step === 1 ? '开启宝宝成长记录之旅' : step === 2 ? '选一个喜欢的头像吧' : '用于找回密码'}
       </p>
 
       {/* 步骤指示器 */}
       <div className="flex items-center gap-2 mb-6">
         <div className={`w-8 h-1 rounded-full transition-colors ${step >= 1 ? 'bg-primary-500' : 'bg-gray-200'}`} />
         <div className={`w-8 h-1 rounded-full transition-colors ${step >= 2 ? 'bg-primary-500' : 'bg-gray-200'}`} />
+        <div className={`w-8 h-1 rounded-full transition-colors ${step >= 3 ? 'bg-primary-500' : 'bg-gray-200'}`} />
       </div>
 
       {/* 步骤1：基本信息 */}
@@ -297,7 +317,7 @@ export function RegisterPage({ onRegister }) {
 
       {/* 步骤2：完善资料 */}
       {step === 2 && (
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        <form onSubmit={handleRegister} className="w-full max-w-sm space-y-4">
           {/* 头像选择 */}
           <div className="text-center">
             <div className="relative inline-block mb-4">
@@ -389,6 +409,105 @@ export function RegisterPage({ onRegister }) {
               上一步
             </button>
             <button
+              type="button"
+              onClick={() => {
+                setStep(3);
+                setError('');
+              }}
+              className="flex-1 btn-secondary flex items-center justify-center gap-1"
+            >
+              <Shield className="w-4 h-4" />
+              安全问题
+            </button>
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>注册中...</span>
+              </>
+            ) : (
+              <>
+                <Heart className="w-5 h-5" />
+                <span>完成注册</span>
+              </>
+            )}
+          </button>
+        </form>
+      )}
+
+      {/* 步骤3：安全问题 */}
+      {step === 3 && (
+        <form onSubmit={handleRegister} className="w-full max-w-sm space-y-4">
+          <div className="text-center mb-4">
+            <div className="w-16 h-16 mx-auto mb-3 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+              <Shield className="w-8 h-8 text-primary-500" />
+            </div>
+            <p className="text-sm text-gray-500">
+              设置安全问题可用于找回密码<br/>
+              <span className="text-primary-500">（选填）</span>
+            </p>
+          </div>
+
+          {/* 安全问题选择 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              选择一个问题
+            </label>
+            <select
+              value={securityQuestion}
+              onChange={(e) => setSecurityQuestion(e.target.value)}
+              className="input-field"
+              disabled={isLoading}
+            >
+              <option value="">请选择安全问题</option>
+              {securityQuestions.map((q, i) => (
+                <option key={i} value={q}>{q}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 安全问题答案 */}
+          {securityQuestion && (
+            <div className="animate-fade-in">
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                你的答案
+              </label>
+              <input
+                type="text"
+                value={securityAnswer}
+                onChange={(e) => setSecurityAnswer(e.target.value)}
+                placeholder="请输入答案"
+                className="input-field"
+                maxLength={50}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-gray-400 mt-1">答案不区分大小写</p>
+            </div>
+          )}
+
+          {/* 错误提示 */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl animate-shake">
+              {error}
+            </div>
+          )}
+
+          {/* 按钮组 */}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="flex-1 btn-secondary"
+            >
+              上一步
+            </button>
+            <button
               type="submit"
               disabled={isLoading}
               className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -406,6 +525,12 @@ export function RegisterPage({ onRegister }) {
               )}
             </button>
           </div>
+          
+          {securityQuestion && securityAnswer && (
+            <p className="text-xs text-primary-500 text-center">
+              ✓ 将保存安全问题用于找回密码
+            </p>
+          )}
         </form>
       )}
 

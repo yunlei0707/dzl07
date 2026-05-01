@@ -808,3 +808,293 @@ export async function getTodayVisitCount(babyId) {
   const today = new Date().toISOString().split('T')[0];
   return visits.filter(v => v.visitDate === today).length;
 }
+
+// ==================== 回收站功能 ====================
+
+/**
+ * 软删除动态（标记为已删除）
+ * @param {number} momentId - 动态ID
+ */
+export async function softDeleteMoment(momentId) {
+  const db = await initDB();
+  const moment = await db.get('moments', momentId);
+  if (!moment) throw new Error('动态不存在');
+  
+  const updatedMoment = { 
+    ...moment, 
+    isDeleted: true, 
+    deletedAt: new Date().toISOString() 
+  };
+  await db.put('moments', updatedMoment);
+  return updatedMoment;
+}
+
+/**
+ * 恢复已删除的动态
+ * @param {number} momentId - 动态ID
+ */
+export async function restoreMoment(momentId) {
+  const db = await initDB();
+  const moment = await db.get('moments', momentId);
+  if (!moment) throw new Error('动态不存在');
+  
+  const updatedMoment = { 
+    ...moment, 
+    isDeleted: false, 
+    deletedAt: null 
+  };
+  await db.put('moments', updatedMoment);
+  return updatedMoment;
+}
+
+/**
+ * 永久删除动态
+ * @param {number} momentId - 动态ID
+ */
+export async function deleteMomentPermanently(momentId) {
+  const db = await initDB();
+  await db.delete('moments', momentId);
+  return true;
+}
+
+/**
+ * 获取某个宝宝回收站中的动态
+ * @param {string} babyId - 宝宝ID
+ */
+export async function getDeletedMomentsByBaby(babyId) {
+  const db = await initDB();
+  const moments = await db.getAllFromIndex('moments', 'babyId', babyId);
+  return moments
+    .filter(m => m.isDeleted === true)
+    .sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+}
+
+/**
+ * 清空回收站
+ * @param {string} babyId - 宝宝ID
+ */
+export async function emptyRecycleBin(babyId) {
+  const db = await initDB();
+  const deletedMoments = await getDeletedMomentsByBaby(babyId);
+  
+  const tx = db.transaction('moments', 'readwrite');
+  for (const moment of deletedMoments) {
+    await tx.store.delete(moment.id);
+  }
+  await tx.done;
+  return true;
+}
+
+/**
+ * 自动清理30天前删除的记录
+ * @param {string} babyId - 宝宝ID
+ */
+export async function cleanExpiredDeleted(babyId) {
+  const db = await initDB();
+  const deletedMoments = await getDeletedMomentsByBaby(babyId);
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const expiredMoments = deletedMoments.filter(
+    m => new Date(m.deletedAt) < thirtyDaysAgo
+  );
+  
+  const tx = db.transaction('moments', 'readwrite');
+  for (const moment of expiredMoments) {
+    await tx.store.delete(moment.id);
+  }
+  await tx.done;
+  return expiredMoments.length;
+}
+
+// ==================== 月度报告统计 ====================
+
+/**
+ * 获取某月的统计数据
+ * @param {string} babyId - 宝宝ID
+ * @param {number} year - 年份
+ * @param {number} month - 月份（1-12）
+ */
+export async function getMonthlyStats(babyId, year, month) {
+  const db = await initDB();
+  const moments = await db.getAllFromIndex('moments', 'babyId', babyId);
+  
+  // 筛选当月记录
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+  
+  const monthlyMoments = moments.filter(m => {
+    const momentDate = new Date(m.date);
+    return momentDate >= startDate && momentDate <= endDate;
+  });
+  
+  // 统计各类型数量
+  const photoMoments = monthlyMoments.filter(m => m.type === 'photo');
+  const videoMoments = monthlyMoments.filter(m => m.type === 'video');
+  const diaryMoments = monthlyMoments.filter(m => m.type === 'diary');
+  const audioMoments = monthlyMoments.filter(m => m.type === 'audio');
+  
+  // 照片总数
+  const photoCount = photoMoments.reduce((acc, m) => acc + (m.photos?.length || 0), 0);
+  
+  // 视频总数
+  const videoCount = videoMoments.reduce((acc, m) => acc + (m.videos?.length || 0), 0);
+  
+  // 获取里程碑事件
+  const milestones = monthlyMoments
+    .filter(m => m.milestone)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // 获取心情分布
+  const moodStats = {};
+  monthlyMoments.forEach(m => {
+    if (m.mood) {
+      moodStats[m.mood] = (moodStats[m.mood] || 0) + 1;
+    }
+  });
+  
+  return {
+    year,
+    month,
+    totalMoments: monthlyMoments.length,
+    photoCount,
+    videoCount,
+    diaryCount: diaryMoments.length,
+    audioCount: audioMoments.length,
+    milestones,
+    moodStats,
+  };
+}
+
+// ==================== 忘记密码功能（安全问题） ====================
+
+/**
+ * 更新用户安全问题
+ * @param {number} userId - 用户ID
+ * @param {string} question - 安全问题
+ * @param {string} answer - 答案
+ */
+export async function updateSecurityQuestion(userId, question, answer) {
+  const db = await initDB();
+  const user = await db.get('users', userId);
+  if (!user) throw new Error('用户不存在');
+  
+  const updatedUser = { 
+    ...user, 
+    securityQuestion: question,
+    securityAnswer: answer,
+    updatedAt: new Date().toISOString()
+  };
+  await db.put('users', updatedUser);
+  return updatedUser;
+}
+
+/**
+ * 验证安全问题答案
+ * @param {string} username - 用户名
+ * @param {string} answer - 答案
+ */
+export async function verifySecurityAnswer(username, answer) {
+  const user = await getUserByUsername(username);
+  if (!user) throw new Error('用户不存在');
+  if (!user.securityQuestion || !user.securityAnswer) {
+    throw new Error('该用户未设置安全问题');
+  }
+  if (user.securityAnswer.toLowerCase() !== answer.toLowerCase()) {
+    throw new Error('答案错误');
+  }
+  return user;
+}
+
+/**
+ * 解密密码（用于忘记密码显示）
+ * @param {string} encryptedPassword - 加密后的密码
+ */
+export function decryptPassword(encryptedPassword) {
+  try {
+    const decoded = atob(encryptedPassword);
+    return decoded.split('').reverse().join('');
+  } catch (error) {
+    throw new Error('密码解析失败');
+  }
+}
+
+// ==================== 游客登录功能 ====================
+
+/**
+ * 创建游客账号
+ * @returns {Object} 游客用户信息
+ */
+export async function createGuestAccount() {
+  const db = await initDB();
+  const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const randomPassword = Math.random().toString(36).substring(2, 10);
+  
+  const guestUser = {
+    username: guestId,
+    password: simpleEncrypt(randomPassword),
+    nickname: '小游客',
+    avatar: '👶',
+    isGuest: true,
+    createdAt: new Date().toISOString(),
+    lastLoginAt: new Date().toISOString(),
+  };
+  
+  const id = await db.add('users', guestUser);
+  return { ...guestUser, id, rawPassword: randomPassword };
+}
+
+/**
+ * 创建示例宝宝档案
+ * @param {number} userId - 用户ID
+ * @returns {Object} 示例宝宝信息
+ */
+export async function createSampleBaby(userId) {
+  const defaultBaby = await addBaby({
+    name: '小豆芽',
+    nickname: '豆芽',
+    avatar: null,
+    birthDate: getDefaultBirthDate(),
+    gender: 'girl',
+    userId: userId,
+  });
+
+  // 创建示例动态
+  const now = new Date();
+  
+  // 示例动态1：三个月前
+  const date1 = new Date(now);
+  date1.setMonth(date1.getMonth() - 3);
+  
+  await addMoment({
+    babyId: defaultBaby.id,
+    type: 'photo',
+    date: date1.toISOString(),
+    content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
+    photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
+    mood: 'happy',
+    weather: 'sunny',
+    milestone: 'first',
+    milestoneLabel: '第一次翻身',
+  });
+
+  // 示例动态2：一个月前
+  const date2 = new Date(now);
+  date2.setMonth(date2.getMonth() - 1);
+  
+  await addMoment({
+    babyId: defaultBaby.id,
+    type: 'diary',
+    date: date2.toISOString(),
+    content: '今天学会叫"妈妈"了！虽然还不太清晰，但是听到的那一刻真的太感动了。',
+    mood: 'touched',
+    weather: 'cloudy',
+    milestone: 'growth',
+    milestoneLabel: '学会说话',
+  });
+
+  // 更新当前宝宝设置
+  await updateSettings({ currentBabyId: defaultBaby.id });
+  
+  return defaultBaby;
+}

@@ -1,6 +1,6 @@
 /**
  * 个人中心页面
- * 包含数据导入导出、主题切换、资料编辑、里程碑管理等功能
+ * 优化版本：MusicPlayer折叠式、横向滚动宝宝卡片、设置抽屉、回收站入口
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
 import { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
-  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings
+  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown
 } from 'lucide-react';
 import { exportAllData, importAllData, PRESET_AVATARS, generateInviteToken } from '../utils/db';
 import { calculateAge } from '../utils/dateUtils';
@@ -26,7 +26,7 @@ const THEME_PRESETS = [
 // 里程碑emoji选项
 const EMOJI_OPTIONS = ['⭐', '🌱', '💪', '📚', '✨', '🎈', '🎀', '🌟', '💫', '🌈', '☀️', '🌙', '❤️', '🎉', '👏', '🦋', '🌸', '🍀'];
 
-export function ProfilePage({ onEditBaby, onAddBaby }) {
+export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const navigate = useNavigate();
   const { 
     currentBaby, 
@@ -48,6 +48,7 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
     updateMilestone,
     deleteMilestone,
     getAllMilestones,
+    switchBaby,
   } = useApp();
   
   const fileInputRef = useRef(null);
@@ -64,11 +65,14 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
   
   // 邀约打卡状态
   const [showInviteModal, setShowInviteModal] = useState(false);
-  
-  // 设置面板状态
-  const [showSettings, setShowSettings] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [copied, setCopied] = useState(false);
+  
+  // 设置面板抽屉状态
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // 音乐播放器折叠状态
+  const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   
   // 个人资料编辑状态
   const [editProfile, setEditProfile] = useState({
@@ -158,98 +162,72 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
     }
   }, [pullDistance, isRefreshing, handleRefresh]);
   
-  // 打开邀约打卡弹窗
-  const handleOpenInvite = () => {
-    if (!currentBaby?.id) {
-      showToast('请先创建宝宝档案', 'error');
-      return;
-    }
-    const token = generateInviteToken(currentBaby.id);
-    const baseUrl = window.location.origin;
-    setInviteLink(`${baseUrl}/invite?babyId=${currentBaby.id}&token=${token}`);
-    setShowInviteModal(true);
+  // 切换宝宝
+  const handleSwitchBaby = async (babyId) => {
+    await switchBaby(babyId);
+    showToast('已切换宝宝档案');
   };
-  
-  // 复制邀请链接
-  const handleCopyInviteLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      showToast('链接已复制，快去分享给亲戚吧~');
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      showToast('复制失败，请手动复制', 'error');
-    }
-  };
-  
+
   // 导出数据
   const handleExport = async () => {
     try {
       const data = await exportAllData();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const date = new Date().toISOString().split('T')[0];
-      link.download = `宝贝时光-备份-${date}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `babytime-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
       URL.revokeObjectURL(url);
-      showToast('数据导出成功！');
+      showToast('数据已导出');
     } catch (error) {
-      showToast('导出失败，请重试', 'error');
+      showToast('导出失败: ' + error.message, 'error');
     }
   };
-  
-  // 处理导入文件选择
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.name.endsWith('.json')) {
-        showToast('请选择 JSON 文件', 'error');
-        return;
-      }
-      setImportFile(file);
-      setShowImportModal(true);
-    }
-  };
-  
-  // 执行数据导入
+
+  // 导入数据
   const handleImport = async () => {
-    if (!importFile) return;
-    
+    if (!importFile) {
+      showToast('请选择文件', 'error');
+      return;
+    }
+
     setIsImporting(true);
     try {
       const text = await importFile.text();
       const data = JSON.parse(text);
-      
-      if (!data.version || !data.data) {
-        throw new Error('无效的备份文件');
-      }
-      
       await importAllData(data, importMode);
-      showToast('数据导入成功！');
+      showToast('数据导入成功');
       setShowImportModal(false);
-      
-      // 刷新页面
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      handleRefresh();
     } catch (error) {
-      showToast(error.message || '导入失败，请重试', 'error');
+      showToast('导入失败: ' + error.message, 'error');
     } finally {
       setIsImporting(false);
     }
   };
-  
-  // 切换主题
-  const handleThemeChange = async (preset, customColor = null) => {
-    await setTheme(preset, customColor);
-    showToast('主题已更换');
+
+  // 打开邀约
+  const handleOpenInvite = () => {
+    if (!currentBaby) {
+      showToast('请先创建宝宝档案', 'error');
+      return;
+    }
+    const token = generateInviteToken(currentBaby.id);
+    const link = `${window.location.origin}/invite?babyId=${currentBaby.id}&token=${token}`;
+    setInviteLink(link);
+    setShowInviteModal(true);
   };
-  
-  // 保存资料编辑
+
+  // 复制链接
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    showToast('已复制链接');
+  };
+
+  // 保存资料
   const handleSaveProfile = async () => {
     try {
       await updateUserProfile(editProfile);
@@ -259,40 +237,7 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
       showToast('保存失败', 'error');
     }
   };
-  
-  // 选择头像
-  const handleSelectAvatar = (avatar) => {
-    setEditProfile(prev => ({ ...prev, avatar }));
-  };
-  
-  // 从相册选择头像
-  const handleAvatarFromAlbum = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEditProfile(prev => ({ ...prev, avatar: event.target.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  // 打开里程碑编辑
-  const handleEditMilestone = (milestone = null) => {
-    if (milestone) {
-      setEditingMilestone(milestone);
-      setMilestoneForm({
-        label: milestone.label,
-        emoji: milestone.emoji,
-        color: milestone.color || '#FF7B70'
-      });
-    } else {
-      setEditingMilestone(null);
-      setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
-    }
-    setShowMilestoneModal(true);
-  };
-  
+
   // 保存里程碑
   const handleSaveMilestone = async () => {
     if (!milestoneForm.label.trim()) {
@@ -303,54 +248,39 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
     try {
       if (editingMilestone) {
         await updateMilestone(editingMilestone.id, milestoneForm);
-        showToast('标签已更新');
+        showToast('已更新');
       } else {
         await addMilestone(milestoneForm);
-        showToast('标签已添加');
+        showToast('已添加');
       }
       setShowMilestoneModal(false);
+      setEditingMilestone(null);
+      setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
     } catch (error) {
       showToast('保存失败', 'error');
     }
   };
-  
+
   // 删除里程碑
   const handleDeleteMilestone = async (id) => {
-    if (!window.confirm('确定要删除这个标签吗？')) return;
-    
     try {
       await deleteMilestone(id);
-      showToast('标签已删除');
-    } catch (error) {
-      showToast('删除失败', 'error');
-    }
-  };
-  
-  // 删除宝宝
-  const handleDeleteBaby = async () => {
-    if (!currentBaby) return;
-    
-    try {
-      const { deleteBaby, getAllBabies } = await import('../utils/db');
-      await deleteBaby(currentBaby.id);
-      const allBabies = await getAllBabies();
-      setBabies(allBabies);
-      setShowDeleteConfirm(false);
       showToast('已删除');
-      window.location.reload();
     } catch (error) {
       showToast('删除失败', 'error');
     }
   };
-  
-  // 退出登录
+
+  // 登出
   const handleLogout = () => {
-    if (window.confirm('确定要退出登录吗？')) {
+    if (confirm('确定要退出登录吗？')) {
       logout();
       navigate('/login', { replace: true });
     }
   };
-  
+
+  const allMilestones = getAllMilestones();
+
   return (
     <div 
       ref={containerRef}
@@ -376,18 +306,20 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
         </div>
       )}
       
-      {/* 头部 */}
+      {/* 头部 - 优化：设置按钮和头像在右侧 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold">👤 我的</h1>
             <div className="flex items-center gap-2">
+              {/* 设置按钮 */}
               <button
                 onClick={() => setShowSettings(true)}
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
               >
                 <Settings className="w-5 h-5" />
               </button>
+              {/* 头像 */}
               <div 
                 className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl overflow-hidden cursor-pointer"
                 onClick={() => setShowProfileModal(true)}
@@ -407,7 +339,7 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
           
           {/* 用户信息 */}
           <div 
-            className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm mb-3 cursor-pointer hover:bg-white/15 transition-colors"
+            className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm cursor-pointer hover:bg-white/15 transition-colors"
             onClick={() => setShowProfileModal(true)}
           >
             <div className="flex items-center gap-3">
@@ -419,17 +351,16 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
                     <span>{currentUser.avatar}</span>
                   )
                 ) : (
-                  <User className="w-6 h-6 text-white" />
+                  <User className="w-7 h-7 text-white" />
                 )}
               </div>
               <div className="flex-1">
                 <h2 className="font-bold">{currentUser?.nickname || currentUser?.username || '用户'}</h2>
-                <p className="text-white/70 text-sm">@{currentUser?.username}</p>
                 {currentUser?.signature && (
-                  <p className="text-white/60 text-xs mt-1">{currentUser.signature}</p>
+                  <p className="text-sm text-white/70 mt-0.5">{currentUser.signature}</p>
                 )}
               </div>
-              <Edit3 className="w-5 h-5 text-white/60" />
+              <ChevronRight className="w-5 h-5 text-white/60" />
             </div>
           </div>
           
@@ -493,10 +424,22 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
       {/* 功能列表 */}
       <main className="px-4 -mt-4 max-w-lg mx-auto">
 
-        {/* 音乐播放器卡片 */}
+        {/* 音乐播放器卡片 - 折叠式 */}
         <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.05s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">🎵 背景音乐</h3>
-          <MusicPlayer />
+          <button
+            onClick={() => setShowMusicPlayer(!showMusicPlayer)}
+            className="w-full flex items-center justify-between"
+          >
+            <h3 className="font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              🎵 背景音乐
+            </h3>
+            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showMusicPlayer ? 'rotate-180' : ''}`} />
+          </button>
+          {showMusicPlayer && (
+            <div className="mt-3 animate-fade-in">
+              <MusicPlayer />
+            </div>
+          )}
         </div>
         
         {/* 邀约打卡 */}
@@ -512,602 +455,259 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
             className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-primary-500" />
-              <span className="text-gray-700 dark:text-gray-200">邀请亲友打卡</span>
+              <span className="text-xl">🔗</span>
+              <span className="text-gray-700 dark:text-gray-200">生成邀请链接</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
-          </button>
-          
-          {/* 查看来访排行 */}
-          <button
-            onClick={() => navigate('/invite')}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <span className="text-gray-700 dark:text-gray-200">来访排行榜</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-        
-        {/* 个性化设置 */}
-        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.05s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">个性化</h3>
-          
-          {/* 主题切换 */}
-          <button
-            onClick={() => setShowThemeModal(true)}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Palette className="w-5 h-5 text-purple-500" />
-              <span className="text-gray-700 dark:text-gray-200">主题风格</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-5 h-5 rounded-full border-2 border-white shadow"
-                style={{ backgroundColor: themePreset === 'custom' ? customThemeColor : (THEME_PRESETS.find(t => t.id === themePreset)?.color || '#FF7B70') }}
-              />
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </div>
-          </button>
-          
-          {/* 里程碑管理 */}
-          <button
-            onClick={() => handleEditMilestone(null)}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Tag className="w-5 h-5 text-orange-500" />
-              <span className="text-gray-700 dark:text-gray-200">里程碑标签</span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-400 text-sm">
-              <span>{getAllMilestones().length}个</span>
-              <ChevronRight className="w-5 h-5" />
-            </div>
-          </button>
-          
-        
-        {/* 邀约打卡 */}
-        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.03s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            邀约打卡
-          </h3>
-          
-          {/* 生成邀请链接 */}
-          <button
-            onClick={handleOpenInvite}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-primary-500" />
-              <span className="text-gray-700 dark:text-gray-200">邀请亲友打卡</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </button>
-          
-          {/* 查看来访排行 */}
-          <button
-            onClick={() => navigate('/invite')}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <span className="text-gray-700 dark:text-gray-200">来访排行榜</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-        
-        {/* 个性化设置 */}
-        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.05s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">个性化</h3>
-          
-          {/* 主题切换 */}
-          <button
-            onClick={() => setShowThemeModal(true)}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Palette className="w-5 h-5 text-purple-500" />
-              <span className="text-gray-700 dark:text-gray-200">主题风格</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-5 h-5 rounded-full border-2 border-white shadow"
-                style={{ backgroundColor: themePreset === 'custom' ? customThemeColor : (THEME_PRESETS.find(t => t.id === themePreset)?.color || '#FF7B70') }}
-              />
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </div>
-          </button>
-          
-          {/* 里程碑管理 */}
-          <button
-            onClick={() => handleEditMilestone(null)}
-            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Tag className="w-5 h-5 text-orange-500" />
-              <span className="text-gray-700 dark:text-gray-200">里程碑标签</span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-400 text-sm">
-              <span>{getAllMilestones().length}个</span>
-              <ChevronRight className="w-5 h-5" />
-            </div>
-          </button>
-          
-            </div>
-            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${
-              theme === 'dark' ? 'bg-primary-500' : 'bg-gray-300'
-            }`}>
-              <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${
-                theme === 'dark' ? 'translate-x-5' : 'translate-x-0'
-              }`} />
-            </div>
           </button>
         </div>
         
         {/* 数据管理 */}
-
-        {/* 音乐播放器卡片 */}
-        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.08s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">🎵 背景音乐</h3>
-          <MusicPlayer />
-        </div>
-        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">数据管理</h3>
+        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.06s' }}>
+          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
+            <Trophy className="w-4 h-4" />
+            数据管理
+          </h3>
           
-          {/* 导出数据 */}
           <button
             onClick={handleExport}
             className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Download className="w-5 h-5 text-green-500" />
+              <Download className="w-5 h-5 text-primary-500" />
               <span className="text-gray-700 dark:text-gray-200">导出数据</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
           
-          {/* 导入数据 */}
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setShowImportModal(true)}
             className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Upload className="w-5 h-5 text-blue-500" />
+              <Upload className="w-5 h-5 text-primary-500" />
               <span className="text-gray-700 dark:text-gray-200">导入数据</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
           
-          {/* 删除档案 */}
           <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="w-full flex items-center justify-between py-3 hover:bg-red-50 dark:hover:bg-red-900/20 -mx-4 px-4 rounded-xl transition-colors"
+            onClick={() => onOpenRecycleBin?.()}
+            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Trash2 className="w-5 h-5 text-red-500" />
-              <span className="text-red-500">删除宝宝档案</span>
+              <Trash2 className="w-5 h-5 text-gray-400" />
+              <span className="text-gray-700 dark:text-gray-200">回收站</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
         </div>
         
-        {/* 关于 */}
-        <div className="card animate-fade-in" style={{ animationDelay: '0.15s' }}>
-          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">关于</h3>
+        {/* 外观设置 */}
+        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.09s' }}>
+          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            外观设置
+          </h3>
           
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2">
-              <span className="text-gray-700 dark:text-gray-200">版本</span>
-              <span className="text-gray-500">1.1.0</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-gray-700 dark:text-gray-200">存储方式</span>
-              <span className="text-gray-500">本地 IndexedDB</span>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-3 bg-cream-50 dark:bg-gray-700 rounded-xl">
-            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-start gap-2">
-              <Heart className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
-              <span>
-                宝贝时光是一款纯本地存储的应用，所有数据仅保存在您的设备中，
-                不上传至任何服务器，充分保护您的隐私。
-              </span>
-            </p>
-          </div>
-        </div>
-        
-        {/* 退出登录 */}
-        <div className="card mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+            onClick={() => setShowThemeModal(true)}
+            className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
           >
-            <LogOut className="w-5 h-5" />
-            <span>退出登录</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{theme === 'dark' ? '🌙' : '☀️'}</span>
+              <span className="text-gray-700 dark:text-gray-200">
+                {theme === 'dark' ? '深色模式' : '浅色模式'}
+              </span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
         </div>
         
+        {/* 账号 */}
+        <div className="card mb-4 animate-fade-in" style={{ animationDelay: '0.12s' }}>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-between py-3 hover:bg-red-50 dark:hover:bg-red-900/20 -mx-4 px-4 rounded-xl transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500" />
+              <span className="text-gray-700 dark:text-gray-200 group-hover:text-red-500">退出登录</span>
+            </div>
+          </button>
+        </div>
+      </main>
 
       {/* 设置面板抽屉 */}
       {showSettings && (
         <div 
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
           onClick={() => setShowSettings(false)}
         >
-          {/* 背景遮罩 */}
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
-          
-          {/* 抽屉内容 */}
           <div 
-            className="absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-white dark:bg-gray-800 animate-slide-in-right shadow-2xl overflow-y-auto"
+            className="absolute right-0 top-0 bottom-0 w-80 max-w-full bg-white dark:bg-gray-800 shadow-xl animate-slide-in-right overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            {/* 头部 */}
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700 p-4 z-10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-800 dark:text-white">设置</h2>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="w-10 h-10 rounded-full bg-cream-100 dark:bg-gray-700 flex items-center justify-center"
-                >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-cream-100 dark:border-gray-700 p-4 flex items-center justify-between">
+              <h2 className="font-bold text-lg text-gray-800 dark:text-white">设置</h2>
+              <button 
+                onClick={() => setShowSettings(false)}
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
             
             <div className="p-4 space-y-4">
-              {/* 深夜模式 */}
-              <div className="card">
-                <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">显示</h3>
+              {/* 主题切换 */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-200">深色模式</span>
                 <button
                   onClick={toggleTheme}
-                  className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
+                  className={`w-12 h-7 rounded-full transition-colors ${theme === 'dark' ? 'bg-primary-500' : 'bg-gray-300'}`}
                 >
-                  <div className="flex items-center gap-3">
-                    {theme === 'dark' ? (
-                      <Moon className="w-5 h-5 text-indigo-500" />
-                    ) : (
-                      <Sun className="w-5 h-5 text-yellow-500" />
-                    )}
-                    <span className="text-gray-700 dark:text-gray-200">深夜模式</span>
-                  </div>
-                  <div className={`w-12 h-7 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-primary-500' : 'bg-gray-300'}`}>
-                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </div>
+                  <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               
-              {/* 数据管理 */}
-              <div className="card">
-                <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">数据管理</h3>
-                
-                <button
-                  onClick={handleExport}
-                  className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Download className="w-5 h-5 text-green-500" />
-                    <span className="text-gray-700 dark:text-gray-200">导出数据</span>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                </button>
-                
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-between py-3 hover:bg-cream-50 dark:hover:bg-gray-700 -mx-4 px-4 rounded-xl transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Upload className="w-5 h-5 text-blue-500" />
-                    <span className="text-gray-700 dark:text-gray-200">导入数据</span>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full flex items-center justify-between py-3 hover:bg-red-50 dark:hover:bg-red-900/20 -mx-4 px-4 rounded-xl transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Trash2 className="w-5 h-5 text-red-500" />
-                    <span className="text-red-500">删除宝宝档案</span>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
+              {/* 回收站入口 */}
+              <button
+                onClick={() => {
+                  setShowSettings(false);
+                  onOpenRecycleBin?.();
+                }}
+                className="w-full flex items-center gap-3 py-3 text-gray-700 dark:text-gray-200 hover:bg-cream-50 dark:hover:bg-gray-700 rounded-xl px-3 -mx-3"
+              >
+                <Trash2 className="w-5 h-5 text-gray-400" />
+                回收站
+              </button>
               
-              {/* 关于 */}
-              <div className="card">
-                <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-3">关于</h3>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-700 dark:text-gray-200">版本</span>
-                    <span className="text-gray-500">1.1.0</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-700 dark:text-gray-200">存储方式</span>
-                    <span className="text-gray-500">本地 IndexedDB</span>
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-3 bg-cream-50 dark:bg-gray-700 rounded-xl">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-start gap-2">
-                    <Heart className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
-                    <span>
-                      宝贝时光是一款纯本地存储的应用，所有数据仅保存在您的设备中，
-                      不上传至任何服务器，充分保护您的隐私。
-                    </span>
-                  </p>
-                </div>
-              </div>
-              
-              {/* 退出登录 */}
-              <div className="card">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>退出登录</span>
-                </button>
+              {/* 版本信息 */}
+              <div className="pt-4 border-t border-cream-100 dark:border-gray-700">
+                <p className="text-xs text-gray-400 text-center">宝贝时光 v1.0</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-        {/* 底部信息 */}
-        <div className="text-center py-8 text-gray-400 text-sm">
-          <p>Made with ❤️ for families</p>
-          <p className="mt-1">© 2024 宝贝时光</p>
-        </div>
-      </main>
-      
-      {/* 邀约打卡弹窗 */}
-      {showInviteModal && (
-        <div 
-          className="modal-backdrop"
-          onClick={() => setShowInviteModal(false)}
-        >
-          <div 
-            className="modal-content max-w-md"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary-500" />
-                邀请亲友打卡
-              </h3>
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-            
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              复制下方链接发送给亲戚朋友，他们可以来为宝宝打卡送祝福~
-            </p>
-            
-            <div className="bg-cream-50 dark:bg-gray-700 rounded-xl p-3 mb-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">邀请链接</p>
-              <p className="text-sm text-gray-700 dark:text-gray-200 break-all">
-                {inviteLink}
-              </p>
-            </div>
-            
-            <button
-              onClick={handleCopyInviteLink}
-              className={`w-full py-3 rounded-xl font-medium text-white transition-colors flex items-center justify-center gap-2 ${
-                copied 
-                  ? 'bg-green-500 hover:bg-green-600' 
-                  : 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700'
-              }`}
-            >
-              {copied ? (
-                <>
-                  <CheckIcon className="w-5 h-5" />
-                  已复制到剪贴板
-                </>
-              ) : (
-                <>
-                  <Copy className="w-5 h-5" />
-                  复制链接
-                </>
-              )}
-            </button>
-            
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
-              💡 同一称呼每天只能打卡一次，每次+1积分
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {/* 删除确认弹窗 */}
-      {showDeleteConfirm && (
-        <div 
-          className="modal-backdrop"
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div 
-            className="modal-content"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-              <Trash2 className="w-8 h-8 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white text-center mb-2">
-              确定要删除吗？
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
-              删除"{currentBaby?.name}"的档案将同时删除所有相关记录，此操作不可撤销。
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 btn-secondary"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleDeleteBaby}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-6 rounded-xl transition-colors"
-              >
-                确认删除
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 主题选择弹窗 */}
+      {/* 主题选择模态框 */}
       {showThemeModal && (
         <div 
-          className="modal-backdrop"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setShowThemeModal(false)}
         >
           <div 
-            className="modal-content max-w-md"
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 animate-bounce-in"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white">选择主题风格</h3>
-              <button onClick={() => setShowThemeModal(false)}>
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">选择主题</h3>
             
-            {/* 预设主题 */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="space-y-2 mb-4">
               {THEME_PRESETS.map(preset => (
                 <button
                   key={preset.id}
-                  onClick={() => handleThemeChange(preset.id)}
-                  className={`p-3 rounded-xl border-2 transition-all ${
-                    themePreset === preset.id ? 'border-primary-500' : 'border-transparent bg-cream-100 dark:bg-gray-700'
+                  onClick={() => {
+                    setTheme(preset.id);
+                    showToast('主题已切换');
+                    setShowThemeModal(false);
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    themePreset === preset.id ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500' : 'hover:bg-cream-50 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <div className={`w-full h-12 rounded-lg bg-gradient-to-br ${preset.gradient} mb-2`} />
-                  <span className="text-sm text-gray-700 dark:text-gray-200">{preset.name}</span>
+                  <div 
+                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${preset.gradient}`}
+                  />
+                  <span className="text-gray-700 dark:text-gray-200">{preset.name}</span>
+                  {themePreset === preset.id && <Check className="w-5 h-5 text-primary-500 ml-auto" />}
                 </button>
               ))}
             </div>
             
-            {/* 自定义颜色 */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">自定义颜色</h4>
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer"
-                  style={{ backgroundColor: customThemeColor || '#FF7B70' }}
-                  onClick={() => colorInputRef.current?.click()}
-                >
-                  <Palette className="w-5 h-5 text-white" />
-                </div>
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={customThemeColor || '#FF7B70'}
-                  onChange={(e) => handleThemeChange('custom', e.target.value)}
-                  className="hidden"
-                />
-                <span className="text-sm text-gray-500">
-                  选择一个颜色作为主题色
-                </span>
-              </div>
-            </div>
+            <button
+              onClick={() => {
+                toggleTheme();
+                showToast(`已切换到${theme === 'dark' ? '浅色' : '深色'}模式`);
+                setShowThemeModal(false);
+              }}
+              className="w-full py-3 bg-cream-100 dark:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-cream-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              {theme === 'dark' ? '☀️ 切换到浅色模式' : '🌙 切换到深色模式'}
+            </button>
+            
+            <button
+              onClick={() => setShowThemeModal(false)}
+              className="w-full mt-3 py-2 text-gray-500"
+            >
+              关闭
+            </button>
           </div>
         </div>
       )}
-      
-      {/* 导入确认弹窗 */}
+
+      {/* 导入数据模态框 */}
       {showImportModal && (
         <div 
-          className="modal-backdrop"
-          onClick={() => { setShowImportModal(false); setImportFile(null); }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowImportModal(false)}
         >
           <div 
-            className="modal-content"
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 animate-bounce-in"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white">导入数据</h3>
-              <button onClick={() => { setShowImportModal(false); setImportFile(null); }}>
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-            
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              文件: {importFile?.name}
-            </p>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">导入数据</h3>
             
             <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">导入模式</p>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="importMode"
-                    value="merge"
-                    checked={importMode === 'merge'}
-                    onChange={(e) => setImportMode(e.target.value)}
-                    className="w-4 h-4 text-primary-500"
-                  />
-                  <span className="text-gray-700 dark:text-gray-200">合并（追加现有数据）</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="importMode"
-                    value="replace"
-                    checked={importMode === 'replace'}
-                    onChange={(e) => setImportMode(e.target.value)}
-                    className="w-4 h-4 text-primary-500"
-                  />
-                  <span className="text-gray-700 dark:text-gray-200">覆盖（清空后导入）</span>
-                </label>
-              </div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                选择JSON文件
+              </label>
+              <input
+                type="file"
+                accept=".json"
+                onChange={e => setImportFile(e.target.files?.[0])}
+                className="w-full px-4 py-3 border border-cream-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              />
             </div>
             
-            {importMode === 'replace' && (
-              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm p-3 rounded-xl mb-4">
-                ⚠️ 覆盖模式会清空所有现有数据，此操作不可恢复！
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                导入模式
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setImportMode('merge')}
+                  className={`flex-1 py-2 rounded-lg transition-colors ${
+                    importMode === 'merge' ? 'bg-primary-500 text-white' : 'bg-cream-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                  }`}
+                >
+                  合并
+                </button>
+                <button
+                  onClick={() => setImportMode('replace')}
+                  className={`flex-1 py-2 rounded-lg transition-colors ${
+                    importMode === 'replace' ? 'bg-primary-500 text-white' : 'bg-cream-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                  }`}
+                >
+                  覆盖
+                </button>
               </div>
-            )}
+              <p className="text-xs text-gray-400 mt-1">
+                合并：保留现有数据，导入数据追加；覆盖：清空现有数据后导入
+              </p>
+            </div>
             
             <div className="flex gap-3">
               <button
-                onClick={() => { setShowImportModal(false); setImportFile(null); }}
-                className="flex-1 btn-secondary"
+                onClick={() => setShowImportModal(false)}
+                className="flex-1 py-3 bg-cream-100 dark:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-200"
               >
                 取消
               </button>
               <button
                 onClick={handleImport}
                 disabled={isImporting}
-                className="flex-1 btn-primary disabled:opacity-50"
+                className="flex-1 py-3 bg-primary-500 text-white rounded-xl disabled:opacity-50"
               >
                 {isImporting ? '导入中...' : '确认导入'}
               </button>
@@ -1115,29 +715,23 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
           </div>
         </div>
       )}
-      
-      {/* 编辑资料弹窗 */}
+
+      {/* 个人资料模态框 */}
       {showProfileModal && (
         <div 
-          className="modal-backdrop"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setShowProfileModal(false)}
         >
           <div 
-            className="modal-content max-w-md"
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 animate-bounce-in"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white">编辑资料</h3>
-              <button onClick={() => setShowProfileModal(false)}>
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">编辑资料</h3>
             
             {/* 头像选择 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">头像</label>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-16 h-16 rounded-full bg-cream-100 dark:bg-gray-700 flex items-center justify-center text-2xl overflow-hidden">
+            <div className="text-center mb-4">
+              <div className="relative inline-block mb-3">
+                <div className="w-20 h-20 rounded-full bg-cream-100 dark:bg-gray-700 flex items-center justify-center text-3xl overflow-hidden border-4 border-primary-200">
                   {editProfile.avatar ? (
                     editProfile.avatar.startsWith('data:') || editProfile.avatar.startsWith('http') ? (
                       <img src={editProfile.avatar} alt="" className="w-full h-full object-cover" />
@@ -1145,162 +739,113 @@ export function ProfilePage({ onEditBaby, onAddBaby }) {
                       <span>{editProfile.avatar}</span>
                     )
                   ) : (
-                    <User className="w-8 h-8 text-gray-400" />
+                    <User className="w-10 h-10 text-gray-400" />
                   )}
                 </div>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-2 bg-cream-100 dark:bg-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"
+                  type="button"
+                  onClick={() => {
+                    const randomAvatar = PRESET_AVATARS[Math.floor(Math.random() * PRESET_AVATARS.length)];
+                    setEditProfile(prev => ({ ...prev, avatar: randomAvatar }));
+                  }}
+                  className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg"
                 >
-                  <Image className="w-4 h-4" />
-                  从相册选择
+                  🎲
                 </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarFromAlbum}
-                  className="hidden"
-                />
               </div>
-              <div className="avatar-grid">
-                {PRESET_AVATARS.map((avatar, index) => (
+              
+              <div className="grid grid-cols-6 gap-2">
+                {PRESET_AVATARS.slice(0, 12).map((a, i) => (
                   <button
-                    key={index}
-                    onClick={() => handleSelectAvatar(avatar)}
-                    className={`avatar-option ${editProfile.avatar === avatar ? 'selected' : ''}`}
+                    key={i}
+                    type="button"
+                    onClick={() => setEditProfile(prev => ({ ...prev, avatar: a }))}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all ${
+                      editProfile.avatar === a ? 'bg-primary-100 ring-2 ring-primary-500' : 'bg-cream-100 dark:bg-gray-700'
+                    }`}
                   >
-                    <span className="text-2xl">{avatar}</span>
+                    {a}
                   </button>
                 ))}
               </div>
             </div>
             
-            {/* 昵称 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">昵称</label>
-              <input
-                type="text"
-                value={editProfile.nickname}
-                onChange={(e) => setEditProfile(prev => ({ ...prev, nickname: e.target.value }))}
-                placeholder="设置昵称"
-                className="input-field"
-                maxLength={20}
-              />
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">昵称</label>
+                <input
+                  type="text"
+                  value={editProfile.nickname}
+                  onChange={e => setEditProfile(prev => ({ ...prev, nickname: e.target.value }))}
+                  className="w-full px-4 py-3 border border-cream-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  placeholder="输入昵称"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">个性签名</label>
+                <input
+                  type="text"
+                  value={editProfile.signature}
+                  onChange={e => setEditProfile(prev => ({ ...prev, signature: e.target.value }))}
+                  className="w-full px-4 py-3 border border-cream-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  placeholder="输入个性签名"
+                />
+              </div>
             </div>
             
-            {/* 个性签名 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">个性签名</label>
-              <textarea
-                value={editProfile.signature}
-                onChange={(e) => setEditProfile(prev => ({ ...prev, signature: e.target.value }))}
-                placeholder="添加个性签名..."
-                className="input-field resize-none"
-                rows={2}
-                maxLength={50}
-              />
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="flex-1 py-3 bg-cream-100 dark:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-200"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                className="flex-1 py-3 bg-primary-500 text-white rounded-xl"
+              >
+                保存
+              </button>
             </div>
-            
-            <button onClick={handleSaveProfile} className="btn-primary w-full">
-              保存
-            </button>
           </div>
         </div>
       )}
-      
-      {/* 里程碑管理弹窗 */}
-      {showMilestoneModal && (
+
+      {/* 邀约打卡模态框 */}
+      {showInviteModal && (
         <div 
-          className="modal-backdrop"
-          onClick={() => setShowMilestoneModal(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowInviteModal(false)}
         >
           <div 
-            className="modal-content max-w-md max-h-[80vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 animate-bounce-in"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white">
-                {editingMilestone ? '编辑标签' : '添加标签'}
-              </h3>
-              <button onClick={() => setShowMilestoneModal(false)}>
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">邀约打卡</h3>
+            
+            <p className="text-sm text-gray-500 mb-4">
+              分享链接给家人朋友，让他们可以为 {currentBaby?.nickname || currentBaby?.name} 打卡~
+            </p>
+            
+            <div className="p-3 bg-cream-50 dark:bg-gray-700 rounded-xl break-all text-sm text-gray-600 dark:text-gray-300 mb-4">
+              {inviteLink}
             </div>
             
-            {/* 标签名称 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">标签名称</label>
-              <input
-                type="text"
-                value={milestoneForm.label}
-                onChange={(e) => setMilestoneForm(prev => ({ ...prev, label: e.target.value }))}
-                placeholder="例如：第一次走路"
-                className="input-field"
-                maxLength={10}
-              />
-            </div>
-            
-            {/* emoji选择 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">选择图标</label>
-              <div className="flex flex-wrap gap-2">
-                {EMOJI_OPTIONS.map((emoji, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setMilestoneForm(prev => ({ ...prev, emoji }))}
-                    className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all ${
-                      milestoneForm.emoji === emoji 
-                        ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' 
-                        : 'bg-cream-100 dark:bg-gray-700 hover:bg-cream-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <button onClick={handleSaveMilestone} className="btn-primary w-full mb-4">
-              {editingMilestone ? '保存修改' : '添加标签'}
+            <button
+              onClick={handleCopyLink}
+              className="w-full py-3 bg-primary-500 text-white rounded-xl flex items-center justify-center gap-2"
+            >
+              {copied ? <CheckIcon className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copied ? '已复制' : '复制链接'}
             </button>
             
-            {/* 已有标签列表 */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">已有标签</h4>
-              <div className="space-y-2">
-                {getAllMilestones().map(milestone => (
-                  <div 
-                    key={milestone.id} 
-                    className="flex items-center justify-between p-2 bg-cream-50 dark:bg-gray-700 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{milestone.emoji}</span>
-                      <span className="text-gray-700 dark:text-gray-200">{milestone.label}</span>
-                      {milestone.id.startsWith('custom_') && (
-                        <span className="text-xs text-primary-500">(自定义)</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleEditMilestone(milestone)}
-                        className="p-1.5 text-gray-400 hover:text-primary-500"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      {milestone.id.startsWith('custom_') && (
-                        <button
-                          onClick={() => handleDeleteMilestone(milestone.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <button
+              onClick={() => setShowInviteModal(false)}
+              className="w-full mt-3 py-2 text-gray-500"
+            >
+              关闭
+            </button>
           </div>
         </div>
       )}

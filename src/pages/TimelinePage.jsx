@@ -1,5 +1,6 @@
 /**
  * 时光轴页面
+ * 优化版本：往年今日折叠面板，头像显示在左上角
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
@@ -7,7 +8,6 @@ import { useApp } from '../store/AppContext';
 import { BabyHeader } from '../components/BabyHeader';
 import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
-// UserAvatar 已移除
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown } from 'lucide-react';
@@ -52,7 +52,7 @@ export function TimelinePage({
   filterMilestone,
   onClearFilters 
 }) {
-  const { moments, setMoments, currentBaby, showToast } = useApp();
+  const { moments, setMoments, currentBaby, currentUser, showToast } = useApp();
   const [selectedPhotos, setSelectedPhotos] = useState(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [selectedMilestone, setSelectedMilestone] = useState('');
@@ -68,9 +68,6 @@ export function TimelinePage({
   const scrollTop = useRef(0);
   const containerRef = useRef(null);
   
-  // 目标记录ID（用于从统计页面跳转定位）
-  const targetMomentId = useRef(null);
-  
   // 监听外部筛选条件变化
   useEffect(() => {
     if (filterType && filterType !== 'specific' && filterType !== '') {
@@ -80,12 +77,7 @@ export function TimelinePage({
       setSelectedMood(filterMood);
     }
     if (filterMilestone) {
-      if (filterMilestone === 'all') {
-        // 显示所有里程碑
-        setSelectedMilestone('first'); // 先设置为第一个，后续可以改进
-      } else {
-        setSelectedMilestone(filterMilestone);
-      }
+      setSelectedMilestone(filterMilestone);
     }
   }, [filterType, filterMood, filterMilestone]);
   
@@ -106,7 +98,7 @@ export function TimelinePage({
     }
   }, [currentBaby, isRefreshing, setMoments, showToast]);
   
-  // 下拉刷新手势处理 - 更柔和
+  // 下拉刷新手势处理
   const handleTouchStart = useCallback((e) => {
     touchStartY.current = e.touches[0].clientY;
     if (containerRef.current) {
@@ -120,9 +112,7 @@ export function TimelinePage({
     const currentY = e.touches[0].clientY;
     const diff = currentY - touchStartY.current;
     
-    // 只在顶部且向下拉时才处理
     if (scrollTop.current <= 0 && diff > 0) {
-      // 降低灵敏度，使用阻尼效果
       const dampened = Math.min(diff * 0.3, 100);
       setPullDistance(dampened);
     } else {
@@ -131,7 +121,6 @@ export function TimelinePage({
   }, [isRefreshing]);
   
   const handleTouchEnd = useCallback(() => {
-    // 需要拉超过60px才触发刷新
     if (pullDistance > 60 && !isRefreshing) {
       handleRefresh();
     } else {
@@ -141,19 +130,14 @@ export function TimelinePage({
   
   // 筛选后的动态
   const filteredMoments = useMemo(() => {
-    let result = moments;
+    let result = moments.filter(m => !m.isDeleted); // 排除已删除的记录
     
-    // 按类型筛选
     if (selectedType) {
       result = result.filter(m => m.type === selectedType);
     }
-    
-    // 按心情筛选
     if (selectedMood) {
       result = result.filter(m => m.mood === selectedMood);
     }
-    
-    // 按里程碑筛选
     if (selectedMilestone) {
       result = result.filter(m => m.milestone === selectedMilestone);
     }
@@ -204,10 +188,12 @@ export function TimelinePage({
       return;
     }
     
-    const today = new Date();
-    const sameDay = await getMomentsOnSameDayLastYear(currentBaby.id, today.toISOString());
-    setSameDayMoments(sameDay);
-    setShowSameDay(true);
+    if (!showSameDay) {
+      const today = new Date();
+      const sameDay = await getMomentsOnSameDayLastYear(currentBaby.id, today.toISOString());
+      setSameDayMoments(sameDay);
+    }
+    setShowSameDay(!showSameDay);
   };
   
   const handlePhotoClick = (photos, index = 0) => {
@@ -215,7 +201,7 @@ export function TimelinePage({
     setPhotoIndex(index);
   };
   
-  // 删除动态
+  // 删除动态（软删除）
   const handleDeleteMoment = async (id) => {
     try {
       await deleteMoment(id);
@@ -233,7 +219,7 @@ export function TimelinePage({
   
   // 计算筛选后的记录数
   const filteredCount = filteredMoments.length;
-  const totalCount = moments.length;
+  const totalCount = moments.filter(m => !m.isDeleted).length;
   
   return (
     <div 
@@ -260,11 +246,12 @@ export function TimelinePage({
         </div>
       )}
       
-      {/* 头部 */}
+      {/* 头部 - 优化：左上角显示头像 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
+              {/* 头像显示在左上角 */}
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
                 {currentUser?.avatar ? (
                   currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
@@ -279,14 +266,9 @@ export function TimelinePage({
               <h1 className="text-xl font-bold">宝贝时光</h1>
             </div>
             <div className="flex items-center gap-2">
-
+              {/* 往年今日按钮 - 折叠式 */}
               <button
-                onClick={() => {
-                  if (!showSameDay) {
-                    checkSameDayLastYear();
-                  }
-                  setShowSameDay(!showSameDay);
-                }}
+                onClick={checkSameDayLastYear}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 rounded-full text-sm hover:bg-white/30 transition-colors"
               >
                 <Clock className="w-4 h-4" />
@@ -298,7 +280,7 @@ export function TimelinePage({
           
           <BabyHeader onSwitchBaby={onSwitchBaby} onAddBaby={onAddBaby} />
           
-          {/* 筛选标签区域 - 仅在有筛选条件时显示 */}
+          {/* 筛选标签区域 */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 mt-4">
               {getActiveFilterLabel().map((label, index) => (
@@ -312,7 +294,6 @@ export function TimelinePage({
                       if (selectedType) setSelectedType('');
                       else if (selectedMood) setSelectedMood('');
                       else if (selectedMilestone) setSelectedMilestone('');
-                      // 如果清空后没有其他筛选条件，调用onClearFilters
                       if (!selectedType && !selectedMood && !selectedMilestone) {
                         onClearFilters?.();
                       }
@@ -334,8 +315,43 @@ export function TimelinePage({
         </div>
       </header>
       
+      {/* 往年今日折叠面板 - 就地展开 */}
+      {showSameDay && (
+        <div className="px-4 py-3 bg-cream-50 dark:bg-gray-800/50 animate-slide-up">
+          <div className="max-w-lg mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-card overflow-hidden">
+              <div className="p-4 border-b border-cream-100 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🕰️</span>
+                  <h3 className="font-bold text-gray-800 dark:text-white">
+                    往年今日
+                  </h3>
+                </div>
+              </div>
+              <div className="p-4">
+                {sameDayMoments.length === 0 ? (
+                  <p className="text-center text-gray-500 py-6">
+                    去年今天没有记录，继续创造回忆吧~
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {sameDayMoments.map(moment => (
+                      <MomentCard
+                        key={moment.id}
+                        moment={moment}
+                        onClick={handlePhotoClick}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 筛选器 - 水平滚动 */}
-      <div className="px-4 -mt-4">
+      <div className="px-4 mt-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 space-y-2">
           {/* 类型筛选 */}
           <div className="flex gap-2 overflow-x-auto hide-scrollbar">
@@ -461,41 +477,6 @@ export function TimelinePage({
           </div>
         )}
       </main>
-      
-      {/* 往年今日折叠面板 */}
-      {showSameDay && (
-        <div className="px-4 py-3 bg-cream-50 dark:bg-gray-800/50 animate-slide-up">
-          <div className="max-w-lg mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-card overflow-hidden">
-              <div className="p-4 border-b border-cream-100 dark:border-gray-700">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🕰️</span>
-                  <h3 className="font-bold text-gray-800 dark:text-white">
-                    往年今日
-                  </h3>
-                </div>
-              </div>
-              <div className="p-4">
-                {sameDayMoments.length === 0 ? (
-                  <p className="text-center text-gray-500 py-6">
-                    去年今天没有记录，继续创造回忆吧~
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {sameDayMoments.map(moment => (
-                      <MomentCard
-                        key={moment.id}
-                        moment={moment}
-                        onClick={handlePhotoClick}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       
       {/* 照片查看器 */}
       {selectedPhotos && (

@@ -1,12 +1,13 @@
 /**
  * 登录页面
  * 温馨可爱的UI风格，与宝贝时光主题一致
+ * 支持忘记密码和游客登录功能
  */
 
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart, User, Lock, Eye, EyeOff, Baby } from 'lucide-react';
-import { loginUser } from '../utils/db';
+import { Heart, User, Lock, Eye, EyeOff, Baby, HelpCircle, AlertCircle } from 'lucide-react';
+import { loginUser, verifySecurityAnswer, decryptPassword, createGuestAccount, createSampleBaby } from '../utils/db';
 
 export function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -15,6 +16,14 @@ export function LoginPage({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // 忘记密码模态框
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: 输入用户名, 2: 安全问题, 3: 显示密码
+  const [forgotUsername, setForgotUsername] = useState('');
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
+  const [revealedPassword, setRevealedPassword] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,6 +56,109 @@ export function LoginPage({ onLogin }) {
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || '登录失败，请检查用户名和密码');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 游客登录
+  const handleGuestLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      // 创建游客账号
+      const guestUser = await createGuestAccount();
+      
+      // 创建示例宝宝
+      await createSampleBaby(guestUser.id);
+      
+      // 保存登录状态
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('currentUser', JSON.stringify(guestUser));
+      
+      // 回调通知父组件
+      if (onLogin) {
+        onLogin(guestUser);
+      }
+      
+      // 跳转到首页
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err.message || '游客登录失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 打开忘记密码模态框
+  const handleOpenForgot = () => {
+    setShowForgotModal(true);
+    setForgotStep(1);
+    setForgotUsername('');
+    setSecurityQuestion('');
+    setSecurityAnswer('');
+    setRevealedPassword('');
+  };
+
+  // 关闭忘记密码模态框
+  const handleCloseForgot = () => {
+    setShowForgotModal(false);
+    setForgotStep(1);
+    setForgotUsername('');
+    setSecurityQuestion('');
+    setSecurityAnswer('');
+    setRevealedPassword('');
+  };
+
+  // 验证用户名（获取安全问题）
+  const handleVerifyUsername = async () => {
+    if (!forgotUsername.trim()) {
+      setError('请输入用户名');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { getUserByUsername } = await import('../utils/db');
+      const user = await getUserByUsername(forgotUsername);
+      
+      if (!user) {
+        setError('用户名不存在');
+        return;
+      }
+      
+      if (!user.securityQuestion) {
+        setError('该用户未设置安全问题，请联系客服');
+        return;
+      }
+      
+      setSecurityQuestion(user.securityQuestion);
+      setForgotStep(2);
+      setError('');
+    } catch (err) {
+      setError('验证失败，请重试');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 验证安全问题答案
+  const handleVerifyAnswer = async () => {
+    if (!securityAnswer.trim()) {
+      setError('请输入答案');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const user = await verifySecurityAnswer(forgotUsername, securityAnswer);
+      const decryptedPwd = decryptPassword(user.password);
+      setRevealedPassword(decryptedPwd);
+      setForgotStep(3);
+      setError('');
+    } catch (err) {
+      setError(err.message || '答案错误');
     } finally {
       setIsLoading(false);
     }
@@ -115,6 +227,18 @@ export function LoginPage({ onLogin }) {
           </button>
         </div>
 
+        {/* 忘记密码链接 */}
+        <div className="text-right -mt-2">
+          <button
+            type="button"
+            onClick={handleOpenForgot}
+            className="text-sm text-primary-500 hover:text-primary-600 flex items-center gap-1 ml-auto"
+          >
+            <HelpCircle className="w-3 h-3" />
+            忘记密码？
+          </button>
+        </div>
+
         {/* 错误提示 */}
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl animate-shake">
@@ -153,13 +277,111 @@ export function LoginPage({ onLogin }) {
         </Link>
       </div>
 
-      {/* 跳过登录提示 */}
+      {/* 游客模式 */}
       <button
-        onClick={() => navigate('/', { replace: true })}
-        className="mt-6 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+        onClick={handleGuestLogin}
+        disabled={isLoading}
+        className="mt-6 px-6 py-2.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
       >
-        游客模式登录
+        游客体验
       </button>
+
+      {/* 忘记密码模态框 */}
+      {showForgotModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={handleCloseForgot}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 animate-bounce-in"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-primary-500" />
+              找回密码
+            </h3>
+
+            {/* 步骤1：输入用户名 */}
+            {forgotStep === 1 && (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">请输入您注册的用户名</p>
+                <input
+                  type="text"
+                  value={forgotUsername}
+                  onChange={e => setForgotUsername(e.target.value)}
+                  placeholder="用户名"
+                  className="input-field"
+                />
+                <button
+                  onClick={handleVerifyUsername}
+                  disabled={isLoading}
+                  className="btn-primary w-full disabled:opacity-50"
+                >
+                  {isLoading ? '验证中...' : '下一步'}
+                </button>
+              </div>
+            )}
+
+            {/* 步骤2：安全问题 */}
+            {forgotStep === 2 && (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">请回答以下安全问题</p>
+                <div className="p-3 bg-cream-50 dark:bg-gray-700 rounded-xl">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{securityQuestion}</p>
+                </div>
+                <input
+                  type="text"
+                  value={securityAnswer}
+                  onChange={e => setSecurityAnswer(e.target.value)}
+                  placeholder="请输入答案"
+                  className="input-field"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setForgotStep(1)}
+                    className="flex-1 btn-secondary"
+                  >
+                    上一步
+                  </button>
+                  <button
+                    onClick={handleVerifyAnswer}
+                    disabled={isLoading}
+                    className="flex-1 btn-primary disabled:opacity-50"
+                  >
+                    {isLoading ? '验证中...' : '验证'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 步骤3：显示密码 */}
+            {forgotStep === 3 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                  <AlertCircle className="w-5 h-5 text-green-500" />
+                  <p className="text-sm text-green-700 dark:text-green-400">
+                    验证成功！您的密码是：
+                  </p>
+                </div>
+                <div className="p-4 bg-cream-50 dark:bg-gray-700 rounded-xl text-center">
+                  <p className="text-2xl font-bold text-gray-800 dark:text-white tracking-wider">
+                    {revealedPassword}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400 text-center">
+                  建议登录后修改密码
+                </p>
+                <button
+                  onClick={handleCloseForgot}
+                  className="btn-primary w-full"
+                >
+                  完成
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

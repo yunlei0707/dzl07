@@ -1,16 +1,16 @@
 /**
  * 成长数据页面
+ * 优化版本：左上角显示头像，月度报告入口
  */
 
 import { useMemo, useState, useRef, useCallback } from 'react';
 import { useApp } from '../store/AppContext';
-// UserAvatar 已移除
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
-import { Gift, TrendingUp, Camera, Calendar, Star } from 'lucide-react';
+import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react';
 
-export function StatsPage({ onOpenCapsules, onStatClick }) {
-  const { currentBaby, moments, capsules, setMoments, setCapsules, showToast } = useApp();
+export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
+  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast } = useApp();
   
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -77,11 +77,11 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
     const age = calculateAge(currentBaby.birthDate);
     
     // 照片数量
-    const photoCount = moments.filter(m => m.photos && m.photos.length > 0)
+    const photoCount = moments.filter(m => m.photos && m.photos.length > 0 && !m.isDeleted)
       .reduce((acc, m) => acc + m.photos.length, 0);
     
     // 里程碑数量
-    const milestoneCount = moments.filter(m => m.milestone).length;
+    const milestoneCount = moments.filter(m => m.milestone && !m.isDeleted).length;
     
     // 胶囊数量
     const unlockedCapsules = capsules.filter(c => 
@@ -90,14 +90,15 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
     const lockedCapsules = capsules.length - unlockedCapsules;
     
     // 按类型统计
-    const photoMoments = moments.filter(m => m.type === 'photo').length;
-    const videoMoments = moments.filter(m => m.type === 'video').length;
-    const diaryMoments = moments.filter(m => m.type === 'diary').length;
-    const audioMoments = moments.filter(m => m.type === 'audio').length;
+    const activeMoments = moments.filter(m => !m.isDeleted);
+    const photoMoments = activeMoments.filter(m => m.type === 'photo').length;
+    const videoMoments = activeMoments.filter(m => m.type === 'video').length;
+    const diaryMoments = activeMoments.filter(m => m.type === 'diary').length;
+    const audioMoments = activeMoments.filter(m => m.type === 'audio').length;
     
     // 按心情统计
     const moodStats = {};
-    moments.forEach(m => {
+    activeMoments.forEach(m => {
       if (m.mood) {
         moodStats[m.mood] = (moodStats[m.mood] || 0) + 1;
       }
@@ -110,7 +111,7 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
     return {
       age,
       photoCount,
-      totalMoments: moments.length,
+      totalMoments: activeMoments.length,
       milestoneCount,
       unlockedCapsules,
       lockedCapsules,
@@ -123,9 +124,9 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
     };
   }, [currentBaby, moments, capsules]);
   
-  // 里程碑列表（用于点击跳转）
+  // 里程碑列表
   const milestones = useMemo(() => {
-    return moments.filter(m => m.milestone).slice(0, 5);
+    return moments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
   }, [moments]);
   
   if (!currentBaby || !stats) {
@@ -179,10 +180,11 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
         </div>
       )}
       
-      {/* 头部 */}
+      {/* 头部 - 优化：左上角显示头像 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-2 mb-4">
+            {/* 头像显示在左上角 */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
               {currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
@@ -217,6 +219,23 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
       
       {/* 统计内容 */}
       <main className="px-4 -mt-4 space-y-4 max-w-lg mx-auto">
+        {/* 月度报告入口 */}
+        <div 
+          className="card cursor-pointer active:scale-[0.98] transition-transform"
+          onClick={() => onOpenMonthlyReport?.()}
+        >
+          <div className="flex items-center gap-3 text-primary-500">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <BarChart2 className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold">月度报告</h3>
+              <p className="text-xs text-gray-500">查看本月成长数据</p>
+            </div>
+            <span className="text-xs text-gray-400">→</span>
+          </div>
+        </div>
+        
         {/* 概览卡片 */}
         <div className="card animate-fade-in">
           <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -225,7 +244,7 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
           </h3>
           
           <div className="grid grid-cols-2 gap-3">
-            {/* 成长记录 - 跳转到时光轴，显示所有记录 */}
+            {/* 成长记录 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => onStatClick({ type: 'timeline' })}
@@ -236,7 +255,7 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">成长记录</p>
             </div>
             
-            {/* 珍贵照片 - 跳转到时光轴，筛选照片类型 */}
+            {/* 珍贵照片 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => onStatClick({ type: 'filter', filterType: 'photo' })}
@@ -247,7 +266,7 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">珍贵照片</p>
             </div>
             
-            {/* 重要里程碑 - 跳转到时光轴，筛选里程碑记录 */}
+            {/* 重要里程碑 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => onStatClick({ type: 'filter', filterMilestone: 'all' })}
@@ -258,7 +277,7 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">重要里程碑</p>
             </div>
             
-            {/* 成长天数 - 跳转到宝宝信息编辑页 */}
+            {/* 成长天数 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => onStatClick({ type: 'profile', baby: currentBaby })}
@@ -311,7 +330,7 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-warm-400 rounded-full"
+                    className="h-full bg-purple-400 rounded-full"
                     style={{ width: `${(stats.videoMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
@@ -319,19 +338,19 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
               </div>
             </div>
             
-            {/* 文字日记 */}
+            {/* 日记记录 */}
             <div 
               className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => onStatClick({ type: 'filter', filterType: 'diary' })}
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">📝</span>
-                <span className="text-gray-700 dark:text-gray-300">文字日记</span>
+                <span className="text-gray-700 dark:text-gray-300">日记记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-purple-400 rounded-full"
+                    className="h-full bg-warm-400 rounded-full"
                     style={{ width: `${(stats.diaryMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
@@ -339,19 +358,19 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
               </div>
             </div>
             
-            {/* 语音日记 */}
+            {/* 语音记录 */}
             <div 
               className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => onStatClick({ type: 'filter', filterType: 'audio' })}
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎙️</span>
-                <span className="text-gray-700 dark:text-gray-300">语音日记</span>
+                <span className="text-gray-700 dark:text-gray-300">语音记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-teal-400 rounded-full"
+                    className="h-full bg-green-400 rounded-full"
                     style={{ width: `${(stats.audioMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
@@ -361,131 +380,64 @@ export function StatsPage({ onOpenCapsules, onStatClick }) {
           </div>
         </div>
         
-        {/* 时空胶囊入口 */}
-        <div 
-          className="card cursor-pointer active:scale-[0.98] transition-transform animate-fade-in"
-          style={{ animationDelay: '0.2s' }}
-          onClick={onOpenCapsules}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-warm-400 rounded-2xl flex items-center justify-center">
-                <Gift className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                  <Gift className="w-5 h-5 text-primary-500" />
-                  时空胶囊
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {stats.lockedCapsules}个待开封 · {stats.unlockedCapsules}个已解锁
-                </p>
-              </div>
-            </div>
-            <span className="text-primary-500">›</span>
+        {/* 时空胶囊 */}
+        <div className="card animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+              <Gift className="w-5 h-5 text-primary-500" />
+              时空胶囊
+            </h3>
+            <button
+              onClick={onOpenCapsules}
+              className="text-sm text-primary-500 hover:text-primary-600"
+            >
+              查看全部 →
+            </button>
           </div>
           
-          {/* 胶囊统计数字可点击 */}
-          <div className="flex gap-4 mt-3 pt-3 border-t border-cream-200 dark:border-gray-700">
-            <div 
-              className="flex-1 text-center cursor-pointer active:scale-[0.98] transition-transform"
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatClick({ type: 'capsules' });
-              }}
-            >
-              <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                {stats.lockedCapsules}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">待开封</p>
+          <div className="flex gap-4">
+            <div className="flex-1 bg-green-50 dark:bg-green-900/20 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.unlockedCapsules}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">已解锁</p>
             </div>
-            <div 
-              className="flex-1 text-center cursor-pointer active:scale-[0.98] transition-transform"
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatClick({ type: 'capsules' });
-              }}
-            >
-              <p className="text-2xl font-bold text-warm-600 dark:text-warm-400">
-                {stats.unlockedCapsules}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">已解锁</p>
+            <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.lockedCapsules}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">待解锁</p>
             </div>
           </div>
         </div>
         
-        {/* 心情统计 */}
-        {stats.topMood && (
+        {/* 里程碑列表 */}
+        {milestones.length > 0 && (
           <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <Star className="w-5 h-5 text-primary-500" />
-              最常见心情
+              <Star className="w-5 h-5 text-amber-500" />
+              里程碑
             </h3>
             
-            <div 
-              className="flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => onStatClick({ type: 'filter', filterMood: stats.topMood })}
-            >
-              <div className="text-4xl">
-                {stats.topMood === 'happy' && '😊'}
-                {stats.topMood === 'excited' && '🎉'}
-                {stats.topMood === 'touched' && '🥰'}
-                {stats.topMood === 'sleepy' && '😴'}
-                {stats.topMood === 'crying' && '😢'}
-                {stats.topMood === 'angry' && '😠'}
-              </div>
-              <div>
-                <p className="font-bold text-gray-800 dark:text-white">
-                  {moodEmojis[stats.topMood]}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  共记录 {stats.moodStats?.[stats.topMood] || 0} 次
-                </p>
-              </div>
-              <div className="ml-auto text-primary-500">
-                查看全部 ›
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 里程碑时间线 */}
-        <div className="card animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary-500" />
-            重要里程碑
-          </h3>
-          
-          {moments.filter(m => m.milestone).length === 0 ? (
-            <p className="text-center text-gray-400 py-4">暂无里程碑记录</p>
-          ) : (
-            <div className="space-y-3">
-              {milestones.map(moment => (
+            <div className="space-y-2">
+              {milestones.map((m, i) => (
                 <div 
-                  key={moment.id} 
-                  className="flex items-start gap-3 cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  onClick={() => onStatClick({ type: 'moment', momentId: moment.id })}
+                  key={i}
+                  className="flex items-center gap-3 p-2 bg-cream-50 dark:bg-gray-700/50 rounded-xl cursor-pointer hover:bg-cream-100 dark:hover:bg-gray-700"
+                  onClick={() => onStatClick({ type: 'moment', momentId: m.id })}
                 >
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    moment.milestone === 'first' ? 'bg-purple-400' :
-                    moment.milestone === 'growth' ? 'bg-green-400' :
-                    moment.milestone === 'health' ? 'bg-red-400' :
-                    moment.milestone === 'learning' ? 'bg-blue-400' : 'bg-yellow-400'
-                  }`} />
+                  <span className="text-2xl">
+                    {m.milestoneEmoji || '⭐'}
+                  </span>
                   <div className="flex-1">
                     <p className="font-medium text-gray-800 dark:text-white">
-                      {moment.milestoneLabel || '里程碑'}
+                      {m.milestoneLabel || '里程碑'}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(moment.date).toLocaleDateString('zh-CN')}
+                    <p className="text-xs text-gray-500">
+                      {new Date(m.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
-                  <span className="text-gray-400">›</span>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );
