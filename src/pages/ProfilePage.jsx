@@ -378,7 +378,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
               </div>
               <div className="flex-1">
                 <p className="text-white text-sm font-bold text-center truncate">{currentBaby.nickname || currentBaby.name}</p>
-                <p className="text-white/70 text-xs text-center">{calculateAge(currentBaby.birthDate)}</p>
+                <p className="text-white/70 text-xs text-center">{calculateAge(currentBaby.birthDate).display}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>

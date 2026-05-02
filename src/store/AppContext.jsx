@@ -14,6 +14,10 @@ import {
   getCustomMilestones,
   applyThemePreset,
   applyCustomTheme,
+  addCustomMilestone,
+  updateCustomMilestone,
+  deleteCustomMilestone,
+  updateUser,
 } from '../utils/db';
 
 const AppContext = createContext(null);
@@ -194,9 +198,9 @@ export function AppProvider({ children }) {
   // 添加自定义里程碑
   const addMilestone = useCallback(async (milestone) => {
     try {
-      const db = await import('../utils/db');
-      const { addCustomMilestone: addMile } = await import('../utils/db');
-      const newMilestone = await addMile(milestone);
+      // db already imported at top
+      // addCustomMilestone already imported at top
+      const newMilestone = await addCustomMilestone(milestone);
       setCustomMilestones(prev => [...prev, newMilestone]);
       return newMilestone;
     } catch (error) {
@@ -209,8 +213,8 @@ export function AppProvider({ children }) {
   // 更新自定义里程碑
   const updateMilestone = useCallback(async (id, updates) => {
     try {
-      const { updateCustomMilestone: updateMile } = await import('../utils/db');
-      const updated = await updateMile(id, updates);
+      // updateCustomMilestone already imported at top
+      const updated = await updateCustomMilestone(id, updates);
       setCustomMilestones(prev => prev.map(m => m.id === id ? updated : m));
       return updated;
     } catch (error) {
@@ -223,8 +227,8 @@ export function AppProvider({ children }) {
   // 删除自定义里程碑
   const deleteMilestone = useCallback(async (id) => {
     try {
-      const { deleteCustomMilestone: deleteMile } = await import('../utils/db');
-      await deleteMile(id);
+      // deleteCustomMilestone already imported at top
+      await deleteCustomMilestone(id);
       setCustomMilestones(prev => prev.filter(m => m.id !== id));
     } catch (error) {
       console.error('删除里程碑失败:', error);
@@ -248,7 +252,7 @@ export function AppProvider({ children }) {
     if (!currentUser) return;
     
     try {
-      const { updateUser } = await import('../utils/db');
+      // updateUser already imported at top
       const updatedUser = await updateUser(currentUser.id, updates);
       setCurrentUser(updatedUser);
       localStorage.setItem('currentUser', JSON.stringify(updatedUser));

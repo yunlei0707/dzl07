@@ -7,6 +7,7 @@ import { useApp } from '../store/AppContext';
 import { CapsuleCard } from '../components/CapsuleCard';
 import { getMonthDays, formatMonth, getYear, getDate } from '../utils/dateUtils';
 import { X, ChevronLeft, ChevronRight, Plus, Gift, Calendar } from 'lucide-react';
+import { deleteCapsule } from '../utils/db';
 
 export function CapsulesPage({ onClose, onAddCapsule, onEditCapsule }) {
   const { capsules, showToast, refreshCapsules } = useApp();
@@ -66,7 +67,7 @@ export function CapsulesPage({ onClose, onAddCapsule, onEditCapsule }) {
   
   // 删除胶囊
   const handleDeleteCapsule = async (id) => {
-    const { deleteCapsule } = await import('../utils/db');
+
     await deleteCapsule(id);
     await refreshCapsules();
     showToast('已删除');

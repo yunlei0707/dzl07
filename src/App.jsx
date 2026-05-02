@@ -13,6 +13,7 @@ import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { TimelinePage } from './pages/TimelinePage';
 import { StatsPage } from './pages/StatsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { VirtualTimePage } from './pages/VirtualTimePage';
 import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
