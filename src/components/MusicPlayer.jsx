@@ -44,6 +44,7 @@ export function MusicPlayer() {
 
   const fileInputRef = useRef(null);
   const [showPlaylist, setShowPlaylist] = useState(false);
+  const [showMyMusic, setShowMyMusic] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const positionRef = useRef({ x: floatPosition.x, y: floatPosition.y });
@@ -453,7 +454,49 @@ export function MusicPlayer() {
             </div>
           </div>
 
-          {/* 播放列表 */}
+          {/* 我的音乐 - 本地音乐专区 */}
+          {playlist.filter(m => m.isLocal).length > 0 && (
+            <div className="border-t border-gray-100 dark:border-gray-700 bg-gradient-to-r from-primary-50/50 to-transparent dark:from-primary-900/20">
+              <div 
+                className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                onClick={() => setShowMyMusic(!showMyMusic)}
+              >
+                <span className="text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-2">
+                  <span className="text-lg">⭐</span>
+                  我的音乐 ({playlist.filter(m => m.isLocal).length})
+                </span>
+                <ChevronUp className={`w-4 h-4 text-primary-400 transition-transform ${showMyMusic ? '' : 'rotate-180'}`} />
+              </div>
+              
+              {showMyMusic && (
+                <div className="max-h-40 overflow-y-auto px-2 pb-2">
+                  {playlist.filter(m => m.isLocal).map((music) => {
+                    const musicIndex = playlist.findIndex(m => m.id === music.id);
+                    return (
+                      <div
+                        key={music.id}
+                        onClick={() => handlePlaylistItemClick(musicIndex)}
+                        className={`px-2 py-2 flex items-center gap-3 cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                          musicIndex === currentIndex ? 'bg-primary-100 dark:bg-primary-900/50' : ''
+                        }`}
+                      >
+                        <span className="text-xl">{music.cover}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{music.title}</p>
+                          <p className="text-xs text-primary-500">我的音乐</p>
+                        </div>
+                        {musicIndex === currentIndex && isPlaying && (
+                          <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 播放列表 - 内置音乐 */}
           <div className="border-t border-gray-100 dark:border-gray-700">
             <div 
               className="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -461,31 +504,34 @@ export function MusicPlayer() {
             >
               <span className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
                 <Music className="w-4 h-4" />
-                播放列表 ({playlist.length})
+                内置音乐 ({playlist.filter(m => !m.isLocal).length})
               </span>
               <ChevronUp className={`w-4 h-4 text-gray-400 transition-transform ${showPlaylist ? '' : 'rotate-180'}`} />
             </div>
             
             {showPlaylist && (
               <div className="max-h-48 overflow-y-auto">
-                {playlist.map((music, index) => (
-                  <div
-                    key={music.id}
-                    onClick={() => handlePlaylistItemClick(index)}
-                    className={`px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                      index === currentIndex ? 'bg-primary-50 dark:bg-primary-900/30' : ''
-                    }`}
-                  >
-                    <span className="text-lg">{music.cover}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{music.title}</p>
-                      <p className="text-xs text-gray-400 truncate">{music.artist}</p>
+                {playlist.filter(m => !m.isLocal).map((music) => {
+                  const musicIndex = playlist.findIndex(m => m.id === music.id);
+                  return (
+                    <div
+                      key={music.id}
+                      onClick={() => handlePlaylistItemClick(musicIndex)}
+                      className={`px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                        musicIndex === currentIndex ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+                      }`}
+                    >
+                      <span className="text-lg">{music.cover}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{music.title}</p>
+                        <p className="text-xs text-gray-400 truncate">{music.artist}</p>
+                      </div>
+                      {musicIndex === currentIndex && isPlaying && (
+                        <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                      )}
                     </div>
-                    {index === currentIndex && isPlaying && (
-                      <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
