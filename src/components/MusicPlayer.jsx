@@ -130,22 +130,43 @@ export function MusicPlayer() {
               <ChevronDown className="w-6 h-6 text-gray-500" />
             </button>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              正在播放
+              播放列表
             </p>
-            <div className="w-10" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-10 h-10 flex items-center justify-center text-primary-500"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* 封面区域 */}
-          <div className="px-8 py-12 flex flex-col items-center">
-            <div className="w-48 h-48 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl">
-              <span className="text-6xl">{currentMusic.cover}</span>
+          {/* 播放控制栏 */}
+          <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="text-center mb-4">
+              <p className="text-lg font-bold text-gray-800 dark:text-white truncate">
+                {currentMusic.title}
+              </p>
             </div>
-            <h3 className="mt-6 text-xl font-bold text-gray-800 dark:text-white text-center">
-              {currentMusic.title}
-            </h3>
-            <p className="mt-2 text-gray-500">
-              {allCategories.find(c => c.id === currentMusic.category)?.name || '其他'}
-            </p>
+            <div className="flex items-center justify-center gap-8">
+              <button 
+                onClick={playPrev}
+                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+              >
+                <SkipBack className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={togglePlay}
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white shadow-xl"
+              >
+                {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+              </button>
+              <button 
+                onClick={playNext}
+                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+              >
+                <SkipForward className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
           {/* 分类标签 */}
@@ -180,67 +201,20 @@ export function MusicPlayer() {
                 {filteredPlaylist.map(music => (
                   <div
                     key={music.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                    onClick={() => playMusic(music.id)}
+                    className={`p-3 rounded-xl cursor-pointer transition-all ${
                       music.id === currentMusic.id
                         ? 'bg-primary-50 dark:bg-primary-900/30'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <span className="text-2xl">{music.cover}</span>
-                    <div 
-                      className="flex-1 min-w-0"
-                      onClick={() => playMusic(music.id)}
-                    >
-                      <p className={`text-sm font-medium truncate ${
-                        music.id === currentMusic.id
-                          ? 'text-primary-600 dark:text-primary-400'
-                          : 'text-gray-800 dark:text-gray-200'
-                      }`}>
-                        {music.title}
-                      </p>
-                    </div>
-                    
-                    {/* 分类选择 */}
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowCategoryMenu(showCategoryMenu === music.id ? null : music.id);
-                        }}
-                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary-500"
-                      >
-                        <Tag className="w-4 h-4" />
-                      </button>
-                      
-                      {showCategoryMenu === music.id && (
-                        <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-10 min-w-32">
-                          {allCategories.map(cat => (
-                            <button
-                              key={cat.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateMusicCategory(music.id, cat.id);
-                                setShowCategoryMenu(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                            >
-                              {cat.icon} {cat.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* 删除按钮 */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteMusic(music.id);
-                      }}
-                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <p className={`text-sm font-medium truncate ${
+                      music.id === currentMusic.id
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-gray-800 dark:text-gray-200'
+                    }`}>
+                      {music.title}
+                    </p>
                   </div>
                 ))}
               </div>
