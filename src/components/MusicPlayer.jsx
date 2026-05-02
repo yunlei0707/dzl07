@@ -44,7 +44,7 @@ export function MusicPlayer() {
     const files = Array.from(e.target.files);
     files.forEach(file => {
       if (file.type.startsWith('audio/')) {
-        addLocalMusic(file, selectedCategory === 'all' ? 'other' : selectedCategory);
+        addLocalMusic(file, selectedCategory === 'all' ? 'piano' : selectedCategory);
       }
     });
     e.target.value = '';
@@ -104,8 +104,8 @@ export function MusicPlayer() {
               </div>
             </div>
           </div>
-        ) : (
-          /* 没有音乐时显示上传按钮 */
+        ) : (selectedCategory !== 'all' ? (
+          /* 没有音乐且不是全部分类时显示上传按钮 */
           <div className="max-w-lg mx-auto px-4 py-3">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -115,7 +115,7 @@ export function MusicPlayer() {
               添加音乐
             </button>
           </div>
-        )}
+        ) : null)}
       </div>
 
       {/* 展开的播放器面板 */}
@@ -248,12 +248,14 @@ export function MusicPlayer() {
               <div className="text-center py-12">
                 <Music className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                 <p className="text-gray-500 mb-2">该分类暂无音乐</p>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm"
-                >
-                  添加音乐
-                </button>
+                {selectedCategory !== 'all' && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm"
+                  >
+                    添加音乐
+                  </button>
+                )}
               </div>
             )}
           </div>

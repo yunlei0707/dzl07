@@ -12,7 +12,6 @@ export const MUSIC_CATEGORIES = [
   { id: 'nature', name: '自然声', icon: '🌿' },
   { id: 'sleep', name: '助眠', icon: '🌙' },
   { id: 'children', name: '儿歌', icon: '👶' },
-  { id: 'other', name: '其他', icon: '📁' },
 ];
 
 const MusicContext = createContext(null);
@@ -161,7 +160,7 @@ export function MusicProvider({ children }) {
   }, [playlist, play]);
 
   // 添加本地音乐
-  const addLocalMusic = useCallback((file, category = 'other') => {
+  const addLocalMusic = useCallback((file, category = 'piano') => {
     const url = URL.createObjectURL(file);
     const localMusic = {
       id: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
