@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
-  Plus, Music, X, ChevronDown, Tag, Trash2, Settings
+  Plus, Music, X, ChevronDown, Tag, Trash2, Settings, Minus, Maximize2
 } from 'lucide-react';
 import { useMusic } from '../store/MusicContext';
 
@@ -37,9 +37,15 @@ export function MusicPlayer() {
   const fileInputRef = useRef(null);
   const coverInputRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [showCategoryMenu, setShowCategoryMenu] = useState(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  
+  // 拖拽相关状态
+  const [position, setPosition] = useState({ x: 20, y: 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
   // 处理封面上传
   const handleCoverUpload = (e) => {
@@ -52,6 +58,52 @@ export function MusicPlayer() {
       reader.readAsDataURL(file);
     }
     e.target.value = '';
+  };
+
+  // 拖拽处理
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // 移动端触摸拖拽
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    const touch = e.touches[0];
+    dragStartRef.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y
+    };
+  };
+
+  const handleTouchMove = (e) => {
+    if (isDragging) {
+      const touch = e.touches[0];
+      setPosition({
+        x: touch.clientX - dragStartRef.current.x,
+        y: touch.clientY - dragStartRef.current.y
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
   };
 
   // 处理文件选择
@@ -76,62 +128,158 @@ export function MusicPlayer() {
 
   return (
     <>
-      {/* 底部播放器条 */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-700">
-        {currentMusic ? (
-          <div className="max-w-lg mx-auto px-4 py-2">
-            <div className="flex items-center gap-3">
-              {/* 播放/暂停 */}
-              <button 
-                onClick={togglePlay}
-                className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-md flex-shrink-0"
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-              </button>
-              
-              {/* 音乐信息 */}
-              <div 
-                className="flex-1 min-w-0 cursor-pointer"
-                onClick={() => setIsExpanded(true)}
-              >
-                <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                  {currentMusic.title}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {allCategories.find(c => c.id === currentMusic.category)?.name || '其他'}
-                </p>
-              </div>
-              
-              {/* 上一首/下一首 */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button 
-                  onClick={playPrev}
-                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
-                >
-                  <SkipBack className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={playNext}
-                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
-                >
-                  <SkipForward className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (selectedCategory !== 'all' ? (
-          /* 没有音乐且不是全部分类时显示上传按钮 */
-          <div className="max-w-lg mx-auto px-4 py-3">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 shadow-md"
+      {/* 缩小模式的悬浮播放器 */}
+      {isMinimized && currentMusic && (
+        <div
+          style={{
+            position: 'fixed',
+            left: position.x,
+            top: position.y,
+            zIndex: 9999,
+            cursor: isDragging ? 'grabbing' : 'grab',
+            touchAction: 'none'
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex items-center gap-2">
+            {/* 迷你封面 */}
+            <div 
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center overflow-hidden flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMinimized(false);
+                setIsExpanded(true);
+              }}
             >
-              <Plus className="w-5 h-5" />
-              添加音乐
+              {currentMusic.cover?.startsWith('data:image') ? (
+                <img 
+                  src={currentMusic.cover} 
+                  alt="" 
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <span className="text-lg">{currentMusic.cover}</span>
+              )}
+            </div>
+            
+            {/* 播放控制 */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }}
+              className="w-9 h-9 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-md flex-shrink-0"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+            </button>
+            
+            {/* 上一首 */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                playPrev();
+              }}
+              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary-500"
+            >
+              <SkipBack className="w-3.5 h-3.5" />
+            </button>
+            
+            {/* 下一首 */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                playNext();
+              }}
+              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary-500"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+            </button>
+            
+            {/* 放大按钮 */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMinimized(false);
+                setIsExpanded(true);
+              }}
+              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary-500"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
             </button>
           </div>
-        ) : null)}
-      </div>
+        </div>
+      )}
+
+      {/* 底部播放器条（非缩小模式显示 */}
+      {!isMinimized && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-700">
+          {currentMusic ? (
+            <div className="max-w-lg mx-auto px-4 py-2">
+              <div className="flex items-center gap-3">
+                {/* 播放/暂停 */}
+                <button 
+                  onClick={togglePlay}
+                  className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-md flex-shrink-0"
+                >
+                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                </button>
+                
+                {/* 音乐信息 */}
+                <div 
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => setIsExpanded(true)}
+                >
+                  <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                    {currentMusic.title}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {allCategories.find(c => c.id === currentMusic.category)?.name || '其他'}
+                  </p>
+                </div>
+                
+                {/* 控制按钮 */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button 
+                    onClick={playPrev}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
+                  >
+                    <SkipBack className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={playNext}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => setIsMinimized(true)}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (selectedCategory !== 'all' ? (
+            /* 没有音乐且不是全部分类时显示上传按钮 */
+            <div className="max-w-lg mx-auto px-4 py-3">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-3 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 shadow-md"
+              >
+                <Plus className="w-5 h-5" />
+                添加音乐
+              </button>
+            </div>
+          ) : null)}
+        </div>
+      )}
 
       {/* 展开的播放器面板 */}
       {isExpanded && currentMusic && (
@@ -147,12 +295,23 @@ export function MusicPlayer() {
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
               播放列表
             </p>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-10 h-10 flex items-center justify-center text-primary-500"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setIsExpanded(false);
+                  setIsMinimized(true);
+                }}
+                className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary-500"
+              >
+                <Minus className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-10 h-10 flex items-center justify-center text-primary-500"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* 唱片封面+播放控制 */}
