@@ -503,16 +503,7 @@ export function MusicPlayer() {
         </div>
       ) : (
         /* 收起/最小化状态：圆形按钮 */
-        <div className="flex items-end gap-3">
-          {/* 展开按钮 */}
-          <button
-            onClick={toggleMinimize}
-            className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center text-gray-500 hover:text-primary-500"
-            title="展开播放器"
-          >
-            <ChevronUp className="w-5 h-5" />
-          </button>
-
+        <div className="flex items-end">
           {/* 迷你播放器 */}
           <div 
             className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full shadow-2xl pl-1 pr-3 py-1 border border-gray-100 dark:border-gray-700"
@@ -547,14 +538,6 @@ export function MusicPlayer() {
                 <SkipForward className="w-4 h-4" />
               </button>
             </div>
-
-            {/* 折叠按钮 */}
-            <button
-              onClick={toggleMinimize}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
           </div>
         </div>
       )}

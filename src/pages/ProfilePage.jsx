@@ -57,9 +57,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showMilestoneModal, setShowMilestoneModal] = useState(false);
-  const [editingMilestone, setEditingMilestone] = useState(null);
-  const [milestoneForm, setMilestoneForm] = useState({ label: '', emoji: '⭐', color: '#FF7B70' });
+
   
   // 邀约打卡状态
   const [showInviteModal, setShowInviteModal] = useState(false);

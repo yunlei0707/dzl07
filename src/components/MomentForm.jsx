@@ -27,7 +27,7 @@ const formatTime2 = (seconds) => {
 };
 
 export function MomentForm({ moment, onSave, onCancel, babyId }) {
-  const { getAllMilestones, addMilestone, customMilestones } = useApp();
+  const { getAllMilestones } = useApp();
   const [type, setType] = useState(moment?.type || 'photo');
   const [content, setContent] = useState(moment?.content || '');
   const [photos, setPhotos] = useState(moment?.photos || []);
@@ -76,8 +76,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
 
   // 获取所有里程碑选项
   const milestoneOptions = getAllMilestones();
-  const [showCustomMilestoneInput, setShowCustomMilestoneInput] = useState(false);
-  const [customMilestoneForm, setCustomMilestoneForm] = useState({ label: '', emoji: '⭐' });
+
 
   // 清理录音资源
   useEffect(() => {
@@ -689,56 +688,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                 {option.emoji} {option.label}
               </button>
             ))}
-            {/* 自定义里程碑按钮 */}
-            <button
-              onClick={() => setShowCustomMilestoneInput(!showCustomMilestoneInput)}
-              className="px-3 py-1.5 rounded-full text-sm border-2 border-dashed border-primary-300 dark:border-primary-700 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-            >
-              + 自定义
-            </button>
           </div>
-          
-          {/* 自定义里程碑输入 */}
-          {showCustomMilestoneInput && (
-            <div className="mt-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
-              <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="text"
-                  value={customMilestoneForm.label}
-                  onChange={(e) => setCustomMilestoneForm(f => ({ ...f, label: e.target.value }))}
-                  placeholder="输入里程碑名称"
-                  className="flex-1 px-3 py-2 rounded-lg border border-primary-200 dark:border-primary-700 bg-white dark:bg-gray-800 text-sm"
-                />
-                <button
-                  onClick={handleAddCustomMilestone}
-                  disabled={!customMilestoneForm.label.trim()}
-                  className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm disabled:opacity-50"
-                >
-                  添加
-                </button>
-              </div>
-              <div className="flex gap-1 flex-wrap">
-                {['⭐', '🌱', '💪', '📚', '✨', '🎈', '🎀', '🌟', '💫', '🌈', '☀️', '🌙', '❤️', '🎉', '👏', '🦋', '🌸', '🍀'].map(emoji => (
-                  <button
-                    key={emoji}
-                    onClick={() => setCustomMilestoneForm(f => ({ ...f, emoji }))}
-                    className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center ${
-                      customMilestoneForm.emoji === emoji ? 'bg-primary-200 dark:bg-primary-700' : 'bg-white dark:bg-gray-700 hover:bg-primary-100 dark:hover:bg-primary-800'
-                    }`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* 已有的自定义里程碑快速选择 */}
-          {customMilestones.length > 0 && !showCustomMilestoneInput && (
-            <div className="mt-2 text-xs text-gray-500">
-              已自定义: {customMilestones.map(m => m.emoji + m.label).join(', ')}
-            </div>
-          )}
         </div>
         
         {/* 照片上传 */}

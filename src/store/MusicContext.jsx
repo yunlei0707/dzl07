@@ -230,11 +230,11 @@ export function MusicProvider({ children }) {
       audioRef.current.src = localFileUrl || currentMusic.url;
       audioRef.current.load();
       
-      if (hasUserInteracted && isPlaying) {
+      if (isPlaying) {
         audioRef.current.play().catch(() => {});
       }
     }
-  }, [currentMusic, localFileUrl]);
+  }, [currentMusic, localFileUrl, isPlaying]);
 
   // 保存状态到localStorage
   useEffect(() => {
@@ -293,6 +293,7 @@ export function MusicProvider({ children }) {
     setLocalFile(null);
     setLocalFileUrl(null);
     setIsPlaying(true);
+    setHasUserInteracted(true);
     
     const fileInput = document.getElementById('local-music-input');
     if (fileInput) fileInput.value = '';
@@ -305,6 +306,7 @@ export function MusicProvider({ children }) {
     setLocalFile(null);
     setLocalFileUrl(null);
     setIsPlaying(true);
+    setHasUserInteracted(true);
     
     const fileInput = document.getElementById('local-music-input');
     if (fileInput) fileInput.value = '';
