@@ -299,60 +299,41 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
         </div>
       )}
       
-      {/* 头部 - 优化：设置按钮和头像在右侧 */}
+      {/* 头部 - 左上角展示账号头像和名称，参考成长数据页面 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            {/* 账号头像显示在左上角 */}
+            <button 
+              onClick={() => setShowProfileModal(true)}
+              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden"
+            >
+              {currentUser?.avatar ? (
+                currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
+                  <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{currentUser.avatar}</span>
+                )
+              ) : (
+                <User className="w-5 h-5" />
+              )}
+            </button>
             <h1 className="text-xl font-bold">👤 我的</h1>
-            <div className="flex items-center gap-2">
-              {/* 设置按钮 */}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-              {/* 主题切换 */}
-              <button
-                onClick={toggleTheme}
-                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-              >
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-          
-          {/* 用户信息卡片 */}
-          <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-4">
-              {/* 头像 */}
-              <button 
-                onClick={() => setShowProfileModal(true)}
-                className="relative"
-              >
-                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden text-3xl">
-                  {currentUser?.avatar ? (
-                    currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
-                      <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{currentUser.avatar}</span>
-                    )
-                  ) : (
-                    <User className="w-8 h-8" />
-                  )}
-                </div>
-                <div className="absolute bottom-0 right-0 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md">
-                  <Edit3 className="w-3 h-3 text-primary-500" />
-                </div>
-              </button>
-              
-              <div className="flex-1">
-                <h2 className="font-bold">{currentUser?.nickname || currentUser?.username || '用户'}</h2>
-                {currentUser?.signature && (
-                  <p className="text-sm text-white/70 mt-0.5">{currentUser.signature}</p>
-                )}
-              </div>
-            </div>
+            <div className="flex-1" />
+            {/* 设置按钮 */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+            {/* 主题切换 */}
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </header>
@@ -373,8 +354,8 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-white text-sm font-bold text-center truncate">{currentBaby.nickname || currentBaby.name}</p>
-                <p className="text-white/70 text-xs text-center">{calculateAge(currentBaby.birthDate).display}</p>
+                <p className="text-gray-800 dark:text-white text-base font-bold truncate">{currentBaby.nickname || currentBaby.name}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{calculateAge(currentBaby.birthDate).display}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
