@@ -1,587 +1,306 @@
 /**
  * 音乐播放器组件
- * 右下角悬浮播放器，支持全屏展示、拖拽、折叠/展开
+ * 纯本地上传，支持分类管理
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { 
+  Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
+  Plus, Music, X, ChevronDown, Tag, Trash2, Settings
+} from 'lucide-react';
 import { useMusic } from '../store/MusicContext';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, Music, Plus, ChevronUp, ChevronDown, Disc3, Expand, Minimize2, LayoutGrid } from 'lucide-react';
-import { MUSIC_CATEGORIES } from '../store/MusicContext';
 
 export function MusicPlayer() {
-  const {
-    playlist,
-    currentIndex,
-    currentMusic,
-    isPlaying,
+  const { 
+    playlist, 
+    filteredPlaylist,
+    currentMusic, 
+    isPlaying, 
     volume,
     isMuted,
-    currentTime,
-    duration,
-    isExpanded,
-    isFullscreen,
-    localFile,
-    hasUserInteracted,
+    selectedCategory,
+    allCategories,
     togglePlay,
-    handlePrevious,
-    handleNext,
+    playPrev,
+    playNext,
+    playMusic,
     addLocalMusic,
+    deleteMusic,
+    updateMusicCategory,
+    addCustomCategory,
     setVolume,
     toggleMute,
-    setIsExpanded,
-    toggleFullscreen,
-    selectedCategory,
     setSelectedCategory,
-    isMinimized,
-    toggleMinimize,
-    floatPosition,
-    setFloatPos,
-    formatTime,
-    progress,
-    getFilteredPlaylist,
-    getCategoryCount,
   } = useMusic();
 
   const fileInputRef = useRef(null);
-  const [showPlaylist, setShowPlaylist] = useState(false);
-  const [showMyMusic, setShowMyMusic] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-  const positionRef = useRef({ x: floatPosition.x, y: floatPosition.y });
-  const playerRef = useRef(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(null);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
-  // 初始化位置
-  useEffect(() => {
-    positionRef.current = { x: floatPosition.x, y: floatPosition.y };
-  }, [floatPosition]);
-
-  // 处理本地文件选择
+  // 处理文件选择
   const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('audio/')) {
-      addLocalMusic(file);
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      if (file.type.startsWith('audio/')) {
+        addLocalMusic(file, selectedCategory === 'all' ? 'other' : selectedCategory);
+      }
+    });
+    e.target.value = '';
+  };
+
+  // 快速添加分类
+  const handleAddCategory = () => {
+    if (newCategoryName.trim()) {
+      addCustomCategory(newCategoryName.trim());
+      setNewCategoryName('');
+      setShowAddCategory(false);
     }
   };
 
-  // 切换展开/收起
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-    if (!isExpanded) {
-      setShowPlaylist(false);
-    }
-  };
-
-  // 进度条点击
-  const handleProgressClick = (e) => {
-    if (!duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const audio = document.querySelector('audio');
-    if (audio) {
-      audio.currentTime = percent * duration;
-    }
-  };
-
-  // 播放列表项点击
-  const handlePlaylistItemClick = (index) => {
-    const audio = document.querySelector('audio');
-    if (audio) {
-      window.dispatchEvent(new CustomEvent('musicSelect', { detail: { index } }));
-    }
-  };
-
-  // 拖拽开始
-  const handleDragStart = useCallback((e) => {
-    setIsDragging(true);
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    dragStartRef.current = {
-      x: clientX - (positionRef.current.x || 0),
-      y: clientY - (positionRef.current.y || 0)
-    };
-  }, []);
-
-  // 拖拽移动
-  const handleDragMove = useCallback((e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    const newX = clientX - dragStartRef.current.x;
-    const newY = clientY - dragStartRef.current.y;
-    
-    // 限制在屏幕范围内
-    const maxX = window.innerWidth - 80;
-    const maxY = window.innerHeight - 100;
-    const boundedX = Math.max(0, Math.min(maxX, newX));
-    const boundedY = Math.max(0, Math.min(maxY, newY));
-    
-    positionRef.current = { x: boundedX, y: boundedY };
-    setFloatPos({ x: boundedX, y: boundedY });
-  }, [isDragging, setFloatPos]);
-
-  // 拖拽结束
-  const handleDragEnd = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  // 添加拖拽事件监听
-  useEffect(() => {
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', handleDragEnd);
-    document.addEventListener('touchmove', handleDragMove, { passive: false });
-    document.addEventListener('touchend', handleDragEnd);
-    
-    return () => {
-      document.removeEventListener('mousemove', handleDragMove);
-      document.removeEventListener('mouseup', handleDragEnd);
-      document.removeEventListener('touchmove', handleDragMove);
-      document.removeEventListener('touchend', handleDragEnd);
-    };
-  }, [handleDragMove, handleDragEnd]);
-
-  // 如果没有音乐且没有本地文件，显示迷你按钮
-  const hasMusic = currentMusic || localFile;
-
-  const displayMusic = localFile 
-    ? { title: localFile.name.replace(/\.[^/.]+$/, ''), artist: '本地音乐', cover: '📁' }
-    : currentMusic;
-
-  const filteredPlaylist = getFilteredPlaylist();
-  const currentFilteredIndex = filteredPlaylist.findIndex(m => m.id === playlist[currentIndex]?.id);
-
-  // 全屏播放器
-  if (isFullscreen) {
-    return (
-      <div className="fixed inset-0 z-[70] bg-gradient-to-b from-gray-900 to-gray-800 overflow-y-auto">
-        {/* 顶部栏 */}
-        <div className="flex items-center justify-between p-4 text-white">
-          <button onClick={toggleFullscreen} className="p-2 hover:bg-white/10 rounded-full">
-            <ChevronDown className="w-6 h-6" />
-          </button>
-          <span className="text-sm font-medium">音乐播放器</span>
-          <button onClick={toggleMinimize} className="p-2 hover:bg-white/10 rounded-full">
-            <Minimize2 className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* 唱片区域 */}
-        <div className="flex flex-col items-center pt-8 px-6">
-          <div 
-            className={`w-56 h-56 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-2xl ${isPlaying ? 'animate-spin' : ''}`} 
-            style={{ animationDuration: '8s' }}
-          >
-            <div className="w-44 h-44 rounded-full bg-black/20 flex items-center justify-center">
-              <div className="w-32 h-32 rounded-full bg-white/10 flex items-center justify-center">
-                <span className="text-6xl">{displayMusic?.cover || '🎵'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 曲目信息 */}
-          <div className="text-center mt-8">
-            <h3 className="text-xl font-bold text-white">{displayMusic?.title || '未知曲目'}</h3>
-            <p className="text-gray-400 mt-1">{displayMusic?.artist || '未知艺术家'}</p>
-          </div>
-        </div>
-
-        {/* 进度条 */}
-        <div className="px-6 mt-8">
-          <div 
-            className="h-1 bg-gray-700 rounded-full cursor-pointer"
-            onClick={handleProgressClick}
-          >
-            <div 
-              className="h-full bg-primary-500 rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        {/* 控制按钮 */}
-        <div className="flex items-center justify-center gap-8 mt-8">
-          <button onClick={handlePrevious} className="p-3 text-white/80 hover:text-white">
-            <SkipBack className="w-8 h-8" />
-          </button>
-          
-          <button
-            onClick={togglePlay}
-            className="w-16 h-16 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-lg hover:bg-primary-600"
-          >
-            {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
-          </button>
-          
-          <button onClick={handleNext} className="p-3 text-white/80 hover:text-white">
-            <SkipForward className="w-8 h-8" />
-          </button>
-        </div>
-
-        {/* 音量控制 */}
-        <div className="px-6 mt-6 flex items-center gap-3">
-          <button onClick={toggleMute} className="p-1 text-gray-400">
-            {isMuted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-          </button>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={isMuted ? 0 : volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="flex-1 h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-          />
-        </div>
-
-        {/* 音乐分类 */}
-        <div className="px-6 mt-6">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {MUSIC_CATEGORIES.map(cat => (
-              <button
-                key={cat.value}
-                onClick={() => setSelectedCategory(cat.value)}
-                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
-                  selectedCategory === cat.value
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-700 text-gray-300'
-                }`}
-              >
-                {cat.label} ({getCategoryCount(cat.value)})
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 播放列表 */}
-        <div className="px-6 mt-4 flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 520px)' }}>
-          <div className="space-y-2">
-            {filteredPlaylist.map((music, index) => (
-              <div
-                key={music.id}
-                onClick={() => handlePlaylistItemClick(playlist.findIndex(m => m.id === music.id))}
-                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
-                  playlist[currentIndex]?.id === music.id 
-                    ? 'bg-primary-500/20 border border-primary-500/30' 
-                    : 'bg-gray-800 hover:bg-gray-700'
-                }`}
-              >
-                <span className="text-2xl">{music.cover}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium truncate">{music.title}</p>
-                  <p className="text-gray-400 text-sm truncate">{music.artist}</p>
-                </div>
-                {playlist[currentIndex]?.id === music.id && isPlaying && (
-                  <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 添加本地音乐 */}
-        <div className="p-4 border-t border-gray-700">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-3 border-2 border-dashed border-gray-600 rounded-xl text-gray-400 flex items-center justify-center gap-2 hover:border-primary-500 hover:text-primary-400"
-          >
-            <Plus className="w-5 h-5" />
-            添加本地音乐
-          </button>
-        </div>
-
-        <input
-          ref={fileInputRef}
-          id="local-music-input"
-          type="file"
-          accept="audio/*"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
-      </div>
-    );
-  }
-
-  // 如果没有音乐，返回迷你按钮
-  if (!hasMusic) {
-    return (
-      <div 
-        className="fixed bottom-20 right-4 z-50"
-        style={{ right: 16, bottom: 80 }}
-      >
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center text-gray-500 hover:text-primary-500 transition-colors"
-          title="添加音乐"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-        <input
-          ref={fileInputRef}
-          id="local-music-input"
-          type="file"
-          accept="audio/*"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
-      </div>
-    );
-  }
-
-  // 悬浮播放器
   return (
-    <div 
-      ref={playerRef}
-      className="fixed z-50 select-none"
-      style={{ 
-        right: floatPosition.x !== null ? undefined : 16,
-        bottom: floatPosition.y !== null ? undefined : 80,
-        left: floatPosition.x !== null ? floatPosition.x : undefined,
-        top: floatPosition.y !== null ? floatPosition.y : undefined,
-      }}
-    >
-      {/* 展开状态：完整播放器 */}
-      {isExpanded && !isMinimized ? (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-72 overflow-hidden border border-gray-100 dark:border-gray-700">
-          {/* 顶部栏 */}
-          <div 
-            className="bg-gradient-to-r from-primary-400 to-primary-500 px-4 py-3 flex items-center justify-between cursor-move"
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-          >
-            <div className="flex items-center gap-2 text-white">
-              <Disc3 className="w-5 h-5 animate-spin" style={{ animationDuration: '3s', animationPlayState: isPlaying ? 'running' : 'paused' }} />
-              <span className="font-medium text-sm">背景音乐</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={toggleFullscreen}
-                className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                title="全屏"
+    <>
+      {/* 底部播放器条 */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-700">
+        {currentMusic ? (
+          <div className="max-w-lg mx-auto px-4 py-2">
+            <div className="flex items-center gap-3">
+              {/* 播放/暂停 */}
+              <button 
+                onClick={togglePlay}
+                className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-md flex-shrink-0"
               >
-                <Expand className="w-4 h-4 text-white" />
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
               </button>
-            </div>
-          </div>
-
-          {/* 唱片区域 */}
-          <div className="flex flex-col items-center py-6 px-4">
-            <div 
-              className={`w-28 h-28 rounded-full bg-gradient-to-br from-primary-300 to-primary-500 flex items-center justify-center shadow-lg mb-4 ${isPlaying ? 'animate-spin' : ''}`} 
-              style={{ animationDuration: '8s' }}
-            >
-              <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center">
-                  <span className="text-3xl">{displayMusic?.cover || '🎵'}</span>
-                </div>
+              
+              {/* 音乐信息 */}
+              <div 
+                className="flex-1 min-w-0 cursor-pointer"
+                onClick={() => setIsExpanded(true)}
+              >
+                <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                  {currentMusic.title}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {allCategories.find(c => c.id === currentMusic.category)?.name || '其他'}
+                </p>
+              </div>
+              
+              {/* 上一首/下一首 */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button 
+                  onClick={playPrev}
+                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
+                >
+                  <SkipBack className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={playNext}
+                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-500"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
               </div>
             </div>
-
-            <h3 className="font-bold text-gray-800 dark:text-white text-center">{displayMusic?.title || '未知曲目'}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{displayMusic?.artist || '未知艺术家'}</p>
           </div>
-
-          {/* 进度条 */}
-          <div className="px-4 mb-2">
-            <div 
-              className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full cursor-pointer"
-              onClick={handleProgressClick}
-            >
-              <div 
-                className="h-full bg-primary-400 rounded-full transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-
-          {/* 控制按钮 */}
-          <div className="flex items-center justify-center gap-6 px-4 pb-4">
-            <button onClick={handlePrevious} className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-500">
-              <SkipBack className="w-6 h-6" />
-            </button>
-            
+        ) : (
+          /* 没有音乐时显示上传按钮 */
+          <div className="max-w-lg mx-auto px-4 py-3">
             <button
-              onClick={togglePlay}
-              className="w-14 h-14 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-lg hover:bg-primary-600"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full py-3 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 shadow-md"
             >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-            </button>
-            
-            <button onClick={handleNext} className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-500">
-              <SkipForward className="w-6 h-6" />
+              <Plus className="w-5 h-5" />
+              添加音乐
             </button>
           </div>
+        )}
+      </div>
 
-          {/* 音量控制 */}
-          <div className="px-4 pb-4 flex items-center gap-3">
-            <button onClick={toggleMute} className="p-1 text-gray-500 dark:text-gray-400">
-              {isMuted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+      {/* 展开的播放器面板 */}
+      {isExpanded && currentMusic && (
+        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
+          {/* 顶部栏 */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+            <button 
+              onClick={() => setIsExpanded(false)}
+              className="w-10 h-10 flex items-center justify-center"
+            >
+              <ChevronDown className="w-6 h-6 text-gray-500" />
             </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={isMuted ? 0 : volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-500"
-            />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              正在播放
+            </p>
+            <div className="w-10" />
+          </div>
+
+          {/* 封面区域 */}
+          <div className="px-8 py-12 flex flex-col items-center">
+            <div className="w-48 h-48 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl">
+              <span className="text-6xl">{currentMusic.cover}</span>
+            </div>
+            <h3 className="mt-6 text-xl font-bold text-gray-800 dark:text-white text-center">
+              {currentMusic.title}
+            </h3>
+            <p className="mt-2 text-gray-500">
+              {allCategories.find(c => c.id === currentMusic.category)?.name || '其他'}
+            </p>
           </div>
 
           {/* 分类标签 */}
-          <div className="px-4 pb-2">
-            <div className="flex gap-1 overflow-x-auto">
-              {MUSIC_CATEGORIES.map(cat => (
+          <div className="px-4 mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {allCategories.map(cat => (
                 <button
-                  key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value)}
-                  className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
-                    selectedCategory === cat.value
-                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === cat.id
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                   }`}
                 >
-                  {cat.label}
+                  {cat.icon} {cat.name}
                 </button>
               ))}
+              <button
+                onClick={() => setShowAddCategory(true)}
+                className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500"
+              >
+                <Plus className="w-4 h-4 inline mr-1" /> 新建
+              </button>
             </div>
           </div>
 
-          {/* 我的音乐 - 本地音乐专区 */}
-          {playlist.filter(m => m.isLocal).length > 0 && (
-            <div className="border-t border-gray-100 dark:border-gray-700 bg-gradient-to-r from-primary-50/50 to-transparent dark:from-primary-900/20">
-              <div 
-                className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                onClick={() => setShowMyMusic(!showMyMusic)}
-              >
-                <span className="text-sm font-bold text-primary-600 dark:text-primary-400 flex items-center gap-2">
-                  <span className="text-lg">⭐</span>
-                  我的音乐 ({playlist.filter(m => m.isLocal).length})
-                </span>
-                <ChevronUp className={`w-4 h-4 text-primary-400 transition-transform ${showMyMusic ? '' : 'rotate-180'}`} />
-              </div>
-              
-              {showMyMusic && (
-                <div className="max-h-40 overflow-y-auto px-2 pb-2">
-                  {playlist.filter(m => m.isLocal).map((music) => {
-                    const musicIndex = playlist.findIndex(m => m.id === music.id);
-                    return (
-                      <div
-                        key={music.id}
-                        onClick={() => handlePlaylistItemClick(musicIndex)}
-                        className={`px-2 py-2 flex items-center gap-3 cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                          musicIndex === currentIndex ? 'bg-primary-100 dark:bg-primary-900/50' : ''
-                        }`}
-                      >
-                        <span className="text-xl">{music.cover}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{music.title}</p>
-                          <p className="text-xs text-primary-500">我的音乐</p>
-                        </div>
-                        {musicIndex === currentIndex && isPlaying && (
-                          <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 播放列表 - 内置音乐 */}
-          <div className="border-t border-gray-100 dark:border-gray-700">
-            <div 
-              className="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-              onClick={() => setShowPlaylist(!showPlaylist)}
-            >
-              <span className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
-                <Music className="w-4 h-4" />
-                内置音乐 ({playlist.filter(m => !m.isLocal).length})
-              </span>
-              <ChevronUp className={`w-4 h-4 text-gray-400 transition-transform ${showPlaylist ? '' : 'rotate-180'}`} />
-            </div>
-            
-            {showPlaylist && (
-              <div className="max-h-48 overflow-y-auto">
-                {playlist.filter(m => !m.isLocal).map((music) => {
-                  const musicIndex = playlist.findIndex(m => m.id === music.id);
-                  return (
-                    <div
-                      key={music.id}
-                      onClick={() => handlePlaylistItemClick(musicIndex)}
-                      className={`px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                        musicIndex === currentIndex ? 'bg-primary-50 dark:bg-primary-900/30' : ''
-                      }`}
+          {/* 播放列表 */}
+          <div className="flex-1 overflow-y-auto px-4">
+            {filteredPlaylist.length > 0 ? (
+              <div className="space-y-1">
+                {filteredPlaylist.map(music => (
+                  <div
+                    key={music.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                      music.id === currentMusic.id
+                        ? 'bg-primary-50 dark:bg-primary-900/30'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <span className="text-2xl">{music.cover}</span>
+                    <div 
+                      className="flex-1 min-w-0"
+                      onClick={() => playMusic(music.id)}
                     >
-                      <span className="text-lg">{music.cover}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{music.title}</p>
-                        <p className="text-xs text-gray-400 truncate">{music.artist}</p>
-                      </div>
-                      {musicIndex === currentIndex && isPlaying && (
-                        <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+                      <p className={`text-sm font-medium truncate ${
+                        music.id === currentMusic.id
+                          ? 'text-primary-600 dark:text-primary-400'
+                          : 'text-gray-800 dark:text-gray-200'
+                      }`}>
+                        {music.title}
+                      </p>
+                    </div>
+                    
+                    {/* 分类选择 */}
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCategoryMenu(showCategoryMenu === music.id ? null : music.id);
+                        }}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary-500"
+                      >
+                        <Tag className="w-4 h-4" />
+                      </button>
+                      
+                      {showCategoryMenu === music.id && (
+                        <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-10 min-w-32">
+                          {allCategories.map(cat => (
+                            <button
+                              key={cat.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateMusicCategory(music.id, cat.id);
+                                setShowCategoryMenu(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                            >
+                              {cat.icon} {cat.name}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
-                  );
-                })}
+                    
+                    {/* 删除按钮 */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteMusic(music.id);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Music className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500 mb-2">该分类暂无音乐</p>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm"
+                >
+                  添加音乐
+                </button>
               </div>
             )}
           </div>
 
-          {/* 添加本地音乐 */}
-          <div className="p-3 border-t border-gray-100 dark:border-gray-700">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 text-sm flex items-center justify-center gap-2 hover:border-primary-400 hover:text-primary-500"
-            >
-              <Plus className="w-4 h-4" />
-              添加本地音乐
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* 收起/最小化状态：圆形按钮 */
-        <div className="flex items-end">
-          {/* 迷你播放器 */}
-          <div 
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full shadow-2xl pl-1 pr-3 py-1 border border-gray-100 dark:border-gray-700"
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-          >
-            {/* 旋转唱片 */}
-            <button
-              onClick={toggleFullscreen}
-              className={`w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center shadow-md ${
-                isPlaying ? 'animate-spin' : ''
-              }`}
-              style={{ animationDuration: '8s' }}
-            >
-              <span className="text-xl">{displayMusic?.cover || '🎵'}</span>
-            </button>
-
-            {/* 控制按钮 */}
-            <div className="flex items-center gap-1">
-              <button onClick={handlePrevious} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-primary-500">
-                <SkipBack className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={togglePlay}
-                className="w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-md hover:bg-primary-600"
+          {/* 底部控制栏 */}
+          <div className="px-4 py-4 border-t border-gray-100 dark:border-gray-800">
+            {/* 音量控制 */}
+            <div className="flex items-center gap-3 mb-4">
+              <button 
+                onClick={toggleMute}
+                className="w-8 h-8 flex items-center justify-center text-gray-500"
               >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
-              
-              <button onClick={handleNext} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-primary-500">
-                <SkipForward className="w-4 h-4" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(isMuted ? 0 : volume) * 100}%, #e5e7eb ${(isMuted ? 0 : volume) * 100}%, #e5e7eb 100%)`
+                }}
+              />
+            </div>
+
+            {/* 播放控制 */}
+            <div className="flex items-center justify-center gap-8">
+              <button 
+                onClick={playPrev}
+                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+              >
+                <SkipBack className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={togglePlay}
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white shadow-xl"
+              >
+                {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+              </button>
+              <button 
+                onClick={playNext}
+                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+              >
+                <SkipForward className="w-6 h-6" />
               </button>
             </div>
           </div>
@@ -591,14 +310,46 @@ export function MusicPlayer() {
       {/* 隐藏的文件输入 */}
       <input
         ref={fileInputRef}
-        id="local-music-input"
         type="file"
         accept="audio/*"
-        className="hidden"
+        multiple
         onChange={handleFileSelect}
+        className="hidden"
       />
-    </div>
+
+      {/* 添加分类弹窗 */}
+      {showAddCategory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddCategory(false)}>
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">新建分类</h3>
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="输入分类名称..."
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl mb-4 dark:bg-gray-700 dark:text-white"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowAddCategory(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl font-medium"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleAddCategory}
+                className="flex-1 py-3 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-xl font-medium"
+              >
+                创建
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
-
-export default MusicPlayer;
