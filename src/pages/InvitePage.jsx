@@ -3,11 +3,12 @@
  * 亲戚通过链接打卡，记录来访
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, Calendar, Users, Trophy, Copy, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { Heart, Calendar, Users, Trophy, Copy, Check, ArrowRight, Sparkles, Share2 } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { addVisit, getVisitsByBaby, getVisitRanking, generateInviteToken, verifyInviteToken } from '../utils/db';
+import { ShareCard } from '../components/ShareCard';
 
 export function InvitePage() {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,8 @@ export function InvitePage() {
   const [inviteLink, setInviteLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [recentVisits, setRecentVisits] = useState([]);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const shareCardRef = useRef(null);
 
   // 从URL获取邀请信息
   const babyId = searchParams.get('babyId');
@@ -311,6 +314,13 @@ export function InvitePage() {
                     </>
                   )}
                 </button>
+                <button
+                  onClick={() => setShowShareCard(true)}
+                  className="px-3 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors flex items-center gap-1"
+                >
+                  <Share2 className="w-4 h-4" />
+                  分享
+                </button>
               </div>
             </div>
 
@@ -387,6 +397,34 @@ export function InvitePage() {
           </>
         )}
       </main>
+
+      {/* 隐藏的分享卡片模板 */}
+      <div ref={shareCardRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div style={{ width: 375, padding: 32, background: 'linear-gradient(135deg, #FF6B6B, #FFA500)', borderRadius: 16 }}>
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <span style={{ fontSize: 28, fontWeight: 'bold', color: '#fff' }}>✨ 宝贝时光 ✨</span>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 12, padding: 24 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>邀请打卡</h3>
+            <p style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>
+              {currentBaby?.nickname || currentBaby?.name || '小宝宝'}邀请您来打卡送祝福~<br/>
+              快来留下您的足迹吧！
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>长按保存分享 · 宝贝时光</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 分享卡片弹窗 */}
+      <ShareCard
+        visible={showShareCard}
+        onClose={() => setShowShareCard(false)}
+        cardRef={shareCardRef}
+        title="邀请打卡"
+        content={`${currentBaby?.nickname || currentBaby?.name || '小宝宝'}邀请您来打卡送祝福~`}
+      />
     </div>
   );
 }
