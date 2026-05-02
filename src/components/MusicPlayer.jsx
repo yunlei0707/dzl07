@@ -266,8 +266,8 @@ export function MusicPlayer() {
                 </div>
               </div>
             </div>
-          ) : (selectedCategory !== 'all' ? (
-            /* 没有音乐且不是全部分类时显示上传按钮 */
+          ) : (
+            /* 没有音乐时显示上传按钮 */
             <div className="max-w-lg mx-auto px-4 py-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -277,7 +277,7 @@ export function MusicPlayer() {
                 添加音乐
               </button>
             </div>
-          ) : null)}
+          )}
         </div>
       )}
 

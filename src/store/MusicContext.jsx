@@ -50,12 +50,19 @@ export function MusicProvider({ children }) {
       try {
         const parsed = JSON.parse(savedPlaylist);
         setPlaylist(parsed);
+        // 确保索引在有效范围内
+        const savedIndexNum = parseInt(savedIndex);
+        if (!isNaN(savedIndexNum) && savedIndexNum >= 0 && savedIndexNum < parsed.length) {
+          setCurrentIndex(savedIndexNum);
+        } else if (parsed.length > 0) {
+          setCurrentIndex(0);
+        }
       } catch (e) {
         console.error('Failed to restore playlist:', e);
       }
+    } else if (savedIndex) {
+      setCurrentIndex(parseInt(savedIndex));
     }
-    
-    if (savedIndex) setCurrentIndex(parseInt(savedIndex));
     if (savedVolume) setVolumeState(parseFloat(savedVolume));
     if (savedIsMuted) setIsMuted(savedIsMuted === 'true');
     if (savedCategory) setSelectedCategory(savedCategory);
