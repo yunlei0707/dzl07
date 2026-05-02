@@ -332,41 +332,54 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   // 获取当前位置（高德地图 + 备用浏览器定位）
   const getCurrentLocation = async () => {
     setIsLocating(true);
+    
+    // 检查高德地图SDK是否真的加载完成
+    if (!window.AMap || !window.AMap.Geolocation) {
+      console.log('高德地图SDK未加载，使用浏览器定位');
+      useBrowserGeolocation();
+      return;
+    }
 
     // 优先使用高德地图定位
-    if (window.AMap) {
-      try {
-        const geolocation = new window.AMap.Geolocation({
-          enableHighAccuracy: true,
-          timeout: 10000,
-        });
+    try {
+      const geolocation = new window.AMap.Geolocation({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
 
-        geolocation.getCurrentPosition((status, result) => {
-          if (status === 'complete') {
-            const { lat, lng } = result.position;
-            setLocationCoords({ lat, lng });
-            
-            // 逆地理编码获取地址
-            if (geocoderRef.current) {
+      geolocation.getCurrentPosition((status, result) => {
+        if (status === 'complete' && result && result.position) {
+          const { lat, lng } = result.position;
+          setLocationCoords({ lat, lng });
+          
+          // 先显示经纬度坐标
+          setLocation(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          setIsLocating(false);
+          
+          // 再尝试逆地理编码获取地址
+          if (geocoderRef.current) {
+            try {
               geocoderRef.current.getAddress(new window.AMap.LngLat(lng, lat), (geoStatus, geoResult) => {
-                if (geoStatus === 'complete') {
+                if (geoStatus === 'complete' && geoResult?.regeocode?.formattedAddress) {
                   setLocation(geoResult.regeocode.formattedAddress);
-                } else {
-                  setLocation(`位置: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
                 }
               });
+            } catch (e) {
+              // 逆地理编码失败，保留经纬度显示即可
+              console.log('逆地理编码失败，保留经纬度显示');
             }
-          } else {
-            // 高德定位失败，使用浏览器定位
-            useBrowserGeolocation();
           }
-          setIsLocating(false);
-        });
-      } catch (error) {
-        console.error('高德定位失败:', error);
+        } else {
+          // 高德定位失败，使用浏览器定位
+          console.log('高德定位失败:', result?.message);
+          useBrowserGeolocation();
+        }
+      }, (error) => {
+        console.error('高德定位出错:', error);
         useBrowserGeolocation();
-      }
-    } else {
+      });
+    } catch (error) {
+      console.error('高德定位失败:', error);
       useBrowserGeolocation();
     }
   };
@@ -384,42 +397,32 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         const { latitude, longitude } = position.coords;
         setLocationCoords({ lat: latitude, lng: longitude });
         
+        // 先显示经纬度坐标，保证用户能看到结果
+        setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        setIsLocating(false);
+        
+        // 后台尝试逆地理编码获取地址（腾讯地图国内更稳定）
         try {
-          // 使用 Nominatim 逆地理编码
+          // 尝试腾讯地图
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&accept-language=zh`,
-            {
-              mode: 'cors',
-              headers: { 'User-Agent': 'BabyTimeApp/1.0' }
-            }
+            `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=O4BZ-GL3CW-26XR0-4X7DV-DZJSH-F2B3U&get_poi=0`,
+            { mode: 'cors' }
           );
           
           if (response.ok) {
             const data = await response.json();
-            if (data && data.address) {
-              const addr = data.address;
-              const parts = [];
-              if (addr.province || addr.state) parts.push(addr.province || addr.state);
-              if (addr.city) parts.push(addr.city);
-              if (addr.district || addr.county) parts.push(addr.district || addr.county);
-              if (addr.road) parts.push(addr.road);
-              
-              if (parts.length > 0) {
-                setLocation(parts.slice(0, 4).join(' '));
-              } else {
-                setLocation(data.display_name?.split(',').slice(0, 3).join(',') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            if (data && data.status === 0 && data.result) {
+              const addr = data.result.address_component;
+              const formattedAddr = data.result.formatted_addresses?.recommend || 
+                `${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.street || ''}`;
+              if (formattedAddr.trim()) {
+                setLocation(formattedAddr);
               }
-            } else {
-              setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
             }
-          } else {
-            setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
           }
         } catch (error) {
-          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          console.log('逆地理编码失败，保留经纬度显示');
         }
-        
-        setIsLocating(false);
       },
       (error) => {
         setIsLocating(false);
