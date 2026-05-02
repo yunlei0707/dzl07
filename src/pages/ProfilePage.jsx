@@ -47,6 +47,10 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     updateMilestone,
     deleteMilestone,
     switchBaby,
+    customMoods,
+    addMood,
+    updateMood,
+    deleteMood,
   } = useApp();
   
   const fileInputRef = useRef(null);
@@ -60,6 +64,11 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState({ label: '', emoji: '⭐', color: '#FF7B70' });
+  
+  // 心情标签管理状态
+  const [showMoodModal, setShowMoodModal] = useState(false);
+  const [editingMood, setEditingMood] = useState(null);
+  const [moodForm, setMoodForm] = useState({ label: '', emoji: '😊' });
   
   // 邀约打卡状态
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -256,6 +265,25 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     }
   }, [editingMilestone, milestoneForm, addMilestone, updateMilestone, showToast]);
 
+  // 保存心情标签
+  const handleSaveMood = useCallback(async () => {
+    try {
+      if (editingMood) {
+        await updateMood(editingMood.id, moodForm);
+        showToast('更新成功', 'success');
+      } else {
+        await addMood(moodForm);
+        showToast('添加成功', 'success');
+      }
+      setShowMoodModal(false);
+      setEditingMood(null);
+      setMoodForm({ label: '', emoji: '😊' });
+    } catch (error) {
+      console.error('保存失败:', error);
+      showToast('保存失败', 'error');
+    }
+  }, [editingMood, moodForm, addMood, updateMood, showToast]);
+
   // 如果没有用户数据，显示登录提示
   if (!currentUser) {
     return (
@@ -446,6 +474,25 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
           <div className="flex-1 text-left">
             <span className="font-medium dark:text-white">自定义里程碑</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">管理您的专属成长里程碑</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
+        
+        {/* 自定义心情标签 */}
+        <button
+          onClick={() => {
+            setEditingMood(null);
+            setMoodForm({ label: '', emoji: '😊' });
+            setShowMoodModal(true);
+          }}
+          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-purple-500" />
+          </div>
+          <div className="flex-1 text-left">
+            <span className="font-medium dark:text-white">心情标签管理</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">添加和管理自定义心情标签</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
@@ -783,6 +830,102 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                         </button>
                         <button
                           onClick={() => deleteMilestone(ms.id)}
+                          className="p-1 text-gray-500 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* 心情标签编辑弹窗 */}
+      {showMoodModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-6 dark:text-white">
+              {editingMood ? '编辑心情标签' : '添加心情标签'}
+            </h3>
+            
+            {/* 名称 */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">心情名称</label>
+              <input
+                type="text"
+                value={moodForm.label}
+                onChange={(e) => setMoodForm(m => ({ ...m, label: e.target.value }))}
+                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="如: 兴奋"
+              />
+            </div>
+            
+            {/* emoji选择 */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">选择表情</label>
+              <div className="grid grid-cols-9 gap-1">
+                {EMOJI_OPTIONS.map((emoji, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setMoodForm(m => ({ ...m, emoji }))}
+                    className={`aspect-square rounded-lg text-xl flex items-center justify-center transition-all ${
+                      moodForm.emoji === emoji
+                        ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500'
+                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowMoodModal(false)}
+                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSaveMood}
+                disabled={!moodForm.label}
+                className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
+              >
+                保存
+              </button>
+            </div>
+            
+            {/* 已有自定义心情标签列表 */}
+            {customMoods.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的自定义心情标签</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {customMoods.map(mood => (
+                    <div
+                      key={mood.id}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{mood.emoji}</span>
+                        <span className="text-sm dark:text-white">{mood.label}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingMood(mood);
+                            setMoodForm({ label: mood.label, emoji: mood.emoji });
+                          }}
+                          className="p-1 text-gray-500 hover:text-primary-500"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteMood(mood.id)}
                           className="p-1 text-gray-500 hover:text-red-500"
                         >
                           <Trash2 className="w-4 h-4" />

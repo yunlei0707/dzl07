@@ -20,7 +20,7 @@ const formatTime2 = (seconds) => {
 };
 
 export function MomentForm({ moment, onSave, onCancel, babyId }) {
-  const { getAllMilestones } = useApp();
+  const { getAllMilestones, getAllMoods } = useApp();
   const [type, setType] = useState(moment?.type || 'photo');
   const [content, setContent] = useState(moment?.content || '');
   const [photos, setPhotos] = useState(moment?.photos || []);
@@ -69,6 +69,13 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
 
   // 获取所有里程碑选项
   const milestoneOptions = getAllMilestones();
+  
+  // 获取所有心情选项（预设 + 自定义）
+  const moodOptions = getAllMoods().map(mood => ({
+    value: mood.id,
+    label: mood.label,
+    emoji: mood.emoji
+  }));
 
 
   // 清理录音资源
