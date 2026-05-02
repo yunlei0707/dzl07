@@ -220,9 +220,9 @@ export function MusicProvider({ children }) {
 
   // 删除自定义分类
   const deleteCustomCategory = useCallback((categoryId) => {
-    // 把该分类的音乐移动到"其他"
+    // 把该分类的音乐移动到"钢琴"分类
     setPlaylist(prev => prev.map(m => 
-      m.category === categoryId ? { ...m, category: 'other' } : m
+      m.category === categoryId ? { ...m, category: 'piano' } : m
     ));
     setCustomCategories(prev => prev.filter(c => c.id !== categoryId));
   }, []);

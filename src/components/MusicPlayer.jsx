@@ -361,21 +361,41 @@ export function MusicPlayer() {
           <div className="px-4 mb-4">
             <div className="flex gap-2 overflow-x-auto pb-2">
               {allCategories.map(cat => (
-                <button
+                <div
                   key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     selectedCategory === cat.id
                       ? 'bg-primary-500 text-white shadow-md'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                   }`}
                 >
-                  {cat.icon} {cat.name}
-                </button>
+                  <button
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className="flex items-center gap-1"
+                  >
+                    {cat.icon} {cat.name}
+                  </button>
+                  {cat.isCustom && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`确定要删除分类"${cat.name}"吗？该分类下的音乐将移动到"钢琴"分类`)) {
+                          deleteCustomCategory(cat.id);
+                          if (selectedCategory === cat.id) {
+                            setSelectedCategory('all');
+                          }
+                        }
+                      }}
+                      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/10 text-gray-500 hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               ))}
               <button
                 onClick={() => setShowAddCategory(true)}
-                className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500"
+                className="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 hover:border-primary-300 dark:hover:border-primary-600 hover:text-primary-500 transition-colors"
               >
                 <Plus className="w-4 h-4 inline mr-1" /> 新建
               </button>
