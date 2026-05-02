@@ -318,7 +318,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                 <User className="w-5 h-5" />
               )}
             </button>
-            <h1 className="text-xl font-bold">我的</h1>
+            <h1 className="text-xl font-bold">{currentUser?.nickname || "我的"}</h1>
             <div className="flex-1" />
             {/* 设置按钮 */}
             <button
