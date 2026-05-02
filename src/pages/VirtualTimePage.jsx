@@ -9,7 +9,7 @@ import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
 
 export function VirtualTimePage() {
-  const { currentBaby, showToast } = useApp();
+  const { currentBaby, currentUser, showToast } = useApp();
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [fullscreenItem, setFullscreenItem] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -383,7 +383,18 @@ export function VirtualTimePage() {
       <header className="bg-gradient-to-b from-violet-400 to-violet-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="w-6 h-6" />
+            {/* 账号头像 */}
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+              {currentUser?.avatar ? (
+                currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
+                  <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{currentUser.avatar}</span>
+                )
+              ) : (
+                <User className="w-5 h-5" />
+              )}
+            </div>
             <h1 className="text-xl font-bold">✨ 虚拟时光</h1>
           </div>
           <p className="text-white/80 text-sm">
