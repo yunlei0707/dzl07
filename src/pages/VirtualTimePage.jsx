@@ -411,12 +411,12 @@ export function VirtualTimePage() {
 
       {/* 专题详情弹窗 */}
       {selectedTopic && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-cream-50 dark:bg-gray-900 animate-fade-in overflow-hidden">
           <div 
-            className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-cream-50 dark:bg-gray-900 rounded-t-3xl overflow-hidden animate-slide-up"
+            className="h-full flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`h-40 bg-gradient-to-br ${selectedTopic.coverGradient} relative`}>
+            <div className={`h-48 bg-gradient-to-br ${selectedTopic.coverGradient} relative`}>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-7xl animate-pulse">{selectedTopic.coverEmoji}</span>
               </div>
@@ -436,7 +436,7 @@ export function VirtualTimePage() {
               </div>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(85vh-10rem)] p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedTopic.items.map((item) => (
                 renderContentCard(item, selectedTopic)
               ))}
