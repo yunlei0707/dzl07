@@ -7,7 +7,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Share2, Copy, Check } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
-import ShareCard from '../components/ShareCard';
+import { ShareCard } from '../components/ShareCard';
 
 export function VirtualTimePage() {
   const { currentBaby, currentUser, showToast } = useApp();

@@ -11,7 +11,7 @@ import { PhotoViewer } from '../components/PhotoViewer';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown, Share2 } from 'lucide-react';
-import ShareCard from '../components/ShareCard';
+import { ShareCard } from '../components/ShareCard';
 
 // 类型筛选选项
 const typeFilters = [
