@@ -259,6 +259,7 @@ export function MusicProvider({ children }) {
     
     try {
       if (audioRef.current) {
+        setHasUserInteracted(true);
         await audioRef.current.play();
         setIsPlaying(true);
       }
@@ -277,6 +278,7 @@ export function MusicProvider({ children }) {
 
   // 播放/暂停切换
   const togglePlay = useCallback(() => {
+    setHasUserInteracted(true);
     if (isPlaying) {
       pause();
     } else {

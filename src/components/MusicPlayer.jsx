@@ -153,7 +153,7 @@ export function MusicPlayer() {
   // 全屏播放器
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-[70] bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="fixed inset-0 z-[70] bg-gradient-to-b from-gray-900 to-gray-800 overflow-y-auto">
         {/* 顶部栏 */}
         <div className="flex items-center justify-between p-4 text-white">
           <button onClick={toggleFullscreen} className="p-2 hover:bg-white/10 rounded-full">
@@ -362,13 +362,6 @@ export function MusicPlayer() {
                 title="全屏"
               >
                 <Expand className="w-4 h-4 text-white" />
-              </button>
-              <button
-                onClick={toggleMinimize}
-                className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                title="收起"
-              >
-                <ChevronDown className="w-4 h-4 text-white" />
               </button>
             </div>
           </div>

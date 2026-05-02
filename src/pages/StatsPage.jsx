@@ -204,23 +204,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       
       {/* 统计内容 */}
       <main className="px-4 -mt-4 space-y-4 max-w-lg mx-auto">
-        {/* 月度报告入口 */}
-        <div 
-          className="card cursor-pointer active:scale-[0.98] transition-transform"
-          onClick={() => onOpenMonthlyReport?.()}
-        >
-          <div className="flex items-center gap-3 text-primary-500">
-            <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-              <BarChart2 className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold">月度报告</h3>
-              <p className="text-xs text-gray-500">查看本月成长数据</p>
-            </div>
-            <span className="text-xs text-gray-400">→</span>
-          </div>
-        </div>
-        
         {/* 概览卡片 */}
         <div className="card animate-fade-in">
           <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -423,6 +406,24 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             </div>
           </div>
         )}
+        
+        {/* 月度报告入口 */}
+        <div 
+          className="card cursor-pointer active:scale-[0.98] transition-transform animate-fade-in"
+          style={{ animationDelay: '0.4s' }}
+          onClick={() => onOpenMonthlyReport?.()}
+        >
+          <div className="flex items-center gap-3 text-primary-500">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <BarChart2 className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold">月度报告</h3>
+              <p className="text-xs text-gray-500">查看本月成长数据</p>
+            </div>
+            <span className="text-xs text-gray-400">→</span>
+          </div>
+        </div>
       </main>
     </div>
   );
