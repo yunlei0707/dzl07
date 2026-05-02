@@ -140,13 +140,14 @@ export function MusicPlayer() {
             </button>
           </div>
 
-          {/* 播放控制栏 */}
-          <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
-            <div className="text-center mb-4">
-              <p className="text-lg font-bold text-gray-800 dark:text-white truncate">
-                {currentMusic.title}
-              </p>
+          {/* 唱片封面+播放控制 */}
+          <div className="px-8 py-8 flex flex-col items-center border-b border-gray-100 dark:border-gray-800">
+            <div className="w-40 h-40 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl mb-6">
+              <span className="text-5xl">{currentMusic.cover}</span>
             </div>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-6">
+              {currentMusic.title}
+            </h3>
             <div className="flex items-center justify-center gap-8">
               <button 
                 onClick={playPrev}
