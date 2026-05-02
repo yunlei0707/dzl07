@@ -191,7 +191,16 @@ export async function updateMoment(id, updates) {
  */
 export async function deleteMoment(id) {
   const db = await initDB();
-  await db.delete('moments', id);
+  const moment = await db.get('moments', id);
+  if (!moment) return false;
+  
+  // 标记为已删除，而不是直接删除
+  const updatedMoment = {
+    ...moment,
+    isDeleted: true,
+    deletedAt: new Date().toISOString()
+  };
+  await db.put('moments', updatedMoment);
   return true;
 }
 
