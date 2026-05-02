@@ -1,47 +1,102 @@
 /**
  * 音乐上下文 - 全局音乐状态管理
  * 支持预设音乐和本地音乐文件，状态全局共享
+ * 内置10首无版权纯音乐
  */
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
-// 预设免费背景音乐列表（使用无版权音乐CDN）
-const PRESET_MUSIC = [
+// 内置免费背景音乐列表（使用无版权音乐CDN）
+// 类别：轻音乐/钢琴曲、白噪音/自然声、摇篮曲/助眠音乐
+const BUILTIN_MUSIC = [
   {
-    id: 'preset_1',
+    id: 'builtin_1',
     title: '温暖摇篮曲',
+    category: 'sleep',
     artist: 'Sweet Dreams',
     url: 'https://cdn.pixabay.com/audio/2022/10/25/audio_946bc3eb4c.mp3',
-    cover: '🎵'
+    cover: '🌙'
   },
   {
-    id: 'preset_2',
+    id: 'builtin_2',
     title: '童趣时光',
+    category: 'piano',
     artist: 'Happy Children',
     url: 'https://cdn.pixabay.com/audio/2022/08/02/audio_2dde668d05.mp3',
     cover: '🎶'
   },
   {
-    id: 'preset_3',
+    id: 'builtin_3',
     title: '宁静午后',
+    category: 'piano',
     artist: 'Peaceful Afternoon',
     url: 'https://cdn.pixabay.com/audio/2023/07/30/audio_e5b6e7e054.mp3',
     cover: '🌸'
   },
   {
-    id: 'preset_4',
+    id: 'builtin_4',
     title: '温馨时刻',
+    category: 'piano',
     artist: 'Cozy Moments',
     url: 'https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a73467.mp3',
     cover: '💝'
   },
   {
-    id: 'preset_5',
+    id: 'builtin_5',
     title: '快乐成长',
+    category: 'piano',
     artist: 'Growing Up',
     url: 'https://cdn.pixabay.com/audio/2022/12/07/audio_3b3f760e9b.mp3',
     cover: '✨'
   },
+  {
+    id: 'builtin_6',
+    title: '森林鸟鸣',
+    category: 'nature',
+    artist: 'Forest Birds',
+    url: 'https://cdn.pixabay.com/audio/2022/06/07/audio_b9a500b0e8.mp3',
+    cover: '🐦'
+  },
+  {
+    id: 'builtin_7',
+    title: '海浪声',
+    category: 'nature',
+    artist: 'Ocean Waves',
+    url: 'https://cdn.pixabay.com/audio/2021/08/09/audio_dc39bde8e2.mp3',
+    cover: '🌊'
+  },
+  {
+    id: 'builtin_8',
+    title: '雨后清晨',
+    category: 'nature',
+    artist: 'Rainy Morning',
+    url: 'https://cdn.pixabay.com/audio/2022/03/15/audio_8cb749d484.mp3',
+    cover: '🌧️'
+  },
+  {
+    id: 'builtin_9',
+    title: '星空下的梦',
+    category: 'sleep',
+    artist: 'Dreamland',
+    url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3',
+    cover: '⭐'
+  },
+  {
+    id: 'builtin_10',
+    title: '月光奏鸣曲',
+    category: 'piano',
+    artist: 'Moonlight',
+    url: 'https://cdn.pixabay.com/audio/2021/10/13/audio_1ad5028e54.mp3',
+    cover: '🎹'
+  },
+];
+
+// 分类标签
+export const MUSIC_CATEGORIES = [
+  { value: 'all', label: '全部' },
+  { value: 'piano', label: '钢琴曲' },
+  { value: 'nature', label: '自然声' },
+  { value: 'sleep', label: '助眠' },
 ];
 
 const MusicContext = createContext(null);
@@ -53,11 +108,12 @@ const STORAGE_KEYS = {
   VOLUME: 'babytime_volume',
   IS_PLAYING: 'babytime_is_playing',
   IS_MUTED: 'babytime_is_muted',
+  SELECTED_CATEGORY: 'babytime_selected_category',
 };
 
 export function MusicProvider({ children }) {
   const audioRef = useRef(null);
-  const [playlist, setPlaylist] = useState(PRESET_MUSIC);
+  const [playlist, setPlaylist] = useState(BUILTIN_MUSIC);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolumeState] = useState(0.5);
@@ -65,9 +121,13 @@ export function MusicProvider({ children }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [localFile, setLocalFile] = useState(null);
   const [localFileUrl, setLocalFileUrl] = useState(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isMinimized, setIsMinimized] = useState(false); // 悬浮窗折叠状态
+  const [floatPosition, setFloatPosition] = useState({ x: null, y: null }); // 悬浮窗位置
 
   // 当前音乐
   const currentMusic = playlist[currentIndex] || null;
@@ -78,7 +138,6 @@ export function MusicProvider({ children }) {
     audioRef.current.volume = volume;
     audioRef.current.muted = isMuted;
 
-    // 音频事件监听
     audioRef.current.addEventListener('timeupdate', () => {
       setCurrentTime(audioRef.current?.currentTime || 0);
     });
@@ -88,7 +147,6 @@ export function MusicProvider({ children }) {
     });
 
     audioRef.current.addEventListener('ended', () => {
-      // 自动播放下一首
       handleNext();
     });
 
@@ -114,7 +172,9 @@ export function MusicProvider({ children }) {
       const savedVolume = localStorage.getItem(STORAGE_KEYS.VOLUME);
       const savedMuted = localStorage.getItem(STORAGE_KEYS.IS_MUTED);
       const savedCurrentIndex = localStorage.getItem(STORAGE_KEYS.CURRENT_INDEX);
+      const savedCategory = localStorage.getItem(STORAGE_KEYS.SELECTED_CATEGORY);
       const savedPlaylist = localStorage.getItem(STORAGE_KEYS.PLAYLIST);
+      const savedPosition = localStorage.getItem('babytime_float_position');
 
       if (savedVolume !== null) {
         const vol = parseFloat(savedVolume);
@@ -132,17 +192,24 @@ export function MusicProvider({ children }) {
         setCurrentIndex(parseInt(savedCurrentIndex, 10));
       }
 
+      if (savedCategory !== null) {
+        setSelectedCategory(savedCategory);
+      }
+
       if (savedPlaylist) {
         const parsed = JSON.parse(savedPlaylist);
-        // 合并预设音乐和用户添加的音乐
-        setPlaylist([...PRESET_MUSIC, ...parsed.filter(p => p.isLocal)]);
+        setPlaylist([...BUILTIN_MUSIC, ...parsed.filter(p => p.isLocal)]);
+      }
+
+      if (savedPosition) {
+        setFloatPosition(JSON.parse(savedPosition));
       }
     } catch (e) {
       console.error('Failed to restore music state:', e);
     }
   }, []);
 
-  // 监听用户交互（处理自动播放策略）
+  // 监听用户交互
   useEffect(() => {
     const handleUserInteraction = () => {
       setHasUserInteracted(true);
@@ -182,6 +249,10 @@ export function MusicProvider({ children }) {
     localStorage.setItem(STORAGE_KEYS.CURRENT_INDEX, currentIndex.toString());
   }, [currentIndex]);
 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SELECTED_CATEGORY, selectedCategory);
+  }, [selectedCategory]);
+
   // 播放
   const play = useCallback(async () => {
     if (!currentMusic && !localFile) return;
@@ -190,14 +261,11 @@ export function MusicProvider({ children }) {
       if (audioRef.current) {
         await audioRef.current.play();
         setIsPlaying(true);
-        if (!localFileUrl && !localFile) {
-          setIsExpanded(true);
-        }
       }
     } catch (error) {
       console.error('Play failed:', error);
     }
-  }, [currentMusic, localFile, localFileUrl]);
+  }, [currentMusic, localFile]);
 
   // 暂停
   const pause = useCallback(() => {
@@ -222,8 +290,8 @@ export function MusicProvider({ children }) {
     setCurrentIndex(newIndex);
     setLocalFile(null);
     setLocalFileUrl(null);
+    setIsPlaying(true);
     
-    // 清除本地文件选择
     const fileInput = document.getElementById('local-music-input');
     if (fileInput) fileInput.value = '';
   }, [currentIndex, playlist.length]);
@@ -234,8 +302,8 @@ export function MusicProvider({ children }) {
     setCurrentIndex(newIndex);
     setLocalFile(null);
     setLocalFileUrl(null);
+    setIsPlaying(true);
     
-    // 清除本地文件选择
     const fileInput = document.getElementById('local-music-input');
     if (fileInput) fileInput.value = '';
   }, [currentIndex, playlist.length]);
@@ -245,6 +313,7 @@ export function MusicProvider({ children }) {
     setCurrentIndex(index);
     setLocalFile(null);
     setLocalFileUrl(null);
+    setIsPlaying(true);
     
     const fileInput = document.getElementById('local-music-input');
     if (fileInput) fileInput.value = '';
@@ -254,7 +323,6 @@ export function MusicProvider({ children }) {
   const addLocalMusic = useCallback((file) => {
     if (!file) return;
     
-    // 清理之前的ObjectURL
     if (localFileUrl) {
       URL.revokeObjectURL(localFileUrl);
     }
@@ -263,7 +331,6 @@ export function MusicProvider({ children }) {
     setLocalFile(file);
     setLocalFileUrl(url);
     
-    // 添加到播放列表
     const localMusic = {
       id: `local_${Date.now()}`,
       title: file.name.replace(/\.[^/.]+$/, ''),
@@ -274,9 +341,9 @@ export function MusicProvider({ children }) {
     };
     
     setPlaylist(prev => [...prev, localMusic]);
-    setCurrentIndex(playlist.length); // 切换到新添加的音乐
+    setCurrentIndex(playlist.length);
+    setIsPlaying(true);
     
-    // 保存本地音乐列表到localStorage
     const localMusicList = playlist.filter(p => p.isLocal);
     localStorage.setItem(STORAGE_KEYS.PLAYLIST, JSON.stringify([...localMusicList, localMusic]));
   }, [localFileUrl, playlist]);
@@ -312,8 +379,36 @@ export function MusicProvider({ children }) {
   // 进度
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  // 全屏切换
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  // 折叠/展开悬浮窗
+  const toggleMinimize = useCallback(() => {
+    setIsMinimized(prev => !prev);
+  }, []);
+
+  // 设置悬浮窗位置
+  const setFloatPos = useCallback((pos) => {
+    setFloatPosition(pos);
+    localStorage.setItem('babytime_float_position', JSON.stringify(pos));
+  }, []);
+
+  // 按分类筛选音乐
+  const getFilteredPlaylist = useCallback(() => {
+    if (selectedCategory === 'all') return playlist;
+    return playlist.filter(m => m.category === selectedCategory);
+  }, [playlist, selectedCategory]);
+
+  // 获取分类下的音乐数量
+  const getCategoryCount = useCallback((category) => {
+    if (category === 'all') return playlist.length;
+    return playlist.filter(m => m.category === category).length;
+  }, [playlist]);
+
   const value = {
-    // 状态
     playlist,
     currentIndex,
     currentMusic,
@@ -323,10 +418,13 @@ export function MusicProvider({ children }) {
     currentTime,
     duration,
     isExpanded,
+    isFullscreen,
     localFile,
     hasUserInteracted,
+    selectedCategory,
+    isMinimized,
+    floatPosition,
     
-    // 方法
     play,
     pause,
     togglePlay,
@@ -337,8 +435,15 @@ export function MusicProvider({ children }) {
     setVolume,
     toggleMute,
     setIsExpanded,
+    setIsFullscreen,
+    toggleFullscreen,
+    toggleMinimize,
+    setFloatPos,
+    setSelectedCategory,
     formatTime,
     progress,
+    getFilteredPlaylist,
+    getCategoryCount,
   };
 
   return (
@@ -356,4 +461,4 @@ export function useMusic() {
   return context;
 }
 
-export { PRESET_MUSIC };
+export { BUILTIN_MUSIC };

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { exportAllData, importAllData, PRESET_AVATARS, generateInviteToken, getAllBabies, getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
 import { calculateAge } from '../utils/dateUtils';
-import { MusicPlayer } from '../components/MusicPlayer';
 
 // 主题预设配置
 const THEME_PRESETS = [
@@ -71,7 +70,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const [showSettings, setShowSettings] = useState(false);
   
   // 音乐播放器折叠状态
-  const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   
   // 个人资料编辑状态
   const [editProfile, setEditProfile] = useState({
@@ -447,23 +445,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
             </div>
           )}
         </div>
-        
-        {/* 回收站入口 */}
-        <button
-          onClick={onOpenRecycleBin}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <Trash2 className="w-5 h-5 text-red-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">回收站</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">已删除的记录，可恢复或永久删除</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 邀约打卡 */}
+{/* 邀约打卡 */}
         <button
           onClick={generateInviteLink}
           className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -477,38 +459,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
-        
-        {/* 导出数据 */}
-        <button
-          onClick={handleExport}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <Download className="w-5 h-5 text-blue-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导出数据</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">备份所有记录到本地</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 导入数据 */}
-        <button
-          onClick={() => setShowImportModal(true)}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-            <Upload className="w-5 h-5 text-orange-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导入数据</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">从备份文件恢复数据</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 主题设置 */}
+{/* 主题设置 */}
         <button
           onClick={() => setShowThemeModal(true)}
           className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -926,6 +877,30 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                   </div>
                 </button>
                 
+                {/* 主题设置入口 */}
+                <button
+                  onClick={() => {
+                    setShowThemeModal(true);
+                    setShowSettings(false);
+                  }}
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
+                >
+                  <Palette className="w-5 h-5 text-pink-500" />
+                  <span className="font-medium dark:text-white">主题设置</span>
+                </button>
+
+                {/* 回收站入口 */}
+                <button
+                  onClick={() => {
+                    setShowSettings(false);
+                    onOpenRecycleBin();
+                  }}
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
+                >
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                  <span className="font-medium dark:text-white">回收站</span>
+                </button>
+
                 {/* 导出数据 */}
                 <button
                   onClick={() => {
@@ -936,6 +911,18 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                 >
                   <Download className="w-5 h-5 text-blue-500" />
                   <span className="font-medium dark:text-white">导出数据</span>
+                </button>
+
+                {/* 导入数据 */}
+                <button
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowImportModal(true);
+                  }}
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
+                >
+                  <Upload className="w-5 h-5 text-orange-500" />
+                  <span className="font-medium dark:text-white">导入数据</span>
                 </button>
                 
                 {/* 关于 */}

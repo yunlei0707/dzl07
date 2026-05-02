@@ -24,6 +24,7 @@ import { RegisterPage } from './pages/Register';
 import { InvitePage } from './pages/InvitePage';
 import { RecycleBin } from './components/RecycleBin';
 import { MonthlyReport } from './components/MonthlyReport';
+import { MusicPlayer } from './components/MusicPlayer';
 import { 
   addMoment, 
   updateMoment, 
@@ -356,7 +357,8 @@ function AppContent() {
       {/* Toast 提示 */}
       <Toast />
       
-      {/* 注意：MusicPlayer 已移至 ProfilePage，不再全局显示 */}
+      {/* MusicPlayer 全局显示 */}
+      <MusicPlayer />
       
       {/* 动态表单 */}
       {showMomentForm && (
