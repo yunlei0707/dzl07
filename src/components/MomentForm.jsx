@@ -6,13 +6,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play, Pause, Navigation, Search } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 
-const moodOptions = [
-  { value: 'happy', emoji: '😊', label: '开心' },
-  { value: 'excited', emoji: '🎉', label: '兴奋' },
-  { value: 'touched', emoji: '🥰', label: '感动' },
-  { value: 'sleepy', emoji: '😴', label: '困倦' },
-];
-
 const weatherOptions = [
   { value: 'sunny', emoji: '☀️', label: '晴天' },
   { value: 'cloudy', emoji: '⛅', label: '多云' },

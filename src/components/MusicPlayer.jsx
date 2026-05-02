@@ -282,7 +282,7 @@ export function MusicPlayer() {
       )}
 
       {/* 展开的播放器面板 */}
-      {isExpanded && currentMusic && (
+      {isExpanded && (
         <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
           {/* 顶部栏 */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
@@ -314,48 +314,67 @@ export function MusicPlayer() {
             </div>
           </div>
 
-          {/* 唱片封面+播放控制 */}
-          <div className="px-8 py-8 flex flex-col items-center border-b border-gray-100 dark:border-gray-800">
-            {/* 封面（点击可上传） */}
-            <div 
-              onClick={() => coverInputRef.current?.click()}
-              className="w-40 h-40 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl mb-6 cursor-pointer hover:scale-105 transition-transform overflow-hidden"
-            >
-              {currentMusic.cover?.startsWith('data:image') ? (
-                <img 
-                  src={currentMusic.cover} 
-                  alt="cover" 
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : (
-                <span className="text-5xl">{currentMusic.cover}</span>
-              )}
+          {/* 唱片封面+播放控制（有音乐时显示） */}
+          {currentMusic ? (
+            <div className="px-8 py-8 flex flex-col items-center border-b border-gray-100 dark:border-gray-800">
+              <div 
+                onClick={() => coverInputRef.current?.click()}
+                className="w-40 h-40 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl mb-6 cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+              >
+                {currentMusic.cover?.startsWith('data:image') ? (
+                  <img 
+                    src={currentMusic.cover} 
+                    alt="cover" 
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <span className="text-5xl">{currentMusic.cover}</span>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mb-2">点击封面可更换图片</p>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-6">
+                {currentMusic.title}
+              </h3>
+              <div className="flex items-center justify-center gap-8">
+                <button 
+                  onClick={playPrev}
+                  className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+                >
+                  <SkipBack className="w-6 h-6" />
+                </button>
+                <button 
+                  onClick={togglePlay}
+                  className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white shadow-xl"
+                >
+                  {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+                </button>
+                <button 
+                  onClick={playNext}
+                  className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+                >
+                  <SkipForward className="w-6 h-6" />
+                </button>
+              </div>
             </div>
-            <p className="text-xs text-gray-400 mb-2">点击封面可更换图片</p>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-6">
-              {currentMusic.title}
-            </h3>
-            <div className="flex items-center justify-center gap-8">
-              <button 
-                onClick={playPrev}
-                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
+          ) : (
+            <div className="px-8 py-12 flex flex-col items-center border-b border-gray-100 dark:border-gray-800">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-xl mb-4">
+                <Music className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-2">
+                还没有音乐
+              </h3>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                点击下方按钮添加本地音乐文件
+              </p>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-6 py-3 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-shadow"
               >
-                <SkipBack className="w-6 h-6" />
-              </button>
-              <button 
-                onClick={togglePlay}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white shadow-xl"
-              >
-                {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
-              </button>
-              <button 
-                onClick={playNext}
-                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
-              >
-                <SkipForward className="w-6 h-6" />
+                添加音乐
               </button>
             </div>
-          </div>
+          )}
 
           {/* 分类标签 */}
           <div className="px-4 mb-4">

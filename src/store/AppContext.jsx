@@ -12,15 +12,29 @@ import {
   getCapsulesByBaby,
   getSettings as getSettingsFromDB,
   getCustomMilestones,
+  getCustomMoods,
   applyThemePreset,
   applyCustomTheme,
   addCustomMilestone,
   updateCustomMilestone,
   deleteCustomMilestone,
+  addCustomMood,
+  updateCustomMood,
+  deleteCustomMood,
   updateUser,
 } from '../utils/db';
 
 const AppContext = createContext(null);
+
+// 预设里程碑（不可删除）
+const DEFAULT_MOODS = [
+  { id: 'happy', label: '开心', emoji: '😊' },
+  { id: 'excited', label: '兴奋', emoji: '🎉' },
+  { id: 'touched', label: '感动', emoji: '🥰' },
+  { id: 'sleepy', label: '困倦', emoji: '😴' },
+  { id: 'crying', label: '哭泣', emoji: '😢' },
+  { id: 'angry', label: '生气', emoji: '😠' },
+];
 
 // 预设里程碑（不可删除）
 const DEFAULT_MILESTONES = [
@@ -46,6 +60,7 @@ export function AppProvider({ children }) {
   const [customThemeColor, setCustomThemeColor] = useState(null);
   const [customMilestones, setCustomMilestones] = useState([]);
   const [hiddenMilestones, setHiddenMilestones] = useState([]);
+  const [customMoods, setCustomMoods] = useState([]);
   const [toast, setToast] = useState(null);
   
   // 认证状态
@@ -63,6 +78,11 @@ export function AppProvider({ children }) {
     return DEFAULT_MILESTONES.filter(m => !hiddenMilestones.includes(m.id))
       .concat(customMilestones);
   }, [customMilestones, hiddenMilestones]);
+
+  // 获取所有可用的心情（预设 + 自定义）
+  const getAllMoods = useCallback(() => {
+    return DEFAULT_MOODS.concat(customMoods);
+  }, [customMoods]);
 
   // 初始化应用
   useEffect(() => {
@@ -90,6 +110,7 @@ export function AppProvider({ children }) {
         const settings = await getSettingsFromDB();
         const baby = await getCurrentBaby();
         const milestones = await getCustomMilestones();
+        const moods = await getCustomMoods();
         
         setBabies(allBabies);
         setCurrentBaby(baby);
@@ -97,6 +118,7 @@ export function AppProvider({ children }) {
         setThemePreset(settings.themePreset || 'pink');
         setCustomThemeColor(settings.customThemeColor || null);
         setCustomMilestones(milestones);
+        setCustomMoods(moods);
         setHiddenMilestones(settings.hiddenMilestones || []);
         
         // 应用主题
@@ -237,6 +259,44 @@ export function AppProvider({ children }) {
     }
   }, [showToast]);
 
+  // 添加自定义心情标签
+  const addMood = useCallback(async (mood) => {
+    try {
+      const newMood = await addCustomMood(mood);
+      setCustomMoods(prev => [...prev, newMood]);
+      return newMood;
+    } catch (error) {
+      console.error('添加心情标签失败:', error);
+      showToast('添加失败', 'error');
+      throw error;
+    }
+  }, [showToast]);
+
+  // 更新自定义心情标签
+  const updateMood = useCallback(async (id, updates) => {
+    try {
+      const updated = await updateCustomMood(id, updates);
+      setCustomMoods(prev => prev.map(m => m.id === id ? updated : m));
+      return updated;
+    } catch (error) {
+      console.error('更新心情标签失败:', error);
+      showToast('更新失败', 'error');
+      throw error;
+    }
+  }, [showToast]);
+
+  // 删除自定义心情标签
+  const deleteMood = useCallback(async (id) => {
+    try {
+      await deleteCustomMood(id);
+      setCustomMoods(prev => prev.filter(m => m.id !== id));
+    } catch (error) {
+      console.error('删除心情标签失败:', error);
+      showToast('删除失败', 'error');
+      throw error;
+    }
+  }, [showToast]);
+
   // 隐藏/显示预设里程碑
   const toggleMilestoneVisibility = useCallback(async (milestoneId, hidden) => {
     const newHidden = hidden 
@@ -309,6 +369,12 @@ export function AppProvider({ children }) {
     updateMilestone,
     deleteMilestone,
     toggleMilestoneVisibility,
+    // 心情标签相关
+    customMoods,
+    getAllMoods,
+    addMood,
+    updateMood,
+    deleteMood,
     // 用户资料
     updateUserProfile,
     // 认证相关

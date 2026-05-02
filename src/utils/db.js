@@ -370,6 +370,61 @@ export async function deleteCustomMilestone(id) {
   return true;
 }
 
+// ==================== 自定义心情标签 ====================
+
+/**
+ * 获取自定义心情标签
+ */
+export async function getCustomMoods() {
+  const settings = await getSettingsFromDB();
+  return settings.customMoods || [];
+}
+
+/**
+ * 保存自定义心情标签
+ */
+export async function saveCustomMoods(moods) {
+  return updateSettings({ customMoods: moods });
+}
+
+/**
+ * 添加自定义心情标签
+ */
+export async function addCustomMood(mood) {
+  const moods = await getCustomMoods();
+  const newMood = {
+    id: `mood_${Date.now()}`,
+    ...mood,
+  };
+  moods.push(newMood);
+  await saveCustomMoods(moods);
+  return newMood;
+}
+
+/**
+ * 更新自定义心情标签
+ */
+export async function updateCustomMood(id, updates) {
+  const moods = await getCustomMoods();
+  const index = moods.findIndex(m => m.id === id);
+  if (index !== -1) {
+    moods[index] = { ...moods[index], ...updates };
+    await saveCustomMoods(moods);
+    return moods[index];
+  }
+  throw new Error('心情标签不存在');
+}
+
+/**
+ * 删除自定义心情标签
+ */
+export async function deleteCustomMood(id) {
+  const moods = await getCustomMoods();
+  const filtered = moods.filter(m => m.id !== id);
+  await saveCustomMoods(filtered);
+  return true;
+}
+
 // ==================== 数据导出 ====================
 
 /**

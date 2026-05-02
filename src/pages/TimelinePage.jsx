@@ -22,17 +22,6 @@ const typeFilters = [
   { value: 'audio', label: '🎙️ 语音' },
 ];
 
-// 心情筛选选项
-const moodFilters = [
-  { value: '', label: '心情' },
-  { value: 'happy', label: '😊 开心' },
-  { value: 'excited', label: '🎉 兴奋' },
-  { value: 'touched', label: '🥰 感动' },
-  { value: 'sleepy', label: '😴 困倦' },
-  { value: 'crying', label: '😢 哭泣' },
-  { value: 'angry', label: '😠 生气' },
-];
-
 export function TimelinePage({ 
   onAddMoment, 
   onEditMoment, 
@@ -43,7 +32,7 @@ export function TimelinePage({
   filterMilestone,
   onClearFilters 
 }) {
-  const { moments, setMoments, currentBaby, currentUser, showToast, getAllMilestones } = useApp();
+  const { moments, setMoments, currentBaby, currentUser, showToast, getAllMilestones, getAllMoods } = useApp();
   
   // 获取所有里程碑选项（包含预设和自定义）
   const milestoneFilters = useMemo(() => {
@@ -56,6 +45,18 @@ export function TimelinePage({
       }))
     ];
   }, [getAllMilestones]);
+
+  // 获取所有心情选项（包含预设和自定义）
+  const moodFilters = useMemo(() => {
+    const allMoods = getAllMoods();
+    return [
+      { value: '', label: '心情' },
+      ...allMoods.map(m => ({
+        value: m.id,
+        label: `${m.emoji} ${m.label}`
+      }))
+    ];
+  }, [getAllMoods]);
   const [selectedPhotos, setSelectedPhotos] = useState(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [selectedMilestone, setSelectedMilestone] = useState('');
