@@ -69,8 +69,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   // 设置面板抽屉状态
   const [showSettings, setShowSettings] = useState(false);
   
-  // 音乐播放器折叠状态
-  
   // 个人资料编辑状态
   const [editProfile, setEditProfile] = useState({
     nickname: '',
@@ -422,30 +420,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
       
       {/* 功能菜单 */}
       <div className="px-4 space-y-3">
-        {/* 音乐播放器 - 折叠式 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-          <button
-            onClick={() => setShowMusicPlayer(!showMusicPlayer)}
-            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                🎵
-              </div>
-              <span className="font-medium dark:text-white">音乐播放器</span>
-            </div>
-            <ChevronDown 
-              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showMusicPlayer ? 'rotate-180' : ''}`} 
-            />
-          </button>
-          
-          {showMusicPlayer && (
-            <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
-              <MusicPlayer />
-            </div>
-          )}
-        </div>
-{/* 邀约打卡 */}
+        {/* 邀约打卡 */}
         <button
           onClick={generateInviteLink}
           className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -459,7 +434,8 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
-{/* 主题设置 */}
+
+        {/* 主题设置 */}
         <button
           onClick={() => setShowThemeModal(true)}
           className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
