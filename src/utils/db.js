@@ -138,8 +138,10 @@ export async function deleteBaby(id) {
 export async function getMomentsByBaby(babyId) {
   const db = await initDB();
   const moments = await db.getAllFromIndex('moments', 'babyId', babyId);
-  // 按日期倒序排列
-  return moments.sort((a, b) => new Date(b.date) - new Date(a.date));
+  // 过滤未删除的记录，按日期倒序排列
+  return moments
+    .filter(m => !m.isDeleted)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 /**
