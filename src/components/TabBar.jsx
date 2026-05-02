@@ -3,30 +3,32 @@
  */
 
 import { memo } from 'react';
-import { Home, BarChart3, User, Sparkles } from 'lucide-react';
+import { Home, BarChart3, Sparkles } from 'lucide-react';
 
 const tabs = [
   { id: 'timeline', label: '时光轴', icon: Home },
   { id: 'stats', label: '成长数据', icon: BarChart3 },
   { id: 'virtual', label: '虚拟时光', icon: Sparkles },
-  { id: 'profile', label: '我的', icon: User },
+  { id: 'profile', label: '云磊', icon: '🐰' },
 ];
 
 const TabButton = memo(({ tab, isActive, onTabChange }) => {
-  const Icon = tab.icon;
+  const isEmoji = typeof tab.icon === 'string';
   return (
     <button
       onClick={() => onTabChange(tab.id)}
-      className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-        isActive 
-          ? 'text-primary-500' 
-          : 'text-gray-400 dark:text-gray-500'
-      }`}
+      className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
-      <Icon 
-        className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : ''}`} 
-        strokeWidth={isActive ? 2.5 : 2} 
-      />
+      {isEmoji ? (
+        <span className={`text-2xl transition-transform ${isActive ? 'scale-110' : ''}`}>
+          {tab.icon}
+        </span>
+      ) : (
+        <tab.icon 
+          className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : ''}`} 
+          strokeWidth={isActive ? 2.5 : 2} 
+        />
+      )}
       <span className={`text-xs mt-1 font-medium ${isActive ? '' : 'font-normal'}`}>
         {tab.label}
       </span>

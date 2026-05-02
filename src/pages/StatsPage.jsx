@@ -196,25 +196,10 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
                 <span>👶</span>
               )}
             </div>
-            <h1 className="text-xl font-bold">宝贝时光</h1>
-          </div>
-          
-          {/* 年龄卡片 */}
-          <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-4">
-              <img
-                src={currentBaby.avatar || 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=200'}
-                alt={currentBaby.name}
-                className="w-16 h-16 rounded-full object-cover border-2 border-white"
-              />
-              <div>
-                <h2 className="text-lg font-bold">{currentBaby.nickname || currentBaby.name}</h2>
-                <p className="text-white/80 text-sm">{currentBaby.name}</p>
-                <p className="text-2xl font-bold mt-1">{stats.age.display}</p>
-              </div>
-            </div>
+            <h1 className="text-xl font-bold">📊 成长数据</h1>
           </div>
         </div>
+          
       </header>
       
       {/* 统计内容 */}

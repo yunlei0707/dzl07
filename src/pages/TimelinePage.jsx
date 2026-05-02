@@ -263,7 +263,7 @@ export function TimelinePage({
                   <span>👶</span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">宝贝时光</h1>
+              <h1 className="text-xl font-bold">📅 时光轴</h1>
             </div>
             <div className="flex items-center gap-2">
               {/* 往年今日按钮 - 折叠式 */}
@@ -278,7 +278,7 @@ export function TimelinePage({
             </div>
           </div>
           
-          <BabyHeader onSwitchBaby={onSwitchBaby} onAddBaby={onAddBaby} />
+          <BabyHeader />
           
           {/* 筛选标签区域 */}
           {hasActiveFilters && (
