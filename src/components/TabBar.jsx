@@ -3,13 +3,13 @@
  */
 
 import { memo } from 'react';
-import { Home, BarChart3, Sparkles } from 'lucide-react';
+import { Home, BarChart3, Sparkles, User } from 'lucide-react';
 
 const tabs = [
   { id: 'timeline', label: '时光轴', icon: Home },
   { id: 'stats', label: '成长数据', icon: BarChart3 },
   { id: 'virtual', label: '虚拟时光', icon: Sparkles },
-  { id: 'profile', label: '云磊', icon: '🐰' },
+  { id: 'profile', label: '我的', icon: User },
 ];
 
 const TabButton = memo(({ tab, isActive, onTabChange }) => {

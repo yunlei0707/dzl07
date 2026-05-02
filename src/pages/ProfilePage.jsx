@@ -807,10 +807,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
           <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-2xl overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-lg font-bold dark:text-white">我的</h3>
-                </div>
+                <h3 className="text-lg font-bold dark:text-white">⚙️ 设置</h3>
                 <button onClick={() => setShowSettings(false)}>
                   <X className="w-6 h-6 text-gray-400" />
                 </button>
