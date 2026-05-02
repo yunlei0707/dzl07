@@ -259,53 +259,6 @@ export function MusicPlayer() {
               </div>
             )}
           </div>
-
-          {/* 底部控制栏 */}
-          <div className="px-4 py-4 border-t border-gray-100 dark:border-gray-800">
-            {/* 音量控制 */}
-            <div className="flex items-center gap-3 mb-4">
-              <button 
-                onClick={toggleMute}
-                className="w-8 h-8 flex items-center justify-center text-gray-500"
-              >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={isMuted ? 0 : volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${(isMuted ? 0 : volume) * 100}%, #e5e7eb ${(isMuted ? 0 : volume) * 100}%, #e5e7eb 100%)`
-                }}
-              />
-            </div>
-
-            {/* 播放控制 */}
-            <div className="flex items-center justify-center gap-8">
-              <button 
-                onClick={playPrev}
-                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
-              >
-                <SkipBack className="w-6 h-6" />
-              </button>
-              <button 
-                onClick={togglePlay}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white shadow-xl"
-              >
-                {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
-              </button>
-              <button 
-                onClick={playNext}
-                className="w-12 h-12 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-primary-500"
-              >
-                <SkipForward className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
