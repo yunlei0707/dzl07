@@ -833,39 +833,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
               </div>
               
               <div className="space-y-4">
-                {/* 主题切换 */}
-                <button
-                  onClick={toggleTheme}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                    <span className="font-medium dark:text-white">
-                      {theme === 'dark' ? '深色模式' : '浅色模式'}
-                    </span>
-                  </div>
-                  <div className={`w-12 h-7 rounded-full relative transition-colors ${
-                    theme === 'dark' ? 'bg-primary-500' : 'bg-gray-300'
-                  }`}>
-                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      theme === 'dark' ? 'left-6' : 'left-1'
-                    }`} />
-                  </div>
-                </button>
-                
-                {/* 主题设置入口 */}
-                <button
-                  onClick={() => {
-                    setShowThemeModal(true);
-                    setShowSettings(false);
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Palette className="w-5 h-5 text-pink-500" />
-                  <span className="font-medium dark:text-white">主题设置</span>
-                </button>
-
-                {/* 回收站入口 */}
+                                {/* 回收站入口 */}
                 <button
                   onClick={() => {
                     setShowSettings(false);
