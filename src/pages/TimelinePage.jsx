@@ -225,6 +225,122 @@ export function TimelinePage({
     }
   };
   
+  // 导入示例数据
+  const importSampleData = async () => {
+    if (!confirm('确定要导入50条示例宝宝记录吗？\n\n📝 包含：视频10条、语音10条、日记10条、单图10条、多图10条')) return;
+    
+    try {
+      const request = indexedDB.open('BabyTimeDB', 4);
+      
+      request.onsuccess = async (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['moments'], 'readwrite');
+        const store = transaction.objectStore('moments');
+        
+        // 50条示例数据（精简版，包含所有类型）
+        const sampleData = [
+          // 视频 10条
+          { date: '2023-06-15', type: 'video', content: '小豆芽今天第一次翻身啦！从趴着到仰着，虽然只是一瞬间，但是妈妈抓拍到了！太激动了！', milestone: '第一次翻身', mood: '激动', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-07-22', type: 'video', content: '爬行小能手上线！弟弟终于学会爬了，沙发上、地上到处爬，进步好大呀！', milestone: '学会爬行', mood: '欣慰', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-09-10', type: 'video', content: '宝宝第一次叫妈妈了！虽然还不太清晰，但是我听到了！当妈的心都要化了！', milestone: '第一次叫妈妈', mood: '感动', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-10-18', type: 'video', content: '今天是小豆芽的周岁生日！抓周仪式太可爱了，抓了本书和一个小算盘，未来是不是学霸呢？', milestone: '周岁抓周', mood: '幸福', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-11-25', type: 'video', content: '迈出人生第一步！宝宝终于放开手自己走了，虽然摇摇晃晃，但是太勇敢了！', milestone: '第一次走路', mood: '惊喜', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-01-08', type: 'video', content: '小豆芽学会用勺子自己吃饭了！虽然弄得满脸都是，但是好棒呀，进步好大！', milestone: '自主进食', mood: '欣慰', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-03-15', type: 'video', content: '第一次在早教中心和其他小朋友互动，表现得很好！越来越社会化啦！', milestone: '社交初体验', mood: '开心', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-05-20', type: 'video', content: '宝宝会跳舞啦！听到音乐就摇头晃脑，小手挥舞，太可爱了！', milestone: '音乐感知', mood: '欢乐', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-08-12', type: 'video', content: '小豆芽第一次去海边！踩沙子、玩海水，兴奋得不行，笑得眼睛都眯成一条缝了！', milestone: '初次看海', mood: '幸福', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-11-03', type: 'video', content: '会说完整句子了！"妈妈我爱你"，天哪，这是什么神仙宝宝！', milestone: '语言突破', mood: '感动', videos: [{ url: '', cover: '', duration: 0 }] },
+          
+          // 语音 10条
+          { date: '2023-08-05', type: 'audio', content: '今天豆芽第一次发出"ba"的音，虽然是无意识的，但是爸爸激动了一整天！', milestone: '咿呀学语', mood: '开心', audios: [{ url: '', duration: 0 }] },
+          { date: '2023-09-28', type: 'audio', content: '豆芽会唱小星星了！虽然只有几个音，但听起来好可爱啊～', milestone: '学唱歌曲', mood: '惊喜', audios: [{ url: '', duration: 0 }] },
+          { date: '2023-11-12', type: 'audio', content: '今天学会了一首新儿歌，《两只老虎》唱得特别有意思！', milestone: '语言发展', mood: '欢乐', audios: [{ url: '', duration: 0 }] },
+          { date: '2024-01-20', type: 'audio', content: '给豆芽讲故事，她居然能复述最后一句了！语言能力发展好快！', milestone: '语言发展', mood: '欣慰', audios: [{ url: '', duration: 0 }] },
+          { date: '2024-03-08', type: 'audio', content: '第一次录到豆芽喊"奶奶"，外婆听了激动坏了！', milestone: '学会称呼', mood: '幸福', audios: [{ url: '', duration: 0 }] },
+          { date: '2024-05-15', type: 'audio', content: '豆芽在自言自语编故事，说小兔子去旅行了，好有想象力！', milestone: '想象力', mood: '惊喜', audios: [{ url: '', duration: 0 }] },
+          { date: '2024-07-22', type: 'audio', content: '今天唱生日歌给爷爷听，唱得特别认真，好感动啊！', milestone: '情感表达', mood: '感动', audios: [{ url: '', duration: 0 }] },
+          { date: '2024-09-10', type: 'audio', content: '豆芽学会了背古诗，《咏鹅》背得特别流利，小学霸上线！', milestone: '学习能力', mood: '骄傲', audios: [{ url: '', duration: 0 }] },
+          { date: '2024-11-28', type: 'audio', content: '录到了豆芽第一次说"对不起"，虽然还说不清楚，但是好有礼貌！', milestone: '礼貌用语', mood: '欣慰', audios: [{ url: '', duration: 0 }] },
+          { date: '2025-01-15', type: 'audio', content: '豆芽会用英文数数了！one two three four five，太厉害了！', milestone: '英语启蒙', mood: '惊喜', audios: [{ url: '', duration: 0 }] },
+          
+          // 文字日记 10条
+          { date: '2023-06-28', type: 'diary', content: '今天豆芽打疫苗，哭了两声就不哭了，好勇敢！回家睡得特别香。', milestone: '疫苗接种', mood: '心疼又骄傲' },
+          { date: '2023-08-18', type: 'diary', content: '第一次带豆芽去游泳，她居然不怕水，在水里踢踢腿，好开心呀！', milestone: '游泳初体验', mood: '惊喜' },
+          { date: '2023-10-05', type: 'diary', content: '豆芽发烧了，凌晨两点抱着她量体温，心疼得不行。希望快点好起来！', milestone: '生病照顾', mood: '担心' },
+          { date: '2023-12-12', type: 'diary', content: '今天豆芽学会了自己脱袜子，小手特别灵活！每天都在进步呢！', milestone: '精细动作', mood: '开心' },
+          { date: '2024-02-14', type: 'diary', content: '情人节收到了豆芽送的花——她从公园捡的一朵小野花，说送给妈妈，好感动！', milestone: '情感表达', mood: '感动' },
+          { date: '2024-04-20', type: 'diary', content: '豆芽第一次尝试滑滑梯，从最矮的滑下来，笑得好开心！', milestone: '游乐设施', mood: '欢乐' },
+          { date: '2024-06-18', type: 'diary', content: '今天豆芽自己拼好了6块拼图，虽然花了很久，但是好有耐心！', milestone: '益智游戏', mood: '骄傲' },
+          { date: '2024-08-25', type: 'diary', content: '豆芽今天把最喜欢的布偶兔介绍给我，说这是她的好朋友，要好好照顾它。', milestone: '物权意识', mood: '温馨' },
+          { date: '2024-10-12', type: 'diary', content: '豆芽上幼儿园第一天，哭着不肯放手，但还是勇敢地进去了，妈妈为你骄傲！', milestone: '入园第一天', mood: '不舍又骄傲' },
+          { date: '2025-02-08', type: 'diary', content: '今天豆芽帮我洗菜了，虽然弄得满地都是水，但是宝贝的心意最重要！', milestone: '家务参与', mood: '幸福' },
+          
+          // 单图 10条
+          { date: '2023-07-10', type: 'photo', content: '小豆芽百天照！穿上小裙子像个小公主，眼睛亮晶晶的，好可爱呀！', milestone: '百天纪念', mood: '幸福', photos: [''] },
+          { date: '2023-09-05', type: 'photo', content: '今天豆芽会坐了，给她放在餐椅上拍照，小脸认真极了！', milestone: '学会独坐', mood: '欣慰', photos: [''] },
+          { date: '2023-11-20', type: 'photo', content: '豆芽的第一双学步鞋！粉粉嫩嫩的，穿上后走路都带风！', milestone: '学步准备', mood: '期待', photos: [''] },
+          { date: '2024-01-25', type: 'photo', content: '过年前带豆芽买了新衣服，穿上红棉袄喜庆极了，像个福娃娃！', milestone: '新年装扮', mood: '喜庆', photos: [''] },
+          { date: '2024-04-02', type: 'photo', content: '豆芽第一次去踏青，在草地上奔跑的样子好开心，像只快乐的小兔子！', milestone: '户外活动', mood: '欢乐', photos: [''] },
+          { date: '2024-06-15', type: 'photo', content: '豆芽2岁啦！生日蛋糕上的蜡烛映着她的小脸，许愿的样子好认真！', milestone: '两岁生日', mood: '幸福', photos: [''] },
+          { date: '2024-09-18', type: 'photo', content: '今天带豆芽去动物园，她最喜欢小熊猫，抱着一只玩偶不肯放手！', milestone: '动物园初体验', mood: '开心', photos: [''] },
+          { date: '2024-12-05', type: 'photo', content: '豆芽第一天上幼儿园，背着书包的样子好神气！长大了呢！', milestone: '入园纪念', mood: '骄傲', photos: [''] },
+          { date: '2025-02-20', type: 'photo', content: '冬天的豆芽裹成小粽子，在雪地里玩雪，脸蛋红扑扑的，好可爱！', milestone: '玩雪初体验', mood: '欢乐', photos: [''] },
+          { date: '2025-05-01', type: 'photo', content: '五一假期带豆芽去公园，她最喜欢喂小鱼，一勺一勺好认真！', milestone: '户外探索', mood: '温馨', photos: [''] },
+          
+          // 多图 10条
+          { date: '2023-08-12', type: 'photo', content: '豆芽和爸爸的亲子时光，父女俩一起搭积木，笑容灿烂！', milestone: '亲子互动', mood: '幸福', photos: ['', '', '', ''] },
+          { date: '2023-10-01', type: 'photo', content: '国庆假期全家福，豆芽在中间笑得最灿烂，一家人好幸福！', milestone: '全家福', mood: '温馨', photos: ['', '', ''] },
+          { date: '2024-01-01', type: 'photo', content: '新年第一天，豆芽穿上新衣服给大家拜年，小嘴甜甜的！', milestone: '新年祝福', mood: '喜庆', photos: ['', '', '', '', ''] },
+          { date: '2024-03-12', type: 'photo', content: '春天来了！带豆芽去踏春，樱花树下留下美好回忆！', milestone: '春游', mood: '美好', photos: ['', '', '', '', '', ''] },
+          { date: '2024-05-05', type: 'photo', content: '劳动节教豆芽种花，她学得可认真了，小手挖土好可爱！', milestone: '种植体验', mood: '温馨', photos: ['', '', '', ''] },
+          { date: '2024-07-10', type: 'photo', content: '暑假海边度假，豆芽在沙滩上堆城堡、捡贝壳，玩得不亦乐乎！', milestone: '海边度假', mood: '欢乐', photos: ['', '', '', '', '', '', '', ''] },
+          { date: '2024-08-20', type: 'photo', content: '豆芽学画画啦！虽然画得乱七八糟，但是色彩好鲜艳，充满了想象力！', milestone: '艺术启蒙', mood: '惊喜', photos: ['', '', '', '', ''] },
+          { date: '2024-10-25', type: 'photo', content: '万圣节变装派对！豆芽装扮成小女巫，可爱又俏皮！', milestone: '节日装扮', mood: '欢乐', photos: ['', '', '', ''] },
+          { date: '2025-01-01', type: 'photo', content: '新的一年新的开始！豆芽许下新年愿望，希望能实现哦！', milestone: '新年愿望', mood: '期待', photos: ['', '', '', '', ''] },
+          { date: '2025-04-15', type: 'photo', content: '春天万物复苏！带豆芽去春游，赏花、放风筝，度过了美好的周末！', milestone: '周末出游', mood: '幸福', photos: ['', '', '', '', '', ''] }
+        ];
+        
+        let success = 0;
+        for (const item of sampleData) {
+          const data = {
+            babyId: 1,
+            date: item.date,
+            type: item.type,
+            content: item.content,
+            milestone: item.milestone,
+            mood: item.mood,
+            createdAt: new Date(item.date + 'T08:00:00.000Z').toISOString(),
+            updatedAt: new Date().toISOString(),
+            isDeleted: false,
+            deletedAt: null
+          };
+          if (item.videos) data.videos = item.videos;
+          if (item.audios) data.audios = item.audios;
+          if (item.photos) data.photos = item.photos;
+          
+          store.add(data);
+          success++;
+        }
+        
+        db.close();
+        
+        // 刷新页面数据
+        if (currentBaby?.id) {
+          const updatedMoments = await getMomentsByBaby(currentBaby.id);
+          setMoments(updatedMoments);
+        }
+        
+        showToast(`✅ 成功导入 ${success} 条宝宝记录！`);
+      };
+      
+      request.onerror = () => {
+        showToast('导入失败：无法打开数据库', 'error');
+      };
+    } catch (e) {
+      showToast('导入失败：' + e.message, 'error');
+    }
+  };
+  
   // 计算筛选后的记录数
   const filteredCount = filteredMoments.length;
   const totalCount = moments.filter(m => !m.isDeleted).length;
@@ -417,6 +533,14 @@ export function TimelinePage({
                 {filter.label}
               </button>
             ))}
+            {/* 导入示例数据按钮 */}
+            <button
+              onClick={importSampleData}
+              className="px-3 py-1.5 bg-gradient-to-r from-pink-400 to-rose-400 text-white rounded-full text-sm whitespace-nowrap hover:from-pink-500 hover:to-rose-500 transition-all shadow-sm flex-shrink-0"
+              title="一键导入50条示例数据"
+            >
+              📥 导入示例
+            </button>
           </div>
         </div>
       </div>
