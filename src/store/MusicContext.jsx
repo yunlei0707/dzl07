@@ -199,6 +199,13 @@ export function MusicProvider({ children }) {
     ));
   }, []);
 
+  // 更新音乐封面
+  const updateMusicCover = useCallback((musicId, coverUrl) => {
+    setPlaylist(prev => prev.map(m => 
+      m.id === musicId ? { ...m, cover: coverUrl } : m
+    ));
+  }, []);
+
   // 添加自定义分类
   const addCustomCategory = useCallback((name, icon = '🏷️') => {
     const newCategory = {
@@ -297,6 +304,7 @@ export function MusicProvider({ children }) {
     addLocalMusic,
     deleteMusic,
     updateMusicCategory,
+    updateMusicCover,
     addCustomCategory,
     deleteCustomCategory,
     setVolume,

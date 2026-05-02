@@ -27,6 +27,7 @@ export function MusicPlayer() {
     addLocalMusic,
     deleteMusic,
     updateMusicCategory,
+    updateMusicCover,
     addCustomCategory,
     setVolume,
     toggleMute,
@@ -34,10 +35,24 @@ export function MusicPlayer() {
   } = useMusic();
 
   const fileInputRef = useRef(null);
+  const coverInputRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCategoryMenu, setShowCategoryMenu] = useState(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+
+  // 处理封面上传
+  const handleCoverUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && currentMusic) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        updateMusicCover(currentMusic.id, event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
 
   // 处理文件选择
   const handleFileSelect = (e) => {
@@ -142,9 +157,22 @@ export function MusicPlayer() {
 
           {/* 唱片封面+播放控制 */}
           <div className="px-8 py-8 flex flex-col items-center border-b border-gray-100 dark:border-gray-800">
-            <div className="w-40 h-40 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl mb-6">
-              <span className="text-5xl">{currentMusic.cover}</span>
+            {/* 封面（点击可上传） */}
+            <div 
+              onClick={() => coverInputRef.current?.click()}
+              className="w-40 h-40 rounded-full bg-gradient-to-br from-primary-400 to-pink-500 flex items-center justify-center shadow-2xl mb-6 cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+            >
+              {currentMusic.cover?.startsWith('data:image') ? (
+                <img 
+                  src={currentMusic.cover} 
+                  alt="cover" 
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <span className="text-5xl">{currentMusic.cover}</span>
+              )}
             </div>
+            <p className="text-xs text-gray-400 mb-2">点击封面可更换图片</p>
             <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-6">
               {currentMusic.title}
             </h3>
@@ -244,6 +272,15 @@ export function MusicPlayer() {
         accept="audio/*"
         multiple
         onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* 隐藏的封面上传输入 */}
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleCoverUpload}
         className="hidden"
       />
 
