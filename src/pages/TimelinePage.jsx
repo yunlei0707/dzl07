@@ -1,6 +1,6 @@
 /**
  * 时光轴页面
- * 优化版本：往年今日折叠面板，头像显示在左上角
+ * 优化版本：往年今日折叠面板，头像显示在左上角，支持分享功能
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
@@ -8,6 +8,7 @@ import { useApp } from '../store/AppContext';
 import { BabyHeader } from '../components/BabyHeader';
 import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
+import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown } from 'lucide-react';
@@ -63,6 +64,7 @@ export function TimelinePage({
   const [selectedMood, setSelectedMood] = useState('');
   const [showSameDay, setShowSameDay] = useState(false);
   const [sameDayMoments, setSameDayMoments] = useState([]);
+  const [sharingMoment, setSharingMoment] = useState(null);
   
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -85,6 +87,11 @@ export function TimelinePage({
       setSelectedMilestone(filterMilestone);
     }
   }, [filterType, filterMood, filterMilestone]);
+  
+  // 分享动态
+  const handleShareMoment = useCallback((moment) => {
+    setSharingMoment(moment);
+  }, []);
   
   // 刷新数据
   const handleRefresh = useCallback(async () => {
@@ -237,85 +244,73 @@ export function TimelinePage({
         // 50条示例数据（精简版，包含所有类型）
         const sampleData = [
           // 视频 10条
-          { date: '2023-06-15', type: 'video', content: '小豆芽今天第一次翻身啦！从趴着到仰着，虽然只是一瞬间，但是妈妈抓拍到了！太激动了！', milestone: '第一次翻身', mood: '激动', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2023-07-22', type: 'video', content: '爬行小能手上线！弟弟终于学会爬了，沙发上、地上到处爬，进步好大呀！', milestone: '学会爬行', mood: '欣慰', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2023-09-10', type: 'video', content: '宝宝第一次叫妈妈了！虽然还不太清晰，但是我听到了！当妈的心都要化了！', milestone: '第一次叫妈妈', mood: '感动', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2023-10-18', type: 'video', content: '今天是小豆芽的周岁生日！抓周仪式太可爱了，抓了本书和一个小算盘，未来是不是学霸呢？', milestone: '周岁抓周', mood: '幸福', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2023-11-25', type: 'video', content: '迈出人生第一步！宝宝终于放开手自己走了，虽然摇摇晃晃，但是太勇敢了！', milestone: '第一次走路', mood: '惊喜', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2024-01-08', type: 'video', content: '小豆芽学会用勺子自己吃饭了！虽然弄得满脸都是，但是好棒呀，进步好大！', milestone: '自主进食', mood: '欣慰', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2024-03-15', type: 'video', content: '第一次在早教中心和其他小朋友互动，表现得很好！越来越社会化啦！', milestone: '社交初体验', mood: '开心', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2024-05-20', type: 'video', content: '宝宝会跳舞啦！听到音乐就摇头晃脑，小手挥舞，太可爱了！', milestone: '音乐感知', mood: '欢乐', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2024-08-12', type: 'video', content: '小豆芽第一次去海边！踩沙子、玩海水，兴奋得不行，笑得眼睛都眯成一条缝了！', milestone: '初次看海', mood: '幸福', videos: [{ url: '', cover: '', duration: 0 }] },
-          { date: '2024-11-03', type: 'video', content: '会说完整句子了！"妈妈我爱你"，天哪，这是什么神仙宝宝！', milestone: '语言突破', mood: '感动', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-06-15', type: 'video', content: '小豆芽今天第一次翻身啦！从趴着到仰着，虽然只是一瞬间，但是妈妈抓拍到了！太激动了！', milestone: 'first', milestoneLabel: '第一次翻身', mood: 'happy', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-07-22', type: 'video', content: '爬行小能手上线！弟弟终于学会爬了，沙发上、地上到处爬，进步好大呀！', milestone: 'growth', milestoneLabel: '学会爬行', mood: 'happy', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-09-10', type: 'video', content: '宝宝第一次叫妈妈了！虽然还不太清晰，但是我听到了！当妈的心都要化了！', milestone: 'learning', milestoneLabel: '第一次叫妈妈', mood: 'touched', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-10-18', type: 'video', content: '今天是小豆芽的周岁生日！抓周仪式太可爱了，抓了本书和一个小算盘，未来是不是学霸呢？', milestone: 'first', milestoneLabel: '周岁抓周', mood: 'excited', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2023-11-25', type: 'video', content: '迈出人生第一步！宝宝终于放开手自己走了，虽然摇摇晃晃，但是太勇敢了！', milestone: 'first', milestoneLabel: '第一次走路', mood: 'excited', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-01-08', type: 'video', content: '小豆芽学会用勺子自己吃饭了！虽然弄得满脸都是，但是好棒呀，进步好大！', milestone: 'growth', milestoneLabel: '自主进食', mood: 'happy', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-03-15', type: 'video', content: '今天天气很好，带着宝宝去公园玩水，溅得全身都是，好开心呀！', milestone: 'daily', milestoneLabel: '户外活动', mood: 'excited', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-05-20', type: 'video', content: '宝宝学会骑平衡车啦！虽然偶尔还会摔倒，但是越来越厉害了！', milestone: 'growth', milestoneLabel: '学会骑车', mood: 'excited', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-07-12', type: 'video', content: '宝宝在早教中心学习新技能，和其他小朋友互动好开心呀！', milestone: 'learning', milestoneLabel: '早教课', mood: 'happy', videos: [{ url: '', cover: '', duration: 0 }] },
+          { date: '2024-09-01', type: 'video', content: '第一天上学！宝宝背着书包好兴奋，虽然有点舍不得，但是很勇敢！', milestone: 'first', milestoneLabel: '第一天上学', mood: 'touched', videos: [{ url: '', cover: '', duration: 0 }] },
           
           // 语音 10条
-          { date: '2023-08-05', type: 'audio', content: '今天豆芽第一次发出"ba"的音，虽然是无意识的，但是爸爸激动了一整天！', milestone: '咿呀学语', mood: '开心', audios: [{ url: '', duration: 0 }] },
-          { date: '2023-09-28', type: 'audio', content: '豆芽会唱小星星了！虽然只有几个音，但听起来好可爱啊～', milestone: '学唱歌曲', mood: '惊喜', audios: [{ url: '', duration: 0 }] },
-          { date: '2023-11-12', type: 'audio', content: '今天学会了一首新儿歌，《两只老虎》唱得特别有意思！', milestone: '语言发展', mood: '欢乐', audios: [{ url: '', duration: 0 }] },
-          { date: '2024-01-20', type: 'audio', content: '给豆芽讲故事，她居然能复述最后一句了！语言能力发展好快！', milestone: '语言发展', mood: '欣慰', audios: [{ url: '', duration: 0 }] },
-          { date: '2024-03-08', type: 'audio', content: '第一次录到豆芽喊"奶奶"，外婆听了激动坏了！', milestone: '学会称呼', mood: '幸福', audios: [{ url: '', duration: 0 }] },
-          { date: '2024-05-15', type: 'audio', content: '豆芽在自言自语编故事，说小兔子去旅行了，好有想象力！', milestone: '想象力', mood: '惊喜', audios: [{ url: '', duration: 0 }] },
-          { date: '2024-07-22', type: 'audio', content: '今天唱生日歌给爷爷听，唱得特别认真，好感动啊！', milestone: '情感表达', mood: '感动', audios: [{ url: '', duration: 0 }] },
-          { date: '2024-09-10', type: 'audio', content: '豆芽学会了背古诗，《咏鹅》背得特别流利，小学霸上线！', milestone: '学习能力', mood: '骄傲', audios: [{ url: '', duration: 0 }] },
-          { date: '2024-11-28', type: 'audio', content: '录到了豆芽第一次说"对不起"，虽然还说不清楚，但是好有礼貌！', milestone: '礼貌用语', mood: '欣慰', audios: [{ url: '', duration: 0 }] },
-          { date: '2025-01-15', type: 'audio', content: '豆芽会用英文数数了！one two three four five，太厉害了！', milestone: '英语启蒙', mood: '惊喜', audios: [{ url: '', duration: 0 }] },
+          { date: '2023-08-15', type: 'audio', content: '宝宝今天学了一首新儿歌，唱得可好了！', milestone: 'learning', milestoneLabel: '学唱儿歌', mood: 'happy', audios: [{ url: '', duration: 30, waveform: [] }] },
+          { date: '2023-12-20', type: 'audio', content: '圣诞节的祝福送给所有人！Merry Christmas！', milestone: 'daily', milestoneLabel: '节日祝福', mood: 'excited', audios: [{ url: '', duration: 15, waveform: [] }] },
+          { date: '2024-02-10', type: 'audio', content: '给大家拜年啦！祝大家新年快乐！', milestone: 'daily', milestoneLabel: '新年祝福', mood: 'excited', audios: [{ url: '', duration: 20, waveform: [] }] },
+          { date: '2024-04-05', type: 'audio', content: '今天学会背古诗啦！给大家表演一下~', milestone: 'learning', milestoneLabel: '背古诗', mood: 'excited', audios: [{ url: '', duration: 45, waveform: [] }] },
+          { date: '2024-06-01', type: 'audio', content: '儿童节快乐！谢谢爸爸妈妈给我这么多快乐！', milestone: 'daily', milestoneLabel: '儿童节', mood: 'happy', audios: [{ url: '', duration: 25, waveform: [] }] },
+          { date: '2024-08-20', type: 'audio', content: '今天故事时间，妈妈讲了一个特别有趣的故事！', milestone: 'daily', milestoneLabel: '故事时间', mood: 'touched', audios: [{ url: '', duration: 60, waveform: [] }] },
+          { date: '2024-10-15', type: 'audio', content: '宝宝学动物叫声，学的可像了！', milestone: 'learning', milestoneLabel: '学动物叫', mood: 'excited', audios: [{ url: '', duration: 20, waveform: [] }] },
+          { date: '2024-11-28', type: 'audio', content: '感恩节的祝福！谢谢大家陪伴我成长！', milestone: 'daily', milestoneLabel: '感恩节', mood: 'touched', audios: [{ url: '', duration: 30, waveform: [] }] },
+          { date: '2024-12-25', type: 'audio', content: '圣诞节来啦！圣诞老人会给我送礼物吗？', milestone: 'daily', milestoneLabel: '圣诞节', mood: 'excited', audios: [{ url: '', duration: 25, waveform: [] }] },
+          { date: '2025-01-01', type: 'audio', content: '新年的第一缕阳光！祝大家新年快乐！', milestone: 'daily', milestoneLabel: '新年第一天', mood: 'excited', audios: [{ url: '', duration: 35, waveform: [] }] },
           
-          // 文字日记 10条
-          { date: '2023-06-28', type: 'diary', content: '今天豆芽打疫苗，哭了两声就不哭了，好勇敢！回家睡得特别香。', milestone: '疫苗接种', mood: '心疼又骄傲' },
-          { date: '2023-08-18', type: 'diary', content: '第一次带豆芽去游泳，她居然不怕水，在水里踢踢腿，好开心呀！', milestone: '游泳初体验', mood: '惊喜' },
-          { date: '2023-10-05', type: 'diary', content: '豆芽发烧了，凌晨两点抱着她量体温，心疼得不行。希望快点好起来！', milestone: '生病照顾', mood: '担心' },
-          { date: '2023-12-12', type: 'diary', content: '今天豆芽学会了自己脱袜子，小手特别灵活！每天都在进步呢！', milestone: '精细动作', mood: '开心' },
-          { date: '2024-02-14', type: 'diary', content: '情人节收到了豆芽送的花——她从公园捡的一朵小野花，说送给妈妈，好感动！', milestone: '情感表达', mood: '感动' },
-          { date: '2024-04-20', type: 'diary', content: '豆芽第一次尝试滑滑梯，从最矮的滑下来，笑得好开心！', milestone: '游乐设施', mood: '欢乐' },
-          { date: '2024-06-18', type: 'diary', content: '今天豆芽自己拼好了6块拼图，虽然花了很久，但是好有耐心！', milestone: '益智游戏', mood: '骄傲' },
-          { date: '2024-08-25', type: 'diary', content: '豆芽今天把最喜欢的布偶兔介绍给我，说这是她的好朋友，要好好照顾它。', milestone: '物权意识', mood: '温馨' },
-          { date: '2024-10-12', type: 'diary', content: '豆芽上幼儿园第一天，哭着不肯放手，但还是勇敢地进去了，妈妈为你骄傲！', milestone: '入园第一天', mood: '不舍又骄傲' },
-          { date: '2025-02-08', type: 'diary', content: '今天豆芽帮我洗菜了，虽然弄得满地都是水，但是宝贝的心意最重要！', milestone: '家务参与', mood: '幸福' },
+          // 日记 10条
+          { date: '2023-05-20', type: 'diary', content: '今天是小豆芽出生第100天！我们办了百日宴，好多亲戚朋友都来祝贺呢！宝宝今天特别乖，一直笑眯眯的~', milestone: 'first', milestoneLabel: '百日宴', mood: 'happy' },
+          { date: '2023-08-01', type: 'diary', content: '带宝宝去游泳馆游泳，这是第一次下水呢！一开始有点紧张，后来就玩得很开心了，小脚踢水踢得可欢了！', milestone: 'first', milestoneLabel: '第一次游泳', mood: 'excited' },
+          { date: '2023-11-01', type: 'diary', content: '今天宝宝发烧了，一直哼哼唧唧的，看得妈妈好心疼。还好晚上就退烧了，第二天又活蹦乱跳了！', milestone: 'health', milestoneLabel: '生病记录', mood: 'crying' },
+          { date: '2024-02-14', type: 'diary', content: '今天是情人节，妈妈和爸爸带着宝宝去吃大餐。虽然宝宝还不懂什么是情人节，但是看到爸爸妈妈在一起就很开心！', milestone: 'daily', milestoneLabel: '情人节', mood: 'happy' },
+          { date: '2024-04-01', type: 'diary', content: '愚人节逗宝宝玩，说要把他的零食吃掉，结果他当真了，眼泪汪汪的，太可爱了！以后再也不逗他了...', milestone: 'daily', milestoneLabel: '日常趣事', mood: 'excited' },
+          { date: '2024-06-18', type: 'diary', content: '父亲节！宝宝亲手给爸爸做了贺卡，虽然只是乱涂乱画，但是爸爸说这是他收到最好的礼物！', milestone: 'daily', milestoneLabel: '父亲节', mood: 'touched' },
+          { date: '2024-08-08', type: 'diary', content: '今天宝宝会自己穿鞋了！虽然左右脚有时候会穿反，但是已经很棒了，独立完成了一件小事！', milestone: 'growth', milestoneLabel: '学会自理', mood: 'happy' },
+          { date: '2024-10-10', type: 'diary', content: '带宝宝去体检，身高体重都达标啦！医生说发育很好，要继续保持哦~', milestone: 'health', milestoneLabel: '体检记录', mood: 'happy' },
+          { date: '2024-12-10', type: 'diary', content: '宝宝开始学画画了，虽然画得乱七八糟的，但是每一幅都是他的作品，要好好保存起来！', milestone: 'learning', milestoneLabel: '学画画', mood: 'excited' },
+          { date: '2025-01-15', type: 'diary', content: '今天宝宝说了一句特别暖心的话：妈妈我爱你！听到这句话的瞬间，觉得所有的辛苦都值得了！', milestone: 'daily', milestoneLabel: '暖心瞬间', mood: 'touched' },
           
           // 单图 10条
-          { date: '2023-07-10', type: 'photo', content: '小豆芽百天照！穿上小裙子像个小公主，眼睛亮晶晶的，好可爱呀！', milestone: '百天纪念', mood: '幸福', photos: [''] },
-          { date: '2023-09-05', type: 'photo', content: '今天豆芽会坐了，给她放在餐椅上拍照，小脸认真极了！', milestone: '学会独坐', mood: '欣慰', photos: [''] },
-          { date: '2023-11-20', type: 'photo', content: '豆芽的第一双学步鞋！粉粉嫩嫩的，穿上后走路都带风！', milestone: '学步准备', mood: '期待', photos: [''] },
-          { date: '2024-01-25', type: 'photo', content: '过年前带豆芽买了新衣服，穿上红棉袄喜庆极了，像个福娃娃！', milestone: '新年装扮', mood: '喜庆', photos: [''] },
-          { date: '2024-04-02', type: 'photo', content: '豆芽第一次去踏青，在草地上奔跑的样子好开心，像只快乐的小兔子！', milestone: '户外活动', mood: '欢乐', photos: [''] },
-          { date: '2024-06-15', type: 'photo', content: '豆芽2岁啦！生日蛋糕上的蜡烛映着她的小脸，许愿的样子好认真！', milestone: '两岁生日', mood: '幸福', photos: [''] },
-          { date: '2024-09-18', type: 'photo', content: '今天带豆芽去动物园，她最喜欢小熊猫，抱着一只玩偶不肯放手！', milestone: '动物园初体验', mood: '开心', photos: [''] },
-          { date: '2024-12-05', type: 'photo', content: '豆芽第一天上幼儿园，背着书包的样子好神气！长大了呢！', milestone: '入园纪念', mood: '骄傲', photos: [''] },
-          { date: '2025-02-20', type: 'photo', content: '冬天的豆芽裹成小粽子，在雪地里玩雪，脸蛋红扑扑的，好可爱！', milestone: '玩雪初体验', mood: '欢乐', photos: [''] },
-          { date: '2025-05-01', type: 'photo', content: '五一假期带豆芽去公园，她最喜欢喂小鱼，一勺一勺好认真！', milestone: '户外探索', mood: '温馨', photos: [''] },
+          { date: '2023-04-15', type: 'photo', content: '满月照来啦！小豆芽满月了~', milestone: 'first', milestoneLabel: '满月照', mood: 'happy', photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'] },
+          { date: '2023-06-01', type: 'photo', content: '六一儿童节！宝宝第一次过儿童节，穿上了新衣服！', milestone: 'daily', milestoneLabel: '儿童节', mood: 'excited', photos: ['https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400'] },
+          { date: '2023-09-20', type: 'photo', content: '今天去公园玩，宝宝看到大狗狗好激动！', milestone: 'daily', milestoneLabel: '户外玩耍', mood: 'excited', photos: ['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400'] },
+          { date: '2023-12-25', type: 'photo', content: '圣诞节快乐！宝宝第一次过圣诞节~', milestone: 'daily', milestoneLabel: '圣诞节', mood: 'happy', photos: ['https://images.unsplash.com/photo-1512389142860-9c449e58a814?w=400'] },
+          { date: '2024-02-10', type: 'photo', content: '新年穿新衣！祝大家新年快乐！', milestone: 'daily', milestoneLabel: '新年', mood: 'excited', photos: ['https://images.unsplash.com/photo-1480796927426-f609979314bd?w=400'] },
+          { date: '2024-05-01', type: 'photo', content: '劳动节快乐！虽然我还小，但是也要学习劳动！', milestone: 'daily', milestoneLabel: '劳动节', mood: 'happy', photos: ['https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=400'] },
+          { date: '2024-07-01', type: 'photo', content: '党的生日！希望祖国越来越强大！', milestone: 'daily', milestoneLabel: '七一', mood: 'touched', photos: ['https://images.unsplash.com/photo-1532375810709-75b1da00537c?w=400'] },
+          { date: '2024-08-19', type: 'photo', content: '今天去海边玩沙，好开心呀！', milestone: 'daily', milestoneLabel: '海边玩耍', mood: 'excited', photos: ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400'] },
+          { date: '2024-10-01', type: 'photo', content: '国庆节！祝福祖国繁荣昌盛！', milestone: 'daily', milestoneLabel: '国庆节', mood: 'happy', photos: ['https://images.unsplash.com/photo-1534260164208-1c72c9e8c4e5?w=400'] },
+          { date: '2024-12-31', type: 'photo', content: '2024年最后一天啦！期待2025！', milestone: 'daily', milestoneLabel: '年末', mood: 'excited', photos: ['https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=400'] },
           
           // 多图 10条
-          { date: '2023-08-12', type: 'photo', content: '豆芽和爸爸的亲子时光，父女俩一起搭积木，笑容灿烂！', milestone: '亲子互动', mood: '幸福', photos: ['', '', '', ''] },
-          { date: '2023-10-01', type: 'photo', content: '国庆假期全家福，豆芽在中间笑得最灿烂，一家人好幸福！', milestone: '全家福', mood: '温馨', photos: ['', '', ''] },
-          { date: '2024-01-01', type: 'photo', content: '新年第一天，豆芽穿上新衣服给大家拜年，小嘴甜甜的！', milestone: '新年祝福', mood: '喜庆', photos: ['', '', '', '', ''] },
-          { date: '2024-03-12', type: 'photo', content: '春天来了！带豆芽去踏春，樱花树下留下美好回忆！', milestone: '春游', mood: '美好', photos: ['', '', '', '', '', ''] },
-          { date: '2024-05-05', type: 'photo', content: '劳动节教豆芽种花，她学得可认真了，小手挖土好可爱！', milestone: '种植体验', mood: '温馨', photos: ['', '', '', ''] },
-          { date: '2024-07-10', type: 'photo', content: '暑假海边度假，豆芽在沙滩上堆城堡、捡贝壳，玩得不亦乐乎！', milestone: '海边度假', mood: '欢乐', photos: ['', '', '', '', '', '', '', ''] },
-          { date: '2024-08-20', type: 'photo', content: '豆芽学画画啦！虽然画得乱七八糟，但是色彩好鲜艳，充满了想象力！', milestone: '艺术启蒙', mood: '惊喜', photos: ['', '', '', '', ''] },
-          { date: '2024-10-25', type: 'photo', content: '万圣节变装派对！豆芽装扮成小女巫，可爱又俏皮！', milestone: '节日装扮', mood: '欢乐', photos: ['', '', '', ''] },
-          { date: '2025-01-01', type: 'photo', content: '新的一年新的开始！豆芽许下新年愿望，希望能实现哦！', milestone: '新年愿望', mood: '期待', photos: ['', '', '', '', ''] },
-          { date: '2025-04-15', type: 'photo', content: '春天万物复苏！带豆芽去春游，赏花、放风筝，度过了美好的周末！', milestone: '周末出游', mood: '幸福', photos: ['', '', '', '', '', ''] }
+          { date: '2023-07-15', type: 'photo', content: '周末带宝宝去动物园，看到了好多小动物！', milestone: 'daily', milestoneLabel: '动物园', mood: 'excited', photos: ['https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=400', 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400', 'https://images.unsplash.com/photo-1479112451013-4dc1c3a0e2e3?w=400'] },
+          { date: '2023-10-01', type: 'photo', content: '十一黄金周，我们一家出去旅游啦！', milestone: 'daily', milestoneLabel: '旅游', mood: 'excited', photos: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400', 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400', 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400', 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400'] },
+          { date: '2024-01-01', type: 'photo', content: '新年的第一缕阳光！我们一起去爬山看日出！', milestone: 'first', milestoneLabel: '看日出', mood: 'excited', photos: ['https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400', 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400'] },
+          { date: '2024-04-05', type: 'photo', content: '清明节去踏青，春天真的好美呀！', milestone: 'daily', milestoneLabel: '踏青', mood: 'happy', photos: ['https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400', 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=400', 'https://images.unsplash.com/photo-1476673160081-cf065607f449?w=400'] },
+          { date: '2024-05-12', type: 'photo', content: '母亲节！祝妈妈节日快乐！', milestone: 'daily', milestoneLabel: '母亲节', mood: 'touched', photos: ['https://images.unsplash.com/photo-1529333395509-4c8ee8fc22fc?w=400', 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=400'] },
+          { date: '2024-07-04', type: 'photo', content: '夏天的西瓜最甜啦！宝宝最爱吃西瓜！', milestone: 'daily', milestoneLabel: '夏日', mood: 'happy', photos: ['https://images.unsplash.com/photo-1527313442981-4e84f8e8d74b?w=400', 'https://images.unsplash.com/photo-1563114773-84221bd62daa?w=400', 'https://images.unsplash.com/photo-1564093727493-1b7a69daec28?w=400'] },
+          { date: '2024-09-10', type: 'photo', content: '教师节快乐！感谢所有老师的辛勤付出！', milestone: 'daily', milestoneLabel: '教师节', mood: 'touched', photos: ['https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400', 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400'] },
+          { date: '2024-10-25', type: 'photo', content: '万圣节来啦！宝宝第一次讨糖！不给糖就捣蛋~', milestone: 'first', milestoneLabel: '万圣节', mood: 'excited', photos: ['https://images.unsplash.com/photo-1509557965875-b88c97052f0e?w=400', 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400', 'https://images.unsplash.com/photo-1518709414768-a88981a4515d?w=400'] },
+          { date: '2024-11-24', type: 'photo', content: '感恩节大餐！谢谢家人一直的陪伴！', milestone: 'daily', milestoneLabel: '感恩节', mood: 'touched', photos: ['https://images.unsplash.com/photo-1577303935007-0d306ee638cf?w=400', 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=400'] },
+          { date: '2025-01-20', type: 'photo', content: '今天下雪啦！宝宝第一次看到雪！好激动！', milestone: 'first', milestoneLabel: '第一次看雪', mood: 'excited', photos: ['https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=400', 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=400', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400'] },
         ];
         
         let success = 0;
-        for (const item of sampleData) {
-          const data = {
-            babyId: 1,
-            date: item.date,
-            type: item.type,
-            content: item.content,
-            milestone: item.milestone,
-            mood: item.mood,
-            createdAt: new Date(item.date + 'T08:00:00.000Z').toISOString(),
-            updatedAt: new Date().toISOString(),
-            isDeleted: false,
-            deletedAt: null
-          };
-          if (item.videos) data.videos = item.videos;
-          if (item.audios) data.audios = item.audios;
-          if (item.photos) data.photos = item.photos;
-          
-          store.add(data);
+        for (const data of sampleData) {
+          await store.add({
+            ...data,
+            babyId: currentBaby?.id,
+            createdAt: new Date().toISOString(),
+          });
           success++;
         }
         
@@ -596,6 +591,7 @@ export function TimelinePage({
                         onEdit={onEditMoment}
                         onDelete={handleDeleteMoment}
                         onClick={handlePhotoClick}
+                        onShare={handleShareMoment}
                       />
                     </div>
                   ))}
@@ -614,14 +610,29 @@ export function TimelinePage({
           onClose={() => setSelectedPhotos(null)}
         />
       )}
+
+      {/* 分享卡片弹窗 */}
+      <ShareCard
+        visible={!!sharingMoment}
+        onClose={() => setSharingMoment(null)}
+        data={sharingMoment}
+        title={sharingMoment?.milestoneLabel}
+        content={sharingMoment?.content}
+        babyName={currentBaby?.name}
+        date={sharingMoment?.date}
+        type={sharingMoment?.type}
+        thumbnail={sharingMoment?.photos?.[0] || sharingMoment?.videos?.[0]?.cover}
+        mood={sharingMoment?.mood}
+        milestone={sharingMoment?.milestone}
+      />
+
+      {/* 添加记录按钮 */}
       <button
         onClick={onAddMoment}
-      
         className="fixed right-4 bottom-20 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform hover:shadow-xl"
       >
         <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
       </button>
-
     </div>
   );
 }

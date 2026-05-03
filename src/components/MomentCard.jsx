@@ -4,7 +4,7 @@
 
 import { useState, useRef } from 'react';
 import { formatDateFriendly, formatTime } from '../utils/dateUtils';
-import { Smile, CloudSun, MapPin, MoreHorizontal, Trash2, Edit3, Play, Pause, Mic } from 'lucide-react';
+import { Smile, CloudSun, MapPin, MoreHorizontal, Trash2, Edit3, Play, Pause, Mic, Share2 } from 'lucide-react';
 
 // 格式化时间
 const formatTime2 = (seconds) => {
@@ -43,7 +43,7 @@ const milestoneTypes = {
   daily: { label: '日常', className: 'daily', emoji: '✨' },
 };
 
-export function MomentCard({ moment, onEdit, onDelete, onClick }) {
+export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
   const [showMenu, setShowMenu] = useState(false);
   const [playingIndex, setPlayingIndex] = useState(null);
   const audioRef = useRef(null);
@@ -58,6 +58,13 @@ export function MomentCard({ moment, onEdit, onDelete, onClick }) {
   const handleDelete = () => {
     if (confirm('确定要删除这条记录吗？')) {
       onDelete(moment.id);
+    }
+    setShowMenu(false);
+  };
+
+  const handleShare = () => {
+    if (onShare) {
+      onShare(moment);
     }
     setShowMenu(false);
   };
@@ -100,7 +107,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick }) {
           {showMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-card z-20 overflow-hidden animate-scale-in min-w-[90px]">
+              <div className="absolute right-0 top-full mt-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-card z-20 overflow-hidden animate-scale-in min-w-[120px]">
                 <button
                   onClick={() => {
                     onEdit(moment);
@@ -111,6 +118,15 @@ export function MomentCard({ moment, onEdit, onDelete, onClick }) {
                   <Edit3 className="w-4 h-4" />
                   <span>编辑</span>
                 </button>
+                {onShare && (
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 hover:bg-pink-50 dark:hover:bg-pink-900/20 text-sm text-pink-500 border-b border-gray-100 dark:border-gray-700"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>分享</span>
+                  </button>
+                )}
                 <button
                   onClick={handleDelete}
                   className="flex items-center justify-center gap-1.5 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm text-red-500"

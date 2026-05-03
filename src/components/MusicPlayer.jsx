@@ -3,7 +3,7 @@
  * 纯本地上传，支持分类管理
  */
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, 
   Plus, Music, X, ChevronDown, Tag, Trash2, Settings, Minus, Maximize2
@@ -127,7 +127,7 @@ export function MusicPlayer() {
   };
 
   return (
-    <>
+    <React.Fragment>
       {/* 缩小模式的悬浮播放器 */}
       {isMinimized && currentMusic && (
         <div
@@ -216,7 +216,7 @@ export function MusicPlayer() {
         </div>
       )}
 
-      {/* 底部播放器条（非缩小模式显示 */}
+      {/* 底部播放器条（非缩小模式显示） */}
       {!isMinimized && (
         <div className="fixed bottom-16 left-0 right-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-700">
           {currentMusic ? (
@@ -335,6 +335,7 @@ export function MusicPlayer() {
               <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-6">
                 {currentMusic.title}
               </h3>
+
               <div className="flex items-center justify-center gap-8">
                 <button 
                   onClick={playPrev}
@@ -394,22 +395,6 @@ export function MusicPlayer() {
                   >
                     {cat.icon} {cat.name}
                   </button>
-                  {cat.isCustom && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`确定要删除分类"${cat.name}"吗？该分类下的音乐将移动到"钢琴"分类`)) {
-                          deleteCustomCategory(cat.id);
-                          if (selectedCategory === cat.id) {
-                            setSelectedCategory('all');
-                          }
-                        }
-                      }}
-                      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/10 text-gray-500 hover:text-red-500"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
                 </div>
               ))}
               <button
@@ -430,13 +415,13 @@ export function MusicPlayer() {
                     key={music.id}
                     onClick={() => playMusic(music.id)}
                     className={`p-3 rounded-xl cursor-pointer transition-all ${
-                      music.id === currentMusic.id
+                      music.id === currentMusic?.id
                         ? 'bg-primary-50 dark:bg-primary-900/30'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     <p className={`text-sm font-medium truncate ${
-                      music.id === currentMusic.id
+                      music.id === currentMusic?.id
                         ? 'text-primary-600 dark:text-primary-400'
                         : 'text-gray-800 dark:text-gray-200'
                     }`}>
@@ -515,6 +500,6 @@ export function MusicPlayer() {
           </div>
         </div>
       )}
-    </>
+    </React.Fragment>
   );
 }

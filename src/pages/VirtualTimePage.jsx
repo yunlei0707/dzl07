@@ -1,19 +1,20 @@
 /**
  * 虚拟时光页面 - AI生成内容专题展示
- * 支持点击内容项全屏展示
+ * 支持点击内容项全屏展示和分享
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check } from 'lucide-react';
+import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check, Share2 } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
+import { ShareCard } from '../components/ShareCard';
 
 export function VirtualTimePage() {
   const { currentBaby, currentUser, showToast } = useApp();
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [fullscreenItem, setFullscreenItem] = useState(null);
   const [copied, setCopied] = useState(false);
-  const shareCardRef = useRef(null);
+  const [sharingItem, setSharingItem] = useState(null);
 
   const handleTopicClick = (topic) => {
     setSelectedTopic(topic);
@@ -34,6 +35,11 @@ export function VirtualTimePage() {
     setFullscreenItem(null);
   }, []);
 
+  // 打开分享
+  const handleShare = useCallback((item) => {
+    setSharingItem(item);
+  }, []);
+
   // 复制内容到剪贴板
   const copyToClipboard = useCallback((text) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -47,13 +53,11 @@ export function VirtualTimePage() {
 
   // 渲染内容卡片
   const renderContentCard = (item, topic) => {
+    const cardClass = "bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]";
+    
     if (item.type === 'image') {
       return (
-        <div 
-          key={item.id}
-          onClick={() => openFullscreen(item)}
-          className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
-        >
+        <div key={item.id} className={cardClass}>
           <div className="flex items-start gap-3">
             <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${topic.coverGradient} flex items-center justify-center flex-shrink-0`}>
               <span className="text-2xl">{topic.coverEmoji}</span>
@@ -67,10 +71,21 @@ export function VirtualTimePage() {
                     {tag}
                   </span>
                 ))}
-                <span className="ml-auto text-xs text-gray-400 flex items-center gap-1">
-                  <Expand className="w-3 h-3" />
-                </span>
+                <button 
+                  onClick={() => handleShare(item)}
+                  className="ml-auto p-1.5 rounded-full bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
               </div>
+            </div>
+          </div>
+          <div 
+            className="mt-3 rounded-lg overflow-hidden cursor-pointer"
+            onClick={() => openFullscreen(item)}
+          >
+            <div className={`h-24 bg-gradient-to-br ${topic.coverGradient} flex items-center justify-center`}>
+              <span className="text-4xl opacity-50">{topic.coverIcon}</span>
             </div>
           </div>
         </div>
@@ -79,11 +94,7 @@ export function VirtualTimePage() {
     
     if (item.type === 'text') {
       return (
-        <div 
-          key={item.id}
-          onClick={() => openFullscreen(item)}
-          className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
-        >
+        <div key={item.id} className={cardClass}>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center flex-shrink-0">
               <span className="text-xl">{item.emoji || '📝'}</span>
@@ -97,6 +108,12 @@ export function VirtualTimePage() {
                     {tag}
                   </span>
                 ))}
+                <button 
+                  onClick={() => handleShare(item)}
+                  className="ml-auto p-1.5 rounded-full bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -106,11 +123,7 @@ export function VirtualTimePage() {
     
     if (item.type === 'moment') {
       return (
-        <div 
-          key={item.id}
-          onClick={() => openFullscreen(item)}
-          className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
-        >
+        <div key={item.id} className={cardClass}>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-teal-400 flex items-center justify-center flex-shrink-0">
               <span className="text-xl">{item.authorAvatar}</span>
@@ -122,9 +135,17 @@ export function VirtualTimePage() {
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">{item.title}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.content}</p>
-              <div className="flex items-center gap-4 mt-2 text-gray-400 text-sm">
-                <span className="flex items-center gap-1"><Heart className="w-4 h-4" /> {item.likes}</span>
-                <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {item.comments}</span>
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-4 text-gray-400 text-sm">
+                  <span className="flex items-center gap-1"><Heart className="w-4 h-4" /> {item.likes}</span>
+                  <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {item.comments}</span>
+                </div>
+                <button 
+                  onClick={() => handleShare(item)}
+                  className="p-1.5 rounded-full bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -134,11 +155,7 @@ export function VirtualTimePage() {
     
     if (item.type === 'poem') {
       return (
-        <div 
-          key={item.id}
-          onClick={() => openFullscreen(item)}
-          className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
-        >
+        <div key={item.id} className={cardClass}>
           <div className="flex items-start gap-3">
             <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 flex items-center justify-center flex-shrink-0">
               <span className="text-2xl">📜</span>
@@ -154,12 +171,20 @@ export function VirtualTimePage() {
               <p className="text-primary-600 dark:text-primary-400 font-medium text-sm whitespace-pre-line line-clamp-3">
                 {item.content}
               </p>
-              <div className="flex items-center gap-2 mt-2">
-                {item.tags?.map((tag, idx) => (
-                  <span key={idx} className="text-xs px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full">
-                    {tag}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-2">
+                  {item.tags?.map((tag, idx) => (
+                    <span key={idx} className="text-xs px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => handleShare(item)}
+                  className="p-1.5 rounded-full bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -187,50 +212,34 @@ export function VirtualTimePage() {
             <div className="absolute top-4 left-4 text-4xl opacity-50">{topic.coverIcon}</div>
             <div className="absolute bottom-4 right-4 text-3xl opacity-50">{topic.coverIcon}</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-6">
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{item.description}</p>
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
-              {item.tags?.map((tag, idx) => (
-                <span key={idx} className="text-xs px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full">
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <button className="flex items-center gap-2 text-gray-500 hover:text-primary-500">
-                <Heart className="w-5 h-5" />
-                <span className="text-sm">收藏</span>
-              </button>
+          <div className="p-4 bg-white dark:bg-gray-800">
+            <p className="text-gray-600 dark:text-gray-300">{item.description}</p>
+            <div className="flex items-center gap-4 mt-4">
               <button 
-                onClick={() => copyToClipboard(item.description)}
-                className="flex items-center gap-2 text-gray-500 hover:text-primary-500"
+                onClick={() => handleShare(item)}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-pink-50 dark:bg-pink-900/30 text-pink-500 rounded-xl"
               >
-                {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-                <span className="text-sm">{copied ? '已复制' : '复制'}</span>
-              </button>
-              <button 
-                className="flex items-center gap-2 text-gray-500 hover:text-primary-500 ml-auto"
-              >
-                <span className="text-sm">分享</span>
+                <Share2 className="w-5 h-5" />
+                分享
               </button>
             </div>
           </div>
         </div>
       );
     }
-    
+
     if (item.type === 'text') {
       return (
-        <div className="flex flex-col h-full bg-gradient-to-b from-amber-50 to-white dark:from-gray-800 dark:to-gray-900">
+        <div className="flex flex-col h-full bg-gradient-to-b from-yellow-50 to-white dark:from-gray-800 dark:to-gray-900">
           <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center mb-6 shadow-lg">
-              <span className="text-4xl">{item.emoji || '📝'}</span>
-            </div>
+            <div className="text-6xl mb-6">{item.emoji || '📝'}</div>
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">{item.title}</h2>
-            <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed text-center max-w-md">
-              {item.content}
-            </p>
-            <div className="flex items-center gap-2 mt-6 flex-wrap justify-center">
+            <div className="bg-cream-50 dark:bg-gray-800 rounded-2xl p-6 shadow-inner max-w-md">
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                {item.content}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
               {item.tags?.map((tag, idx) => (
                 <span key={idx} className="text-xs px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full">
                   {tag}
@@ -247,22 +256,22 @@ export function VirtualTimePage() {
               {copied ? '已复制' : '复制内容'}
             </button>
             <button 
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl"
+              onClick={() => handleShare(item)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-pink-50 dark:bg-pink-900/30 text-pink-500 rounded-xl"
             >
+              <Share2 className="w-5 h-5" />
               分享
             </button>
           </div>
         </div>
       );
     }
-    
+
     if (item.type === 'poem') {
       return (
         <div className="flex flex-col h-full bg-gradient-to-b from-amber-50 to-white dark:from-gray-800 dark:to-gray-900">
           <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <div className="mb-6">
-              <span className="text-6xl">📜</span>
-            </div>
+            <div className="mb-6"><span className="text-6xl">📜</span></div>
             <span className="text-xs px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full mb-4">
               {item.difficulty}
             </span>
@@ -293,15 +302,17 @@ export function VirtualTimePage() {
               {copied ? '已复制' : '复制诗词'}
             </button>
             <button 
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl"
+              onClick={() => handleShare(item)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-pink-50 dark:bg-pink-900/30 text-pink-500 rounded-xl"
             >
+              <Share2 className="w-5 h-5" />
               分享
             </button>
           </div>
         </div>
       );
     }
-    
+
     if (item.type === 'moment') {
       return (
         <div className="flex flex-col h-full bg-gradient-to-b from-green-50 to-white dark:from-gray-800 dark:to-gray-900">
@@ -333,15 +344,17 @@ export function VirtualTimePage() {
               {copied ? '已复制' : '复制'}
             </button>
             <button 
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl"
+              onClick={() => handleShare(item)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-pink-50 dark:bg-pink-900/30 text-pink-500 rounded-xl"
             >
+              <Share2 className="w-5 h-5" />
               分享
             </button>
           </div>
         </div>
       );
     }
-    
+
     return null;
   };
 
@@ -388,7 +401,6 @@ export function VirtualTimePage() {
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-3 mb-2">
-            {/* 账号头像 */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
               {currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
@@ -397,7 +409,7 @@ export function VirtualTimePage() {
                   <span>{currentUser.avatar}</span>
                 )
               ) : (
-                <User className="w-5 h-5" />
+                <span>👶</span>
               )}
             </div>
             <h1 className="text-xl font-bold">✨ 虚拟时光</h1>
@@ -428,10 +440,7 @@ export function VirtualTimePage() {
       {/* 专题详情弹窗 */}
       {selectedTopic && (
         <div className="fixed inset-0 z-50 bg-cream-50 dark:bg-gray-900 animate-fade-in overflow-hidden">
-          <div 
-            className="h-full flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="h-full flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className={`h-48 bg-gradient-to-br ${selectedTopic.coverGradient} relative`}>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-7xl animate-pulse">{selectedTopic.coverEmoji}</span>
@@ -474,25 +483,30 @@ export function VirtualTimePage() {
 
       {/* 全屏查看弹窗 */}
       {fullscreenItem && (
-        <div 
-          className="fixed inset-0 z-[60] bg-black"
-          onClick={closeFullscreen}
-        >
+        <div className="fixed inset-0 z-[60] bg-black" onClick={closeFullscreen}>
           <button
             onClick={closeFullscreen}
             className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
-          
-          <div 
-            className="w-full h-full"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="w-full h-full" onClick={(e) => e.stopPropagation()}>
             {renderFullscreenContent(fullscreenItem, selectedTopic)}
           </div>
         </div>
       )}
+
+      {/* 分享卡片弹窗 */}
+      <ShareCard
+        visible={!!sharingItem}
+        onClose={() => setSharingItem(null)}
+        data={sharingItem}
+        title={sharingItem?.title}
+        content={sharingItem?.content || sharingItem?.description}
+        babyName={currentBaby?.name}
+        type="diary"
+        mood={sharingItem?.mood}
+      />
     </div>
   );
 }
