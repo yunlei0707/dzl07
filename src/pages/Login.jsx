@@ -11,7 +11,7 @@ import { loginUser, verifySecurityAnswer, decryptPassword, createGuestAccount, c
 
 export function LoginPage({ onLogin }) {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,7 @@ export function LoginPage({ onLogin }) {
   // 忘记密码模态框
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotStep, setForgotStep] = useState(1); // 1: 输入用户名, 2: 安全问题, 3: 显示密码
-  const [forgotUsername, setForgotUsername] = useState('');
+  const [forgotNickname, setForgotNickname] = useState('');
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [revealedPassword, setRevealedPassword] = useState('');
@@ -30,8 +30,8 @@ export function LoginPage({ onLogin }) {
     setError('');
 
     // 简单的表单验证
-    if (!username.trim()) {
-      setError('请输入用户名');
+    if (!nickname.trim()) {
+      setError('请输入昵称');
       return;
     }
     if (!password) {
@@ -41,7 +41,7 @@ export function LoginPage({ onLogin }) {
 
     setIsLoading(true);
     try {
-      const user = await loginUser(username, password);
+      const user = await loginUser(nickname, password);
       
       // 保存登录状态到 localStorage
       localStorage.setItem('isLoggedIn', 'true');
@@ -95,7 +95,7 @@ export function LoginPage({ onLogin }) {
   const handleOpenForgot = () => {
     setShowForgotModal(true);
     setForgotStep(1);
-    setForgotUsername('');
+    setForgotNickname('');
     setSecurityQuestion('');
     setSecurityAnswer('');
     setRevealedPassword('');
@@ -105,7 +105,7 @@ export function LoginPage({ onLogin }) {
   const handleCloseForgot = () => {
     setShowForgotModal(false);
     setForgotStep(1);
-    setForgotUsername('');
+    setForgotNickname('');
     setSecurityQuestion('');
     setSecurityAnswer('');
     setRevealedPassword('');
@@ -113,18 +113,18 @@ export function LoginPage({ onLogin }) {
 
   // 验证用户名（获取安全问题）
   const handleVerifyUsername = async () => {
-    if (!forgotUsername.trim()) {
-      setError('请输入用户名');
+    if (!forgotNickname.trim()) {
+      setError('请输入昵称');
       return;
     }
     
     setIsLoading(true);
     try {
       const { getUserByUsername } = await import('../utils/db');
-      const user = await getUserByUsername(forgotUsername);
+      const user = await getUserByNickname(forgotNickname);
       
       if (!user) {
-        setError('用户名不存在');
+        setError('昵称不存在');
         return;
       }
       
@@ -304,12 +304,12 @@ export function LoginPage({ onLogin }) {
             {/* 步骤1：输入用户名 */}
             {forgotStep === 1 && (
               <div className="space-y-4">
-                <p className="text-sm text-gray-500">请输入您注册的用户名</p>
+<p className="text-sm text-gray-500">请输入您注册的昵称</p>
                 <input
                   type="text"
                   value={forgotUsername}
                   onChange={e => setForgotUsername(e.target.value)}
-                  placeholder="用户名"
+placeholder="昵称"
                   className="input-field"
                 />
                 <button

@@ -554,6 +554,12 @@ export async function isUsernameExists(username) {
   return user !== null;
 }
 
+export async function getUserByNickname(nickname) {
+  const db = await initDB();
+  const users = await db.getAll("users");
+  return users.find(u => u.nickname === nickname) || null;
+}
+
 /**
  * 注册新用户
  */
@@ -583,11 +589,17 @@ export async function registerUser(username, password, userInfo = {}) {
 /**
  * 用户登录
  */
-export async function loginUser(username, password) {
-  const user = await getUserByUsername(username);
+export async function loginUser(nickname, password) {
+  // 先用昵称查找
+  let user = await getUserByNickname(nickname);
+  
+  // 如果找不到，用用户名查找（兼容旧数据）
+  if (!user) {
+    user = await getUserByUsername(nickname);
+  }
   
   if (!user) {
-    throw new Error('用户名不存在');
+    throw new Error('昵称不存在');
   }
   
   if (!verifyPassword(password, user.password)) {
@@ -601,6 +613,7 @@ export async function loginUser(username, password) {
   
   return user;
 }
+
 
 /**
  * 更新用户资料
@@ -1060,8 +1073,14 @@ export async function updateSecurityQuestion(userId, question, answer) {
  * @param {string} username - 用户名
  * @param {string} answer - 答案
  */
-export async function verifySecurityAnswer(username, answer) {
-  const user = await getUserByUsername(username);
+export async function verifySecurityAnswer(nickname, answer) {
+  // 先用昵称查找
+  let user = await getUserByNickname(nickname);
+  
+  // 如果找不到，用用户名查找（兼容旧数据）
+  if (!user) {
+    user = await getUserByUsername(nickname);
+  }
   if (!user) throw new Error('用户不存在');
   if (!user.securityQuestion || !user.securityAnswer) {
     throw new Error('该用户未设置安全问题');
@@ -1071,6 +1090,7 @@ export async function verifySecurityAnswer(username, answer) {
   }
   return user;
 }
+
 
 /**
  * 解密密码（用于忘记密码显示）

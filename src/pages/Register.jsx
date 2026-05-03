@@ -11,10 +11,9 @@ import { registerUser, updateSecurityQuestion, PRESET_AVATARS } from '../utils/d
 
 export function RegisterPage({ onRegister }) {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [nickname, setNickname] = useState('');
   const [avatar, setAvatar] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,18 +63,14 @@ export function RegisterPage({ onRegister }) {
   const passwordsMatch = confirmPassword && password === confirmPassword;
   const passwordsMismatch = confirmPassword && password !== confirmPassword;
 
-  // 验证基本信息
-  const validateBasicInfo = () => {
-    if (!username.trim()) {
-      setError('请输入用户名');
+// 验证基本信息
+const validateBasicInfo = () => {
+    if (!nickname.trim()) {
+      setError('请输入昵称');
       return false;
     }
-    if (username.length < 3) {
-      setError('用户名至少需要3个字符');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError('用户名只能包含字母、数字和下划线');
+    if (nickname.length < 2) {
+      setError('昵称至少需要2个字符');
       return false;
     }
     if (!password) {
@@ -101,7 +96,7 @@ export function RegisterPage({ onRegister }) {
   const handleNextStep = () => {
     setError('');
     if (validateBasicInfo()) {
-      setNickname(username);
+      setNickname(nickname);
       setStep(2);
     }
   };
@@ -131,8 +126,8 @@ export function RegisterPage({ onRegister }) {
 
     setIsLoading(true);
     try {
-      const user = await registerUser(username, password, {
-        nickname: nickname || username,
+const user = await registerUser(nickname, password, {
+nickname: nickname,
         avatar: avatar,
       });
       
@@ -153,8 +148,8 @@ export function RegisterPage({ onRegister }) {
       // 跳转到首页
       navigate('/', { replace: true });
     } catch (err) {
-      if (err.message === '用户名已存在') {
-        setError('该用户名已被注册，请选择其他用户名');
+      if (err.message === '昵称已存在') {
+        setError('该昵称已被注册，请选择其他昵称');
       } else {
         setError(err.message || '注册失败，请重试');
       }
@@ -199,16 +194,16 @@ export function RegisterPage({ onRegister }) {
       {/* 步骤1：基本信息 */}
       {step === 1 && (
         <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="w-full max-w-sm space-y-4">
-          {/* 用户名输入 */}
+          {/* 昵称输入 */}
           <div className="relative">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <User className="w-5 h-5" />
             </div>
             <input
               type="text"
-              value={username}
+              value={nickname}
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
-              placeholder="设置用户名（3-20个字符）"
+              placeholder="设置昵称（2-20个字符）"
               className="input-field pl-12 pr-4"
               autoComplete="username"
               maxLength={20}
