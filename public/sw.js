@@ -1,4 +1,4 @@
-const CACHE_NAME = 'baby-time-v1';
+const CACHE_NAME = 'baby-time-v2';
 const urlsToCache = [
   '/',
   '/index.html',
