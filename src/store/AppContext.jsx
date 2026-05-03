@@ -22,6 +22,7 @@ import {
   updateCustomMood,
   deleteCustomMood,
   updateUser,
+  deleteBaby,
 } from '../utils/db';
 
 const AppContext = createContext(null);
@@ -194,6 +195,24 @@ export function AppProvider({ children }) {
     }
   }, [currentBaby]);
 
+
+  // 删除宝宝
+  const deleteBaby = useCallback(async (babyId) => {
+    await deleteBaby(babyId);
+    await refreshBabies();
+    // 如果删除的是当前宝宝，切换到第一个宝宝
+    if (currentBaby?.id === babyId) {
+      const allBabies = await getAllBabies();
+      if (allBabies.length > 0) {
+        await switchBaby(allBabies[0].id);
+      } else {
+        setCurrentBaby(null);
+        setMoments([]);
+        setCapsules([]);
+      }
+    }
+  }, [currentBaby, refreshBabies, switchBaby]);
+
   // 切换主题（深色/浅色）
   const toggleTheme = useCallback(async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -358,6 +377,7 @@ export function AppProvider({ children }) {
     refreshBabies,
     refreshMoments,
     refreshCapsules,
+    deleteBaby,
     toggleTheme,
     setTheme,
     showToast,

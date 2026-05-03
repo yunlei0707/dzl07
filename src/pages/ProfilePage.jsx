@@ -47,6 +47,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     updateMilestone,
     deleteMilestone,
     switchBaby,
+    deleteBaby,
     customMoods,
     addMood,
     updateMood,
@@ -396,22 +397,38 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">切换宝宝</p>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
               {babies.filter(b => b.id !== currentBaby?.id).map(baby => (
-                <button
+                <div
                   key={baby.id}
-                  onClick={() => switchBaby(baby.id)}
-                  className="flex-shrink-0 flex flex-col items-center gap-1"
+                  className="flex-shrink-0 flex flex-col items-center gap-1 relative group"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                    {baby.avatar ? (
-                      <img src={baby.avatar} alt={baby.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xl">👶</span>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 max-w-16 truncate">
-                    {baby.nickname || baby.name}
-                  </span>
-                </button>
+                  <button
+                    onClick={() => switchBaby(baby.id)}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                      {baby.avatar ? (
+                        <img src={baby.avatar} alt={baby.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl">👶</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 max-w-16 truncate">
+                      {baby.nickname || baby.name}
+                    </span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`确定要删除宝宝"${baby.nickname || baby.name}"吗？所有相关的成长记录都会被删除！`)) {
+                        deleteBaby(baby.id);
+                        showToast('已删除宝宝', 'success');
+                      }
+                    }}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           </div>
