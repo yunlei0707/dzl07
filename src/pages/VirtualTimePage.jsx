@@ -4,19 +4,15 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Share2, Copy, Check } from 'lucide-react';
+import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
-import { ShareCard } from '../components/ShareCard';
 
 export function VirtualTimePage() {
   const { currentBaby, currentUser, showToast } = useApp();
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [fullscreenItem, setFullscreenItem] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [showShareCard, setShowShareCard] = useState(false);
-  const [shareItem, setShareItem] = useState(null);
-  const shareCardRef = useRef(null);
 
   const handleTopicClick = (topic) => {
     setSelectedTopic(topic);
@@ -49,9 +45,6 @@ export function VirtualTimePage() {
   }, [showToast]);
 
   // 打开分享卡片
-  const openShareCard = useCallback((item) => {
-    setShareItem(item);
-    setShowShareCard(true);
   }, []);
 
   // 渲染内容卡片
@@ -218,10 +211,8 @@ export function VirtualTimePage() {
                 <span className="text-sm">{copied ? '已复制' : '复制'}</span>
               </button>
               <button 
-                onClick={() => openShareCard(item)} 
                 className="flex items-center gap-2 text-gray-500 hover:text-primary-500 ml-auto"
               >
-                <Share2 className="w-5 h-5" />
                 <span className="text-sm">分享</span>
               </button>
             </div>
@@ -258,10 +249,8 @@ export function VirtualTimePage() {
               {copied ? '已复制' : '复制内容'}
             </button>
             <button 
-              onClick={() => openShareCard(item)} 
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl"
             >
-              <Share2 className="w-5 h-5" />
               分享
             </button>
           </div>
@@ -306,10 +295,8 @@ export function VirtualTimePage() {
               {copied ? '已复制' : '复制诗词'}
             </button>
             <button 
-              onClick={() => openShareCard(item)} 
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl"
             >
-              <Share2 className="w-5 h-5" />
               分享
             </button>
           </div>
@@ -348,10 +335,8 @@ export function VirtualTimePage() {
               {copied ? '已复制' : '复制'}
             </button>
             <button 
-              onClick={() => openShareCard(item)} 
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl"
             >
-              <Share2 className="w-5 h-5" />
               分享
             </button>
           </div>
@@ -512,15 +497,12 @@ export function VirtualTimePage() {
       )}
 
       {/* 隐藏的分享卡片模板 */}
-      <div ref={shareCardRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
         <div style={{ width: 375, padding: 32, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 16 }}>
           <div style={{ textAlign: 'center', marginBottom: 16 }}>
             <span style={{ fontSize: 28, fontWeight: 'bold', color: '#fff' }}>✨ 虚拟时光 ✨</span>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 12, padding: 24 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>{shareItem?.title || 'AI生成内容'}</h3>
             <p style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>
-              {shareItem?.description || shareItem?.content || '来自宝贝时光的AI生成精彩内容~'}
             </p>
           </div>
           <div style={{ textAlign: 'center', marginTop: 12 }}>
@@ -530,12 +512,7 @@ export function VirtualTimePage() {
       </div>
 
       {/* 分享卡片弹窗 */}
-      <ShareCard
-        visible={showShareCard}
-        onClose={() => setShowShareCard(false)}
-        cardRef={shareCardRef}
         title="虚拟时光"
-        content={shareItem?.title || 'AI生成内容分享'}
       />
     </div>
   );

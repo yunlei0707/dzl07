@@ -10,8 +10,7 @@ import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby } from '../utils/db';
-import { Plus, Calendar, Clock, X, ChevronDown, Share2 } from 'lucide-react';
-import { ShareCard } from '../components/ShareCard';
+import { Plus, Calendar, Clock, X, ChevronDown } from 'lucide-react';
 
 // 类型筛选选项
 const typeFilters = [
@@ -72,8 +71,6 @@ export function TimelinePage({
   const scrollTop = useRef(0);
   const containerRef = useRef(null);
   
-  // 分享卡片状态
-  const [showShareCard, setShowShareCard] = useState(false);
   const shareCardRef = useRef(null);
   
   // 监听外部筛选条件变化
@@ -398,14 +395,6 @@ export function TimelinePage({
                 <Clock className="w-4 h-4" />
                 <span>往年今日</span>
               </button>
-              {/* 分享按钮 */}
-              <button
-                onClick={() => setShowShareCard(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 rounded-full text-sm hover:bg-amber-600 transition-colors"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">分享</span>
-              </button>
             </div>
           </div>
           
@@ -634,20 +623,6 @@ export function TimelinePage({
         <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
       </button>
 
-      {/* 隐藏的分享卡片模板 */}
-      <div ref={shareCardRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <div style={{ width: 375, padding: 32, background: 'linear-gradient(135deg, #FF6B6B, #FFA500)', borderRadius: 16 }}>
-          <div style={{ textAlign: 'center', marginBottom: 16 }}>
-            <span style={{ fontSize: 28, fontWeight: 'bold', color: '#fff' }}>📅 时光轴</span>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 12, padding: 24 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>我的宝贝时光</h3>
-            <p style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>
-              记录宝贝成长的每一个珍贵瞬间，快来看看吧~
-            </p>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 12 }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>长按保存分享 · 宝贝时光</span>
           </div>
         </div>
       </div>
