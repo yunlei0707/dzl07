@@ -26,10 +26,10 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const [photos, setPhotos] = useState(moment?.photos || []);
   const [videos, setVideos] = useState(moment?.videos || []); // [{url, cover, name, size}]
   const [audios, setAudios] = useState(moment?.audios || []); // [{url, duration, waveform}]
-  const [mood, setMood] = useState(moment?.mood || "");
+  const [mood, setMood] = useState(moment?.mood || '');
   const [location, setLocation] = useState(moment?.location || '');
-  const [moodEmoji, setMoodEmoji] = useState(moment?.moodEmoji || "");
-  const [moodLabel, setMoodLabel] = useState(moment?.moodLabel || "");
+  const [moodEmoji, setMoodEmoji] = useState(moment?.moodEmoji || '');
+  const [moodLabel, setMoodLabel] = useState(moment?.moodLabel || '');
   const [locationCoords, setLocationCoords] = useState(moment?.locationCoords || null);
   const [milestone, setMilestone] = useState(moment?.milestone || '');
   const [milestoneLabel, setMilestoneLabel] = useState(moment?.milestoneLabel || '');
