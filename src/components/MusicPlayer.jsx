@@ -434,14 +434,12 @@ export function MusicPlayer() {
               <div className="text-center py-12">
                 <Music className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                 <p className="text-gray-500 mb-2">该分类暂无音乐</p>
-                {selectedCategory !== 'all' && (
-                  <button
+                <button
                     onClick={() => fileInputRef.current?.click()}
                     className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm"
                   >
                     添加音乐
-                  </button>
-                )}
+                  </button>}
               </div>
             )}
           </div>

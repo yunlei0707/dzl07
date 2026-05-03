@@ -113,7 +113,7 @@ export function MusicProvider({ children }) {
     if (!audioRef.current || playlist.length === 0) return;
     try {
       audioRef.current.volume = isMuted ? 0 : volume;
-      await audioRef.current.play();
+      await audioRef.current.play().catch(e => console.error("播放失败:", e));
       setIsPlaying(true);
     } catch (error) {
       console.error('播放失败:', error);
@@ -281,7 +281,7 @@ export function MusicProvider({ children }) {
     if (audioRef.current && currentMusic?.url) {
       audioRef.current.src = currentMusic.url;
       if (isPlaying) {
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().catch(e => console.error("播放失败:", e)).catch(() => {});
       }
     }
   }, [currentMusic, isPlaying]);
