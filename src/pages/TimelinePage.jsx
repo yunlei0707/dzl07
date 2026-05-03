@@ -10,7 +10,7 @@ import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
-import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment } from '../utils/db';
+import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown } from 'lucide-react';
 
 // 类型筛选选项
