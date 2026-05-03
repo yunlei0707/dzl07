@@ -374,12 +374,12 @@ export function MusicPlayer() {
                 className="px-6 py-3 bg-gradient-to-r from-primary-500 to-pink-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-shadow"
               >
                 添加音乐
+              </button>
               <button
                 onClick={importSampleMusic}
                 className="mt-3 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 导入示例音乐
-              </button>
               </button>
             </div>
           )}
