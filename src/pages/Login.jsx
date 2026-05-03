@@ -19,7 +19,7 @@ export function LoginPage({ onLogin }) {
   
   // 忘记密码模态框
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotStep, setForgotStep] = useState(1); // 1: 输入用户名, 2: 安全问题, 3: 显示密码
+  const [forgotStep, setForgotStep] = useState(1); // 1: 输入昵称, 2: 安全问题, 3: 显示密码
   const [forgotNickname, setForgotNickname] = useState('');
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
@@ -55,7 +55,7 @@ export function LoginPage({ onLogin }) {
       // 跳转到首页
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err.message || '登录失败，请检查用户名和密码');
+      setError(err.message || '登录失败，请检查昵称和密码');
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +111,7 @@ export function LoginPage({ onLogin }) {
     setRevealedPassword('');
   };
 
-  // 验证用户名（获取安全问题）
+  // 验证昵称（获取安全问题）
   const handleVerifyUsername = async () => {
     if (!forgotNickname.trim()) {
       setError('请输入昵称');
@@ -188,16 +188,16 @@ export function LoginPage({ onLogin }) {
 
       {/* 登录表单 */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
-        {/* 用户名输入 */}
+        {/* 昵称输入 */}
         <div className="relative">
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
             <User className="w-5 h-5" />
           </div>
           <input
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="请输入用户名"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="请输入昵称"
             className="input-field pl-12 pr-4"
             autoComplete="username"
             disabled={isLoading}
@@ -301,7 +301,7 @@ export function LoginPage({ onLogin }) {
               找回密码
             </h3>
 
-            {/* 步骤1：输入用户名 */}
+            {/* 步骤1：输入昵称 */}
             {forgotStep === 1 && (
               <div className="space-y-4">
 <p className="text-sm text-gray-500">请输入您注册的昵称</p>
