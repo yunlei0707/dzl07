@@ -476,7 +476,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
         
-        {/* 自定义里程碑 */}
+        {/* 里程碑自定义 */}
         <button
           onClick={() => {
             setEditingMilestone(null);
@@ -489,7 +489,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
             <Tag className="w-5 h-5 text-yellow-500" />
           </div>
           <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">自定义里程碑</span>
+            <span className="font-medium dark:text-white">里程碑自定义</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">管理您的专属成长里程碑</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -824,7 +824,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
             {/* 已有里程碑列表 */}
             {customMilestones.length > 0 && (
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的自定义里程碑</h4>
+                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的里程碑自定义</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {customMilestones.map(ms => (
                     <div
