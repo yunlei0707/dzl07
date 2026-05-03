@@ -139,8 +139,6 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
           )}
         </div>
       </div>
-      
-      {/* 里程碑标签 */}
       {moment.milestone && moment.milestoneLabel && (
         <div className="mb-3">
           <span className={`milestone-tag ${milestoneTypes[moment.milestone]?.className || 'daily'}`}>
@@ -267,6 +265,13 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
         {moment.mood && (
           <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
             <span>{moodEmojis[moment.mood]}</span>
+          </span>
+        )}
+
+        {moment.milestone && moment.milestoneLabel && (
+          <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+            <span>{milestoneTypes[moment.milestone]?.emoji || "✨"}</span>
+            <span>{moment.milestoneLabel}</span>
           </span>
         )}
         {moment.weather && (
