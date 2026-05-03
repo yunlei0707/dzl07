@@ -1,23 +1,22 @@
-const CACHE_NAME = 'baby-time-v2';
+// 升级缓存版本到v3
+const CACHE_NAME = 'baby-time-v3';
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/manifest.json'
 ];
 
-// 安装事件 - 缓存核心资源
+// 安装事件 - 只缓存静态资源
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('缓存已打开');
+        console.log('缓存已打开，只缓存静态资源');
         return cache.addAll(urlsToCache);
       })
   );
   self.skipWaiting();
 });
 
-// 激活事件 - 清理旧缓存
+// 激活事件 - 清理所有旧缓存
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,11 +33,26 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 请求拦截 - 网络优先，缓存兜底
+// 请求拦截 - 网络优先，只缓存非HTML的静态资源
 self.addEventListener('fetch', (event) => {
   // 只处理GET请求
   if (event.request.method !== 'GET') return;
   
+  const url = new URL(event.request.url);
+  
+  // HTML页面永远从网络获取，不缓存
+  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
+  // JS/CSS文件也永远从网络获取，避免版本问题
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 其他资源：网络优先，缓存兜底
   event.respondWith(
     fetch(event.request)
       .then((response) => {

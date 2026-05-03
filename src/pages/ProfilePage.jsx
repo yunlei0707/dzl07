@@ -996,6 +996,63 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                 {/* 关于 */}
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                
+                {/* 导入示例数据 */}
+                <button
+                  onClick={async () => {
+                    if (!currentBaby) {
+                      showToast("请先创建宝宝档案", "error");
+                      return;
+                    }
+                    try {
+                      showToast("正在导入示例数据...", "info");
+                      const sampleMoments = [
+                        {
+                          babyId: currentBaby.id,
+                          type: "photo",
+                          content: "今天宝宝第一次自己翻身了，太开心了！",
+                          mood: "happy",
+                          milestone: "first",
+                          media: [{ type: "image", url: "https://picsum.photos/seed/baby1/400/600" }],
+                          createdAt: new Date().toISOString()
+                        },
+                        {
+                          babyId: currentBaby.id,
+                          type: "diary",
+                          content: "今天天气很好，带宝宝去公园散步。宝宝第一次看到这么多花，眼睛都看直了！",
+                          mood: "excited",
+                          milestone: "daily",
+                          media: [],
+                          createdAt: new Date(Date.now() - 86400000).toISOString()
+                        },
+                        {
+                          babyId: currentBaby.id,
+                          type: "photo",
+                          content: "宝宝第一次自己拿勺子吃饭，虽然弄得到处都是，但值得纪念！",
+                          mood: "happy",
+                          milestone: "first",
+                          media: [{ type: "image", url: "https://picsum.photos/seed/baby2/400/400" }],
+                          createdAt: new Date(Date.now() - 172800000).toISOString()
+                        }
+                      ];
+                      
+                      for (const moment of sampleMoments) {
+                        await addMoment(moment);
+                      }
+                      
+                      const updatedMoments = await getMomentsByBaby(currentBaby.id);
+                      setMoments(updatedMoments);
+                      showToast("示例数据导入成功！", "success");
+                    } catch (error) {
+                      console.error("导入失败:", error);
+                      showToast("导入失败，请重试", "error");
+                    }
+                  }}
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
+                >
+                  <span className="text-2xl">✨</span>
+                  <span className="font-medium dark:text-white">导入示例数据</span>
+                </button>
                     宝贝时光 v1.0
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">

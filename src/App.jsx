@@ -89,6 +89,30 @@ function AppContent() {
   // 回收站状态
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   
+  // Service Worker 更新检测和缓存清理
+  useEffect(() => {
+    // 检查并更新 Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          registration.update();
+        }
+      });
+    }
+    
+    // 清理旧缓存
+    const clearOldCaches = async () => {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        cacheNames.forEach((name) => {
+          if (name !== 'baby-time-v3' && name.startsWith('baby-time')) {
+            caches.delete(name);
+          }
+        });
+      }
+    };
+    clearOldCaches();
+  }, []);
   // 月度报告状态
   const [showMonthlyReport, setShowMonthlyReport] = useState(false);
   
