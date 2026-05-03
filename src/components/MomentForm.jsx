@@ -765,7 +765,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                 {videos.map((video, index) => (
                   <div key={index} className="relative aspect-video rounded-xl overflow-hidden bg-gray-800">
                     {video.cover ? (
-                      <img src={video.cover} alt="视频封面" className="w-full h-full object-cover" />
+                    <img src={video.cover} alt="视频封面" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-700">
                         <Video className="w-12 h-12 text-gray-500" />
