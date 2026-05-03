@@ -27,6 +27,45 @@ const STORAGE_KEYS = {
   CUSTOM_CATEGORIES: 'babytime_custom_categories',
 };
 
+// 示例音乐数据 - 使用真实可访问的URL
+const SAMPLE_MUSIC = [
+  {
+    title: "轻柔钢琴曲 - 月光",
+    artist: "古典音乐",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    cover: "🎹",
+    category: "piano"
+  },
+  {
+    title: "自然雨声 - 森林",
+    artist: "自然声",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    cover: "🌿",
+    category: "nature"
+  },
+  {
+    title: "助眠音乐 - 星空",
+    artist: "轻音乐",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    cover: "🌙",
+    category: "sleep"
+  },
+  {
+    title: "儿歌 - 小星星",
+    artist: "儿童音乐",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    cover: "👶",
+    category: "children"
+  },
+  {
+    title: "钢琴曲 - 梦",
+    artist: "古典音乐",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    cover: "🎹",
+    category: "piano"
+  }
+];
+
 export function MusicProvider({ children }) {
   const audioRef = useRef(null);
   const [playlist, setPlaylist] = useState([]);
@@ -187,6 +226,20 @@ export function MusicProvider({ children }) {
     setTimeout(() => play(), 300);
   }, [play]);
 
+  // 导入示例音乐
+  const importSampleMusic = useCallback(() => {
+    const sampleWithIds = SAMPLE_MUSIC.map((music, index) => ({
+      id: "sample_" + Date.now() + "_" + index,
+      ...music,
+      isSample: true,
+      addedAt: new Date().toISOString(),
+    }));
+    setPlaylist(prev => [...sampleWithIds, ...prev]);
+    setCurrentIndex(0);
+    setTimeout(() => play(), 300);
+  }, [play]);
+
+
   // 删除音乐
   const deleteMusic = useCallback((musicId) => {
     const music = playlist.find(m => m.id === musicId);
@@ -310,6 +363,7 @@ export function MusicProvider({ children }) {
     playMusic,
     addLocalMusic,
     deleteMusic,
+    importSampleMusic,
     updateMusicCategory,
     updateMusicCover,
     addCustomCategory,
