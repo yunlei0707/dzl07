@@ -13,6 +13,7 @@ export function VirtualTimePage() {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [fullscreenItem, setFullscreenItem] = useState(null);
   const [copied, setCopied] = useState(false);
+  const shareCardRef = useRef(null);
 
   const handleTopicClick = (topic) => {
     setSelectedTopic(topic);
@@ -43,9 +44,6 @@ export function VirtualTimePage() {
       showToast('复制失败', 'error');
     });
   }, [showToast]);
-
-  // 打开分享卡片
-  }, []);
 
   // 渲染内容卡片
   const renderContentCard = (item, topic) => {
@@ -495,25 +493,6 @@ export function VirtualTimePage() {
           </div>
         </div>
       )}
-
-      {/* 隐藏的分享卡片模板 */}
-        <div style={{ width: 375, padding: 32, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 16 }}>
-          <div style={{ textAlign: 'center', marginBottom: 16 }}>
-            <span style={{ fontSize: 28, fontWeight: 'bold', color: '#fff' }}>✨ 虚拟时光 ✨</span>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 12, padding: 24 }}>
-            <p style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>
-            </p>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 12 }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>长按保存分享 · 宝贝时光</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 分享卡片弹窗 */}
-        title="虚拟时光"
-      />
     </div>
   );
 }

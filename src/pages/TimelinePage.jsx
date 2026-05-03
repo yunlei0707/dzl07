@@ -614,18 +614,14 @@ export function TimelinePage({
           onClose={() => setSelectedPhotos(null)}
         />
       )}
-      
-      {/* 右下角添加按钮 */}
       <button
         onClick={onAddMoment}
+      
         className="fixed right-4 bottom-20 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform hover:shadow-xl"
       >
         <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
       </button>
 
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
