@@ -927,7 +927,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           <div className="flex gap-2">
             {weatherOptions.map(option => (
               <button
-                key={option.id}
+                key={option.value}
                 onClick={() => setWeather(weather === option.value ? '' : option.value)}
                 className={`px-3 py-2 rounded-xl text-sm transition-colors ${
                   weather === option.value
