@@ -26,9 +26,10 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const [photos, setPhotos] = useState(moment?.photos || []);
   const [videos, setVideos] = useState(moment?.videos || []); // [{url, cover, name, size}]
   const [audios, setAudios] = useState(moment?.audios || []); // [{url, duration, waveform}]
-  const [mood, setMood] = useState(moment?.mood || '');
-  const [weather, setWeather] = useState(moment?.weather || '');
+  const [mood, setMood] = useState(moment?.mood || "");
   const [location, setLocation] = useState(moment?.location || '');
+  const [moodEmoji, setMoodEmoji] = useState(moment?.moodEmoji || "");
+  const [moodLabel, setMoodLabel] = useState(moment?.moodLabel || "");
   const [locationCoords, setLocationCoords] = useState(moment?.locationCoords || null);
   const [milestone, setMilestone] = useState(moment?.milestone || '');
   const [milestoneLabel, setMilestoneLabel] = useState(moment?.milestoneLabel || '');
@@ -554,6 +555,8 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       videos: type === 'video' ? videos : [],
       audios: type === 'audio' ? audios : [],
       mood,
+      moodLabel: mood ? moodLabel : '',
+      moodEmoji: mood ? moodEmoji : '',
       weather,
       location,
       locationCoords,
@@ -892,10 +895,20 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           <div className="flex gap-2">
             {moodOptions.map(option => (
               <button
-                key={option.value}
-                onClick={() => setMood(mood === option.value ? '' : option.value)}
+                key={option.id}
+                onClick={() => {
+                  if (mood === option.id) {
+                    setMood('');
+                    setMoodLabel('');
+                    setMoodEmoji('');
+                  } else {
+                    setMood(option.id);
+                    setMoodLabel(option.label);
+                    setMoodEmoji(option.emoji);
+                  }
+                }}
                 className={`px-3 py-2 rounded-xl text-sm transition-colors ${
-                  mood === option.value
+                  mood === option.id
                     ? 'bg-primary-500 text-white'
                     : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
@@ -914,7 +927,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           <div className="flex gap-2">
             {weatherOptions.map(option => (
               <button
-                key={option.value}
+                key={option.id}
                 onClick={() => setWeather(weather === option.value ? '' : option.value)}
                 className={`px-3 py-2 rounded-xl text-sm transition-colors ${
                   weather === option.value
