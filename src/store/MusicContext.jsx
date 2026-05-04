@@ -32,39 +32,33 @@ const SAMPLE_MUSIC = [
   {
     title: "轻柔钢琴曲 - 月光",
     artist: "古典音乐",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    url: "https://www.w3schools.com/html/horse.ogg",
     cover: "🎹",
     category: "piano"
   },
   {
     title: "自然雨声 - 森林",
     artist: "自然声",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    url: "https://www.w3schools.com/html/horse.ogg",
     cover: "🌿",
     category: "nature"
   },
   {
     title: "助眠音乐 - 星空",
     artist: "轻音乐",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    url: "https://www.w3schools.com/html/horse.ogg",
     cover: "🌙",
     category: "sleep"
   },
   {
     title: "儿歌 - 小星星",
     artist: "儿童音乐",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    url: "https://www.w3schools.com/html/horse.ogg",
     cover: "👶",
     category: "children"
   },
-  {
-    title: "钢琴曲 - 梦",
-    artist: "古典音乐",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-    cover: "🎹",
-    category: "piano"
-  }
 ];
+
 
 export function MusicProvider({ children }) {
   const audioRef = useRef(null);
@@ -201,16 +195,22 @@ export function MusicProvider({ children }) {
     const index = playlist.findIndex(m => m.id === musicId);
     if (index !== -1) {
       setCurrentIndex(index);
-      // 强制确保 audio src 更新后再播放
+      setIsPlaying(true);
+      // 确保音频元素已初始化
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      // 强制设置 src 并播放
       setTimeout(() => {
         if (audioRef.current && playlist[index]?.url) {
           audioRef.current.src = playlist[index].url;
+          audioRef.current.volume = isMuted ? 0 : volume;
           audioRef.current.load();
-          play();
+          audioRef.current.play().catch(e => console.log("播放失败:", e));
         }
-      }, 50);
+      }, 30);
     }
-  }, [playlist, play]);
+  }, [playlist, volume, isMuted]);
 
   // 添加本地音乐
   const addLocalMusic = useCallback((file, category = 'piano') => {
