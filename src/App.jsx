@@ -3,25 +3,28 @@
  * 记录宝宝成长点滴的移动端单页应用
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
-import { TimelinePage } from './pages/TimelinePage';
-import { StatsPage } from './pages/StatsPage';
-import { ProfilePage } from './pages/ProfilePage';
+// 懒加载页面组件 - 减小首屏体积
+const TimelinePage = lazy(() => import('./pages/TimelinePage'));
+const StatsPage = lazy(() => import('./pages/StatsPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const VirtualTimePage = lazy(() => import('./pages/VirtualTimePage'));
+const CapsulesPage = lazy(() => import('./pages/CapsulesPage'));
+// 弹窗组件保持立即加载（相对较小）
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { VirtualTimePage } from './pages/VirtualTimePage';
-import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
-import { RecycleBin } from './components/RecycleBin';
-import { MonthlyReport } from './components/MonthlyReport';
+// 非核心组件懒加载 - 点击时才加载
+const RecycleBin = lazy(() => import('./components/RecycleBin'));
+const MonthlyReport = lazy(() => import('./components/MonthlyReport'));
 import { 
   addMoment, 
   updateMoment, 
@@ -328,40 +331,50 @@ function AppContent() {
     showToast('已切换宝宝档案');
   };
   
-  // 渲染页面
+  // 渲染页面 - 懒加载组件用 Suspense 包裹
   const renderPage = () => {
     switch (activeTab) {
       case 'timeline':
         return (
-          <TimelinePage
-            onAddMoment={handleAddMoment}
-            onEditMoment={handleEditMoment}
-            onDeleteMoment={handleDeleteMoment}
-            onSwitchBaby={handleSwitchBaby}
-            onAddBaby={handleAddBaby}
-            filterType={filterType}
-            filterMood={filterMood}
-            filterMilestone={filterMilestone}
-            onClearFilters={clearFilters}
-          />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <TimelinePage
+              onAddMoment={handleAddMoment}
+              onEditMoment={handleEditMoment}
+              onDeleteMoment={handleDeleteMoment}
+              onSwitchBaby={handleSwitchBaby}
+              onAddBaby={handleAddBaby}
+              filterType={filterType}
+              filterMood={filterMood}
+              filterMilestone={filterMilestone}
+              onClearFilters={clearFilters}
+            />
+          </Suspense>
         );
       case 'stats':
         return (
-          <StatsPage
-            onOpenCapsules={() => setShowCapsulesPage(true)}
-            onStatClick={handleStatClick}
-            onOpenMonthlyReport={() => setShowMonthlyReport(true)}
-          />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <StatsPage
+              onOpenCapsules={() => setShowCapsulesPage(true)}
+              onStatClick={handleStatClick}
+              onOpenMonthlyReport={() => setShowMonthlyReport(true)}
+            />
+          </Suspense>
         );
       case 'virtual':
-        return <VirtualTimePage />;
+        return (
+          <Suspense fallback={<LoadingSkeleton />}>
+            <VirtualTimePage />
+          </Suspense>
+        );
       case 'profile':
         return (
-          <ProfilePage
-            onEditBaby={handleEditBaby}
-            onAddBaby={handleAddBaby}
-            onOpenRecycleBin={() => setShowRecycleBin(true)}
-          />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <ProfilePage
+              onEditBaby={handleEditBaby}
+              onAddBaby={handleAddBaby}
+              onOpenRecycleBin={() => setShowRecycleBin(true)}
+            />
+          </Suspense>
         );
       default:
         return null;
@@ -430,14 +443,18 @@ function AppContent() {
         />
       )}
       
-      {/* 回收站 */}
+      {/* 回收站 - 懒加载 */}
       {showRecycleBin && (
-        <RecycleBin onClose={() => setShowRecycleBin(false)} />
+        <Suspense fallback={<LoadingSkeleton />}>
+          <RecycleBin onClose={() => setShowRecycleBin(false)} />
+        </Suspense>
       )}
       
-      {/* 月度报告 */}
+      {/* 月度报告 - 懒加载 */}
       {showMonthlyReport && (
-        <MonthlyReport onClose={() => setShowMonthlyReport(false)} />
+        <Suspense fallback={<LoadingSkeleton />}>
+          <MonthlyReport onClose={() => setShowMonthlyReport(false)} />
+        </Suspense>
       )}
     </div>
   );

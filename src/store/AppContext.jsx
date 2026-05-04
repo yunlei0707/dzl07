@@ -146,10 +146,11 @@ export function AppProvider({ children }) {
         }
         
         // 加载动态和胶囊（如果有宝宝）
+        // 性能优化：只加载最新的20条动态，后续滚动按需加载
         if (baby) {
           try {
             const [babyMoments, babyCapsules] = await Promise.all([
-              getMomentsByBaby(baby.id),
+              getMomentsByBaby(baby.id, 0, 20),  // 只加载最新20条
               getCapsulesByBaby(baby.id)
             ]);
             setMoments(babyMoments);
@@ -185,7 +186,8 @@ export function AppProvider({ children }) {
       const baby = babies.find(b => b.id === babyId);
       if (baby) {
         setCurrentBaby(baby);
-        const babyMoments = await getMomentsByBaby(babyId);
+        // 性能优化：只加载最新20条
+        const babyMoments = await getMomentsByBaby(babyId, 0, 20);
         const babyCapsules = await getCapsulesByBaby(babyId);
         setMoments(babyMoments);
         setCapsules(babyCapsules);
@@ -205,7 +207,8 @@ export function AppProvider({ children }) {
   // 刷新动态
   const refreshMoments = useCallback(async () => {
     if (currentBaby) {
-      const babyMoments = await getMomentsByBaby(currentBaby.id);
+      // 性能优化：只加载最新20条
+      const babyMoments = await getMomentsByBaby(currentBaby.id, 0, 20);
       setMoments(babyMoments);
     }
   }, [currentBaby]);

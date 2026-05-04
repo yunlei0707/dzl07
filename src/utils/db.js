@@ -46,6 +46,14 @@ export async function initDB() {
         userStore.createIndex('username', 'username', { unique: true });
         userStore.createIndex('createdAt', 'createdAt');
       }
+      
+      // 媒体文件独立存储表（性能优化：媒体与动态分离）
+      if (!db.objectStoreNames.contains('media')) {
+        const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
+        mediaStore.createIndex('momentId', 'momentId');  // 关联到动态
+        mediaStore.createIndex('type', 'type');          // photo/video
+        mediaStore.createIndex('createdAt', 'createdAt');
+      }
 
       // 访客打卡存储
       if (!db.objectStoreNames.contains('visits')) {
@@ -142,12 +150,29 @@ export async function deleteBaby(id) {
 // ==================== 动态记录操作 ====================
 
 /**
- * 获取某个宝宝的所有动态
+ * 获取某个宝宝的动态（分页查询，性能优化）
+ * 只加载需要的数据，避免一次读取全部
+ * 向后兼容：先用现有索引读取，再在内存中分页
  */
-export async function getMomentsByBaby(babyId) {
+export async function getMomentsByBaby(babyId, offset = 0, limit = 20) {
   const db = await initDB();
   const moments = await db.getAllFromIndex('moments', 'babyId', babyId);
+  
   // 过滤未删除的记录，按日期倒序排列
+  const filtered = moments
+    .filter(m => !m.isDeleted)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  // 返回分页数据
+  return filtered.slice(offset, offset + limit);
+}
+
+/**
+ * 获取某个宝宝的所有动态（用于导出等场景，慎用）
+ */
+export async function getAllMomentsByBaby(babyId) {
+  const db = await initDB();
+  const moments = await db.getAllFromIndex('moments', 'babyId', babyId);
   return moments
     .filter(m => !m.isDeleted)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
