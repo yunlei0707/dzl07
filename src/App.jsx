@@ -6,7 +6,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
-import { MusicProvider } from './store/MusicContext';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
@@ -24,7 +23,6 @@ import { RegisterPage } from './pages/Register';
 import { InvitePage } from './pages/InvitePage';
 import { RecycleBin } from './components/RecycleBin';
 import { MonthlyReport } from './components/MonthlyReport';
-import { MusicPlayer } from './components/MusicPlayer';
 import { 
   addMoment, 
   updateMoment, 
@@ -381,9 +379,6 @@ function AppContent() {
       {/* Toast 提示 */}
       <Toast />
       
-      {/* MusicPlayer 全局显示 */}
-      <MusicPlayer />
-      
       {/* 动态表单 */}
       {showMomentForm && (
         <MomentForm
@@ -495,9 +490,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
-        <MusicProvider>
-          <AppRoutes />
-        </MusicProvider>
+        <AppRoutes />
       </AppProvider>
     </BrowserRouter>
   );
