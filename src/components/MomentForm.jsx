@@ -84,6 +84,23 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   }, []);
   
 
+  // 照片上传
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotos(prev => [...prev, event.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // 重置input以便重复选择同一文件
+    e.target.value = '';
+  };
+
   // 视频上传 - 生成封面图并存储视频数据
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
