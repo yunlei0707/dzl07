@@ -180,38 +180,32 @@ export function LoginPage({ onLogin }) {
         </div>
       </div>
 
-      {/* 选择角色后显示的欢迎区域 */}
-      {selectedRole && (
-        <div className="w-full max-w-sm z-10 mb-4">
-          <div className={`bg-gradient-to-r ${selectedRole.color} rounded-xl p-4 shadow-lg text-center`}>
-            <div className="text-4xl mb-2">{selectedRole.icon}</div>
-            <div className="text-white text-lg font-bold">{selectedRole.welcome}</div>
-            <div className="text-white/80 text-sm mt-1">点击下方按钮开始记录美好时光</div>
-          </div>
-        </div>
-      )}
-
-      {/* 登录按钮 */}
+      {/* 登录按钮 - 选择角色后显示欢迎卡片样式按钮 */}
       <button
         onClick={handleLogin}
         disabled={!selectedRole || isLoading}
-        className={`btn-primary w-full max-w-sm flex items-center justify-center gap-2 z-10 py-4 text-base font-bold rounded-xl shadow-lg transition-all ${
-          !selectedRole ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+        className={`w-full max-w-sm z-10 flex items-center justify-center transition-all ${
+          selectedRole 
+            ? `bg-gradient-to-r ${selectedRole.color} rounded-xl p-4 shadow-lg hover:scale-105 active:scale-95` 
+            : 'btn-primary py-4 rounded-xl shadow-lg opacity-50 cursor-not-allowed'
         }`}
-        style={selectedRole ? {
-          background: `linear-gradient(to right, var(--tw-gradient-stops))`,
-        } : {}}
       >
         {isLoading ? (
-          <>
+          <div className="flex items-center gap-2">
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>进入中...</span>
-          </>
+            <span className="text-white font-bold">进入中...</span>
+          </div>
+        ) : selectedRole ? (
+          <div className="text-center">
+            <div className="text-4xl mb-1">{selectedRole.icon}</div>
+            <div className="text-white text-lg font-bold flex items-center gap-2 justify-center">
+              <Heart className="w-5 h-5" />
+              {selectedRole.welcome}
+            </div>
+            <div className="text-white/80 text-xs mt-1">点击开始记录美好时光</div>
+          </div>
         ) : (
-          <>
-            <Heart className="w-5 h-5" />
-            <span>{selectedRole ? selectedRole.welcome : '请先选择您的身份'}</span>
-          </>
+          <span className="font-bold">请先选择您的身份</span>
         )}
       </button>
 
