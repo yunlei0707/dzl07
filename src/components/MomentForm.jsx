@@ -68,15 +68,17 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const markerRef = useRef(null);
   const geocoderRef = useRef(null);
 
-  // 获取所有里程碑选项
-  const milestoneOptions = getAllMilestones();
+  // 获取所有里程碑选项（加安全防御）
+  const milestoneOptions = Array.isArray(getAllMilestones()) ? getAllMilestones() : [];
   
-  // 获取所有心情选项（预设 + 自定义）
-  const moodOptions = getAllMoods().map(mood => ({
-    value: mood.id,
-    label: mood.label,
-    emoji: mood.emoji
-  }));
+  // 获取所有心情选项（预设 + 自定义，加安全防御）
+  const moodOptions = Array.isArray(getAllMoods()) 
+    ? getAllMoods().map(mood => ({
+        value: mood.id,
+        label: mood.label,
+        emoji: mood.emoji
+      }))
+    : [];
 
 
   // 清理录音资源
@@ -829,16 +831,18 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                       <div className="flex-1">
                         <div className="h-8 bg-primary-200 dark:bg-primary-700 rounded-full overflow-hidden flex items-end px-1">
                           {Array.isArray(audio.waveform) && audio.waveform.length > 0 ? (
-                            audio.waveform.slice(-40).map((frame, i) => (
-                              <div
-                                key={i}
-                                className="w-1 bg-primary-500 mx-px rounded-full"
-                                style={{ height: `${Math.max(4, (Array.isArray(frame) ? frame[0] : frame) / 4)}%` }}
-                              />
-                            ))
-                          ) : (
-                            <div className="flex-1" />
-                          )}
+                            audio.waveform.slice(-40).map((frame, i) => {
+                              // 兼容一维数组和二维数组格式
+                              const height = Array.isArray(frame) ? frame[0] : frame;
+                              return (
+                                <div
+                                  key={i}
+                                  className="w-1 bg-primary-500 mx-px rounded-full"
+                                  style={{ height: `${Math.max(4, (Number(height) || 0) / 4)}%` }}
+                                />
+                              );
+                            })
+                          ) : null}
                         </div>
                       </div>
                       <span className="text-sm text-gray-500">{formatTime2(audio.duration)}</span>
