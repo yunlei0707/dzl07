@@ -131,8 +131,11 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
         type: 'video',
         date: date2.toISOString(),
         content: '今天学会了爬行，追着球球跑得好开心呀！',
-        video: 'https://www.w3schools.com/html/mov_bbb.mp4',
-        thumbnail: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+        videos: [{
+          url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+          cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+          duration: 10
+        }],
         mood: 'excited',
         weather: 'cloudy',
         milestone: 'growth',

@@ -204,11 +204,12 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                     {audio.waveform?.length > 0 ? (
                       audio.waveform.slice(-40).map((frame, i) => (
                         <div key={i} className="flex items-center gap-px h-full">
-                          {frame?.slice(0, 6).map((v, j) => (
+                          {/* 兼容：一维数组（frame是数字）或二维数组（frame是数组） */}
+                          {(Array.isArray(frame) ? frame.slice(0, 6) : [frame]).map((v, j) => (
                             <div
                               key={j}
                               className="w-1 bg-primary-300 dark:bg-primary-600 rounded-full"
-                              style={{ height: `${Math.max(10, (v / 255) * 100)}%` }}
+                              style={{ height: `${Math.max(10, ((v || 0) / 255) * 100)}%` }}
                             />
                           ))}
                         </div>
