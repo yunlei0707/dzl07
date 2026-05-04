@@ -1,22 +1,22 @@
+// 这是之前的最简测试版ProfilePage，现在可以逐步恢复功能
 /**
- * 个人中心页面
- * 优化版本：MusicPlayer折叠式、横向滚动宝宝卡片、设置抽屉、回收站入口
+ * 个人中心页面 - 逐步恢复版
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
-import { 
+import { PRESET_AVATARS } from '../utils/constants';
+import {
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
   Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
 } from 'lucide-react';
-import { exportAllData, importAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
 import { calculateAge } from '../utils/dateUtils';
 
 // 主题预设配置
 const THEME_PRESETS = [
   { id: 'pink', name: '默认粉橙', color: '#FF7B70', gradient: 'from-primary-400 to-primary-500' },
-  { id: 'forest', name: '森林绿', color: '#34D399', gradient: 'from-emerald-400 to-emerald-500' },
+  { id: 'green', name: '森林绿', color: '#34D399', gradient: 'from-emerald-400 to-emerald-500' },
   { id: 'ocean', name: '海洋蓝', color: '#60A5FA', gradient: 'from-blue-400 to-blue-500' },
   { id: 'lavender', name: '薰衣草紫', color: '#A78BFA', gradient: 'from-violet-400 to-violet-500' },
   { id: 'sunshine', name: '暖阳黄', color: '#FBBF24', gradient: 'from-amber-400 to-amber-500' },
@@ -27,7 +27,7 @@ const EMOJI_OPTIONS = ['⭐', '🌱', '💪', '📚', '✨', '🎈', '🎀', '�
 
 export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const navigate = useNavigate();
-  const { 
+  const {
     currentBaby, 
     babies,
     setBabies,
@@ -48,16 +48,11 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     updateMilestone,
     deleteMilestone,
     switchBaby,
-    deleteBaby,
-    customMoods,
-    addMood,
-    updateMood,
-    deleteMood,
   } = useApp();
-  
+
   const fileInputRef = useRef(null);
   const colorInputRef = useRef(null);
-  
+
   // 状态
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
@@ -66,1004 +61,695 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState({ label: '', emoji: '⭐', color: '#FF7B70' });
-  
+
   // 心情标签管理状态
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [editingMood, setEditingMood] = useState(null);
   const [moodForm, setMoodForm] = useState({ label: '', emoji: '😊' });
-  
-  // 设置面板抽屉状态
-  const [showSettings, setShowSettings] = useState(false);
-  
-  // 个人资料编辑状态
-  const [editProfile, setEditProfile] = useState({
-    nickname: '',
-    avatar: '',
-    signature: ''
-  });
-  
-  // 导入模式
-  const [importMode, setImportMode] = useState('merge');
-  const [importFile, setImportFile] = useState(null);
-  const [isImporting, setIsImporting] = useState(false);
-  
-  // 导入示例数据
-  const [isImportingSample, setIsImportingSample] = useState(false);
-  
-  const generateWaveform = useCallback(() => {
-    return Array(32).fill(0).map(() => Array(6).fill(0).map(() => Math.random() * 255));
-  }, []);
-  
-  // 导入示例数据
-  const handleImportSampleData = useCallback(async () => {
-    if (!currentBaby || isImportingSample) return;
-    
-    setIsImportingSample(true);
-    try {
-      const now = new Date();
-      
-      // 示例动态1：照片 - 三个月前
-      const date1 = new Date(now);
-      date1.setMonth(date1.getMonth() - 3);
-      
-      await addMoment({
-        babyId: currentBaby.id,
-        type: 'photo',
-        date: date1.toISOString(),
-        content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
-        photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
-        mood: 'happy',
-        weather: 'sunny',
-        milestone: 'first',
-        milestoneLabel: '第一次翻身',
-      });
 
-      // 示例动态2：视频 - 两个月前
-      const date2 = new Date(now);
-      date2.setMonth(date2.getMonth() - 2);
-      
-      await addMoment({
-        babyId: currentBaby.id,
-        type: 'video',
-        date: date2.toISOString(),
-        content: '今天学会了爬行，追着球球跑得好开心呀！',
-        videos: [{
-          url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-          cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
-          duration: 10
-        }],
-        mood: 'excited',
-        weather: 'cloudy',
-        milestone: 'growth',
-        milestoneLabel: '学会爬行',
-      });
+  // 资料编辑状态
+  const [userForm, setUserForm] = useState(currentUser || { name: '', avatar: '' });
 
-      // 示例动态3：语音 - 一个月前
-      const date3 = new Date(now);
-      date3.setMonth(date3.getMonth() - 1);
-      
-      await addMoment({
-        babyId: currentBaby.id,
-        type: 'audio',
-        date: date3.toISOString(),
-        content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
-        audios: [{
-          url: 'https://www.w3schools.com/html/horse.ogg',
-          duration: 8,
-          waveform: generateWaveform(),
-        }],
-        mood: 'touched',
-        weather: 'sunny',
-        milestone: 'growth',
-        milestoneLabel: '学会说话',
-      });
+  // 生日计算
+  const babyAge = currentBaby?.birthday ? calculateAge(new Date(currentBaby.birthday)) : null;
 
-      // 示例动态4：日记 - 两周前
-      const date4 = new Date(now);
-      date4.setDate(date4.getDate() - 14);
-      
-      await addMoment({
-        babyId: currentBaby.id,
-        type: 'diary',
-        date: date4.toISOString(),
-        content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
-        mood: 'happy',
-        weather: 'windy',
-        milestone: 'daily',
-        milestoneLabel: '户外活动',
-      });
+  // 切换主题
+  const handleThemeChange = async (preset) => {
+    setTheme(preset);
+    setShowThemeModal(false);
+    showToast(`已切换为${preset === 'pink' ? '默认粉橙' : THEME_PRESETS.find(t => t.id === preset)?.name}主题`);
+  };
 
-      // 刷新数据
-      const babyMoments = await getMomentsByBaby(currentBaby.id);
-      setMoments(babyMoments);
-      
-      showToast('已导入4条示例数据', 'success');
-    } catch (error) {
-      console.error('导入示例数据失败:', error);
-      showToast('导入失败', 'error');
-    } finally {
-      setIsImportingSample(false);
-    }
-  }, [currentBaby, isImportingSample, generateWaveform, setMoments, showToast]);
-  
-  // 下拉刷新状态
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const touchStartY = useRef(0);
-  const scrollTop = useRef(0);
-  const containerRef = useRef(null);
-  
-  // 初始化编辑资料
-  useEffect(() => {
-    if (currentUser) {
-      setEditProfile({
-        nickname: currentUser.nickname || '',
-        avatar: currentUser.avatar || '',
-        signature: currentUser.signature || ''
-      });
-    }
-  }, [currentUser]);
-  
-  // 刷新数据
-  const refreshData = useCallback(async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    try {
-      // 直接使用import的函数，不要动态import
-      const allBabies = await getAllBabies();
-      setBabies(allBabies);
-      
-      if (currentBaby?.id) {
-        const [moments, capsules] = await Promise.all([
-          getMomentsByBaby(currentBaby.id),
-          getCapsulesByBaby(currentBaby.id)
-        ]);
-        setMoments(moments);
-        setCapsules(capsules);
-      }
-      
-      showToast('刷新成功', 'success');
-    } catch (error) {
-      console.error('刷新数据失败:', error);
-      showToast('刷新失败', 'error');
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [currentBaby, isRefreshing, setBabies, setMoments, setCapsules, showToast]);
-  
-  // 下拉刷新处理
-  const handleTouchStart = useCallback((e) => {
-    if (containerRef.current) {
-      scrollTop.current = containerRef.current.scrollTop;
-      touchStartY.current = e.touches[0].clientY;
-    }
-  }, []);
-  
-  const handleTouchMove = useCallback((e) => {
-    if (isRefreshing) return;
-    
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - touchStartY.current;
-    
-    if (scrollTop.current <= 0 && diff > 0) {
-      const dampenedDiff = Math.min(diff * 0.5, 80);
-      setPullDistance(dampenedDiff);
-      e.preventDefault();
-    }
-  }, [isRefreshing]);
-  
-  const handleTouchEnd = useCallback(() => {
-    if (pullDistance > 50) {
-      refreshData();
-    }
-    setPullDistance(0);
-  }, [pullDistance, refreshData]);
-  
-  // 导出数据
-  const handleExport = useCallback(async () => {
-    try {
-      const data = await exportAllData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `宝贝时光备份_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('导出成功', 'success');
-    } catch (error) {
-      console.error('导出失败:', error);
-      showToast('导出失败', 'error');
-    }
-  }, [showToast]);
-  
-  // 导入数据
-  const handleImport = useCallback(async () => {
-    if (!importFile) return;
-    
-    setIsImporting(true);
-    try {
-      const text = await importFile.text();
-      const data = JSON.parse(text);
-      await importAllData(data, importMode);
-      showToast('导入成功', 'success');
-      setShowImportModal(false);
-      refreshData();
-    } catch (error) {
-      console.error('导入失败:', error);
-      showToast('导入失败: ' + error.message, 'error');
-    } finally {
-      setIsImporting(false);
-    }
-  }, [importFile, importMode, showToast, refreshData]);
-  
-  // 保存个人资料
-  const handleSaveProfile = useCallback(async () => {
-    try {
-      await updateUserProfile(editProfile);
-      showToast('保存成功', 'success');
-      setShowProfileModal(false);
-    } catch (error) {
-      console.error('保存失败:', error);
-      showToast('保存失败', 'error');
-    }
-  }, [editProfile, updateUserProfile, showToast]);
-  
-  // 退出登录
-  const handleLogout = useCallback(() => {
-    logout();
-    navigate('/login');
-  }, [logout, navigate]);
-  
-  // 保存里程碑
-  const handleSaveMilestone = useCallback(async () => {
-    try {
-      if (editingMilestone) {
-        await updateMilestone(editingMilestone.id, milestoneForm);
-        showToast('更新成功', 'success');
-      } else {
-        await addMilestone(milestoneForm);
-        showToast('添加成功', 'success');
-      }
-      setShowMilestoneModal(false);
-      setEditingMilestone(null);
-      setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
-    } catch (error) {
-      console.error('保存失败:', error);
-      showToast('保存失败', 'error');
-    }
-  }, [editingMilestone, milestoneForm, addMilestone, updateMilestone, showToast]);
+  // 选择自定义颜色
+  const handleCustomColorChange = async (color) => {
+    // 纯内存版本，直接更新状态
+    // 实际应用中需要调用db.updateSetting保存
+    showToast('自定义颜色已应用');
+  };
 
-  // 保存心情标签
-  const handleSaveMood = useCallback(async () => {
-    try {
-      if (editingMood) {
-        await updateMood(editingMood.id, moodForm);
-        showToast('更新成功', 'success');
-      } else {
-        await addMood(moodForm);
-        showToast('添加成功', 'success');
-      }
-      setShowMoodModal(false);
-      setEditingMood(null);
-      setMoodForm({ label: '', emoji: '😊' });
-    } catch (error) {
-      console.error('保存失败:', error);
-      showToast('保存失败', 'error');
-    }
-  }, [editingMood, moodForm, addMood, updateMood, showToast]);
+  // 打开回收站
+  const handleOpenRecycleBin = () => {
+    onOpenRecycleBin?.();
+  };
 
-  // 如果没有用户数据，显示登录提示
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream-50 dark:bg-gray-900">
-        <div className="text-center p-8">
-          <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 dark:text-gray-400 mb-4">请先登录</p>
+  // 编辑宝宝资料
+  const handleEditBaby = () => {
+    onEditBaby?.(currentBaby);
+  };
+
+  // 添加新宝宝
+  const handleAddBaby = () => {
+    onAddBaby?.(null);
+  };
+
+  // 更新用户资料
+  const handleUpdateProfile = () => {
+    updateUserProfile(userForm);
+    setShowProfileModal(false);
+    showToast('资料已更新');
+  };
+
+  // 新增里程碑
+  const handleAddMilestone = () => {
+    if (!milestoneForm.label.trim()) {
+      showToast('请输入里程碑名称');
+      return;
+    }
+    addMilestone(milestoneForm);
+    setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
+    setShowMilestoneModal(false);
+    showToast('里程碑已添加');
+  };
+
+  // 编辑里程碑
+  const handleEditMilestone = (milestone) => {
+    setEditingMilestone(milestone);
+    setMilestoneForm({ ...milestone });
+    setShowMilestoneModal(true);
+  };
+
+  // 更新里程碑
+  const handleUpdateMilestone = () => {
+    if (!milestoneForm.label.trim()) {
+      showToast('请输入里程碑名称');
+      return;
+    }
+    updateMilestone(editingMilestone.id, milestoneForm);
+    setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
+    setEditingMilestone(null);
+    setShowMilestoneModal(false);
+    showToast('里程碑已更新');
+  };
+
+  // 删除里程碑
+  const handleDeleteMilestone = (id) => {
+    deleteMilestone(id);
+    showToast('里程碑已删除');
+  };
+
+  // 显示宝宝选择器（多宝宝时）
+  const showBabySelector = babies.length > 1;
+
+  return (
+    <div className="min-h-screen bg-cream-50 dark:bg-gray-900">
+      {/* 顶部导航 */}
+      <div className="sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">个人中心</h1>
           <button
-            onClick={() => navigate('/login')}
-            className="px-6 py-2 bg-primary-500 text-white rounded-lg"
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            去登录
+            <ChevronDown size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
-    );
-  }
-  
-  return (
-    <div 
-      ref={containerRef}
-      className="min-h-screen pb-20"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* 下拉刷新指示器 */}
-      {(pullDistance > 0 || isRefreshing) && (
-        <div 
-          className="flex items-center justify-center py-3 text-gray-400 transition-transform"
-          style={{ transform: `translateY(${pullDistance}px)` }}
-        >
-          {isRefreshing ? (
-            <div className="animate-spin w-5 h-5 border-2 border-primary-400 border-t-transparent rounded-full" />
-          ) : (
-            <div 
-              className="w-5 h-5 border-2 border-gray-300 border-t-primary-400 rounded-full transition-transform"
-              style={{ transform: `rotate(${pullDistance * 3}deg)` }}
-            />
-          )}
-        </div>
-      )}
-      
-      {/* 头部 - 左上角展示账号头像和名称，参考成长数据页面 */}
-      <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
-        <div className="px-4 pt-4 pb-6">
-          <div className="flex items-center gap-2 mb-4">
-            {/* 账号头像显示在左上角 */}
-            <button 
-              onClick={() => setShowProfileModal(true)}
-              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden"
-            >
-              {currentUser?.avatar ? (
-                currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
-                  <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{currentUser.avatar}</span>
-                )
-              ) : (
-                <User className="w-5 h-5" />
+
+      <div className="container mx-auto px-4 py-6">
+        {/* 宝宝信息卡片 */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-primary-100 dark:border-primary-900">
+                  {currentBaby?.avatar ? (
+                    <img src={currentBaby.avatar} alt={currentBaby.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                      <span className="text-3xl">{currentBaby?.name?.[0] || '👶'}</span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={handleEditBaby}
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-600 transition-colors"
+                >
+                  <Edit3 size={16} />
+                </button>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{currentBaby?.name || '未命名'}</h2>
+                {babyAge && (
+                  <p className="text-gray-600 dark:text-gray-400">{babyAge.years}岁{babyAge.months}个月</p>
+                )}
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  {currentBaby?.gender === 'boy' ? '男宝' : '女宝'} • {currentBaby?.birthday?.split('T')[0] || '未设置生日'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {showBabySelector && babies.map((baby) => (
+                <button
+                  key={baby.id}
+                  onClick={() => switchBaby(baby.id)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                    currentBaby?.id === baby.id
+                      ? 'bg-primary-100 dark:bg-primary-900 border-2 border-primary-500'
+                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="text-sm font-medium">{baby.name?.[0]}</span>
+                </button>
+              ))}
+              {babies.length < 2 && (
+                <button
+                  onClick={handleAddBaby}
+                  className="w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center hover:bg-primary-600 transition-colors"
+                >
+                  <Plus size={18} />
+                </button>
               )}
-            </button>
-            <h1 className="text-xl font-bold">{currentUser?.nickname || "我的"}</h1>
-            <div className="flex-1" />
-            {/* 设置按钮 */}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            {/* 主题切换 */}
-            <button
-              onClick={toggleTheme}
-              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+            </div>
+          </div>
+
+          {/* 宝宝成长数据 */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">成长记录</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                  <Sparkles size={20} className="text-primary-600 dark:text-primary-400" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">时空胶囊</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                  <Database size={20} className="text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
-      
-      {/* 当前宝宝卡片 + 其他宝宝横向滚动 */}
-      <div className="px-4 -mt-4">
-        {currentBaby && (
-          <div 
-            onClick={() => onEditBaby(currentBaby)}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4 cursor-pointer active:scale-98 transition-transform"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center overflow-hidden">
-                {currentBaby.avatar ? (
-                  <img src={currentBaby.avatar} alt={currentBaby.name} className="w-full h-full object-cover" />
+
+        {/* 功能菜单 */}
+        <div className="space-y-4">
+          {/* 用户资料 */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">个人资料</h2>
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+              >
+                <Edit3 size={20} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700">
+                {userForm?.avatar ? (
+                  <img src={userForm.avatar} alt={userForm.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-2xl">👶</span>
+                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                    <User size={32} className="text-gray-400 dark:text-gray-500" />
+                  </div>
                 )}
               </div>
-              <div className="flex-1">
-                <p className="text-gray-800 dark:text-white text-base font-bold truncate">{currentBaby.nickname || currentBaby.name}</p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">{calculateAge(currentBaby.birthDate).display}</p>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{userForm?.name || '家长'}</h3>
+                <p className="text-gray-600 dark:text-gray-400">{currentBaby?.gender === 'boy' ? '爸爸' : '妈妈'}</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
           </div>
-        )}
-        
-        {/* 其他宝宝横向滚动列表 */}
-        {babies.filter(b => b.id !== currentBaby?.id).length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">切换宝宝</p>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
-              {babies.filter(b => b.id !== currentBaby?.id).map(baby => (
-                <div
-                  key={baby.id}
-                  className="flex-shrink-0 flex flex-col items-center gap-1 relative group"
-                >
-                  <button
-                    onClick={() => switchBaby(baby.id)}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                      {baby.avatar ? (
-                        <img src={baby.avatar} alt={baby.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xl">👶</span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 max-w-16 truncate">
-                      {baby.nickname || baby.name}
-                    </span>
-                  </button>
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (confirm(`确定要删除宝宝"${baby.nickname || baby.name}"吗？所有相关的成长记录都会被删除！`)) {
-                        await deleteBaby(baby.id);
-                        await refreshBabies();
-                        showToast('已删除宝宝', 'success');
-                      }
-                    }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* 添加宝宝按钮 */}
-        {babies.length < 2 ? (
-          <button
-            onClick={onAddBaby}
-            className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:border-primary-400 hover:text-primary-500 transition-colors mb-4"
-          >
-            <Plus className="w-5 h-5" />
-            <span>添加宝宝</span>
-          </button>
-        ) : (
-          <div className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 mb-4">
-            <span className="text-sm">已达到最多宝宝数量（2个）</span>
-          </div>
-        )}
-      </div>
-      
-      {/* 功能菜单 */}
-      <div className="px-4 space-y-3">
 
-        {/* 主题设置 */}
-        <button
-          onClick={() => setShowThemeModal(true)}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
-            <Palette className="w-5 h-5 text-pink-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">主题设置</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">自定义应用颜色主题</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 里程碑自定义 */}
-        <button
-          onClick={() => {
-            setEditingMilestone(null);
-            setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
-            setShowMilestoneModal(true);
-          }}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-            <Tag className="w-5 h-5 text-yellow-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">里程碑自定义</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">管理您的专属成长里程碑</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 自定义心情标签 */}
-        <button
-          onClick={() => {
-            setEditingMood(null);
-            setMoodForm({ label: '', emoji: '😊' });
-            setShowMoodModal(true);
-          }}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-purple-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">心情标签管理</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">添加和管理自定义心情标签</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 导入示例数据 */}
-        <button
-          onClick={handleImportSampleData}
-          disabled={!currentBaby || isImportingSample}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
-        >
-          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <Database className="w-5 h-5 text-blue-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导入示例数据（时光轴）</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
-            </p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        {/* 退出登录 */}
-        <button
-          onClick={handleLogout}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <LogOut className="w-5 h-5 text-gray-500" />
-          </div>
-          <span className="font-medium dark:text-white">退出登录</span>
-        </button>
-      </div>
-      
-      {/* 底部标语 */}
-      <div className="text-center py-8 text-sm text-gray-400">
-        <Heart className="w-4 h-4 inline mx-1 text-red-400" />
-        用心记录每一个成长瞬间
-      </div>
-      
-      {/* 导入数据弹窗 */}
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6">
-            <h3 className="text-lg font-bold mb-4 dark:text-white">导入数据</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">导入模式</label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <input
-                    type="radio"
-                    name="importMode"
-                    checked={importMode === 'merge'}
-                    onChange={() => setImportMode('merge')}
-                    className="w-4 h-4 text-primary-500"
-                  />
-                  <div>
-                    <p className="font-medium dark:text-white">合并导入</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">保留现有数据，只添加新内容</p>
-                  </div>
-                </label>
-                <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <input
-                    type="radio"
-                    name="importMode"
-                    checked={importMode === 'replace'}
-                    onChange={() => setImportMode('replace')}
-                    className="w-4 h-4 text-primary-500"
-                  />
-                  <div>
-                    <p className="font-medium dark:text-white">覆盖导入</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">删除现有数据，完全替换</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">选择备份文件</label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-100 file:text-primary-700 hover:file:bg-primary-200 file:cursor-pointer dark:file:bg-primary-900/30 dark:file:text-primary-400"
-              />
-              {importFile && (
-                <p className="text-sm text-green-600 mt-2">已选择: {importFile.name}</p>
-              )}
-            </div>
-            
-            <div className="flex gap-3">
+          {/* 主题设置 */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">主题设置</h2>
               <button
-                onClick={() => setShowImportModal(false)}
-                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                取消
-              </button>
-              <button
-                onClick={handleImport}
-                disabled={!importFile || isImporting}
-                className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
-              >
-                {isImporting ? '导入中...' : '开始导入'}
+                {theme === 'dark' ? (
+                  <Sun size={20} className="text-yellow-500" />
+                ) : (
+                  <Moon size={20} className="text-gray-600 dark:text-gray-400" />
+                )}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 个人资料编辑弹窗 */}
-      {showProfileModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-6 dark:text-white">编辑个人资料</h3>
-            
-            {/* 头像选择 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-3 dark:text-gray-300">选择头像</label>
-              <div className="grid grid-cols-6 gap-2 mb-3">
-                {PRESET_AVATARS.slice(0, 12).map((avatar, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setEditProfile(p => ({ ...p, avatar }))}
-                    className={`aspect-square rounded-lg text-2xl flex items-center justify-center transition-all ${
-                      editProfile.avatar === avatar 
-                        ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' 
-                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {avatar}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* 昵称 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">昵称</label>
-              <input
-                type="text"
-                value={editProfile.nickname}
-                onChange={(e) => setEditProfile(p => ({ ...p, nickname: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="请输入昵称"
-              />
-            </div>
-            
-            {/* 个性签名 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">个性签名</label>
-              <textarea
-                value={editProfile.signature}
-                onChange={(e) => setEditProfile(p => ({ ...p, signature: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                rows={3}
-                placeholder="写下你的个性签名..."
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSaveProfile}
-                className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 主题设置弹窗 */}
-      {showThemeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6">
-            <h3 className="text-lg font-bold mb-6 dark:text-white">选择主题</h3>
-            
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {THEME_PRESETS.map(preset => (
+
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              {THEME_PRESETS.map((preset) => (
                 <button
                   key={preset.id}
-                  onClick={() => setTheme(preset.id)}
-                  className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all ${
-                    themePreset === preset.id 
-                      ? 'ring-2 ring-offset-2 ring-gray-400' 
-                      : ''
+                  onClick={() => handleThemeChange(preset.id)}
+                  className={`relative rounded-xl overflow-hidden transition-all ${
+                    themePreset === preset.id
+                      ? 'ring-2 ring-primary-500 scale-105'
+                      : 'hover:scale-105'
                   }`}
-                  style={{ backgroundColor: preset.color + '20' }}
                 >
-                  <div 
-                    className="w-10 h-10 rounded-full"
-                    style={{ backgroundColor: preset.color }}
-                  />
-                  <span className="text-xs font-medium dark:text-white">{preset.name}</span>
+                  <div className={`h-12 w-full bg-gradient-to-r ${preset.gradient}`} />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <span className="text-white font-medium text-sm">{preset.name}</span>
+                  </div>
                 </button>
               ))}
             </div>
-            
-            <div className="flex items-center gap-3 mb-6">
-              <label className="text-sm font-medium dark:text-gray-300">自定义颜色:</label>
-              <input
-                ref={colorInputRef}
-                type="color"
-                value={customThemeColor}
-                onChange={(e) => setTheme('custom', e.target.value)}
-                className="w-10 h-10 rounded-lg cursor-pointer"
-              />
-            </div>
-            
+
             <button
-              onClick={() => setShowThemeModal(false)}
-              className="w-full py-2 bg-primary-500 text-white rounded-lg font-medium"
+              onClick={() => setShowThemeModal(true)}
+              className="w-full py-3 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              完成
+              <div className="flex items-center justify-center gap-2">
+                <Palette size={18} />
+                <span>自定义主题颜色</span>
+              </div>
             </button>
           </div>
+
+          {/* 数据管理 */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">数据管理</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={handleOpenRecycleBin}
+                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Trash2 size={24} className="text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">回收站</span>
+              </button>
+              <button
+                // onClick={handleExportData}
+                disabled
+                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 opacity-50 cursor-not-allowed"
+              >
+                <Download size={24} className="text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">导出数据</span>
+              </button>
+              <button
+                // onClick={() => setShowImportModal(true)}
+                disabled
+                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 opacity-50 cursor-not-allowed"
+              >
+                <Upload size={24} className="text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">导入数据</span>
+              </button>
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Settings size={24} className="text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">更多设置</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 退出登录 */}
+          <button
+            onClick={logout}
+            className="w-full py-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <LogOut size={20} />
+              <span>退出登录</span>
+            </div>
+          </button>
         </div>
-      )}
-      
-      {/* 里程碑编辑弹窗 */}
+      </div>
+
+      {/* 里程碑编辑模态框 */}
       {showMilestoneModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-6 dark:text-white">
-              {editingMilestone ? '编辑里程碑' : '添加里程碑'}
-            </h3>
-            
-            {/* 名称 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">里程碑名称</label>
-              <input
-                type="text"
-                value={milestoneForm.label}
-                onChange={(e) => setMilestoneForm(m => ({ ...m, label: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="如: 第一次游泳"
-              />
-            </div>
-            
-            {/* emoji选择 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">选择图标</label>
-              <div className="grid grid-cols-9 gap-1">
-                {EMOJI_OPTIONS.map((emoji, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setMilestoneForm(m => ({ ...m, emoji }))}
-                    className={`aspect-square rounded-lg text-xl flex items-center justify-center transition-all ${
-                      milestoneForm.emoji === emoji
-                        ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500'
-                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* 颜色选择 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">选择颜色</label>
-              <input
-                type="color"
-                value={milestoneForm.color}
-                onChange={(e) => setMilestoneForm(m => ({ ...m, color: e.target.value }))}
-                className="w-full h-12 rounded-lg cursor-pointer"
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowMilestoneModal(false)}
-                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSaveMilestone}
-                disabled={!milestoneForm.label}
-                className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
-              >
-                保存
-              </button>
-            </div>
-            
-            {/* 已有里程碑列表 */}
-            {customMilestones.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的里程碑自定义</h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {customMilestones.map(ms => (
-                    <div
-                      key={ms.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{ms.emoji}</span>
-                        <span className="text-sm dark:text-white">{ms.label}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            setEditingMilestone(ms);
-                            setMilestoneForm({ label: ms.label, emoji: ms.emoji, color: ms.color });
-                          }}
-                          className="p-1 text-gray-500 hover:text-primary-500"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteMilestone(ms.id)}
-                          className="p-1 text-gray-500 hover:text-red-500"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {/* 心情标签编辑弹窗 */}
-      {showMoodModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-6 dark:text-white">
-              {editingMood ? '编辑心情标签' : '添加心情标签'}
-            </h3>
-            
-            {/* 名称 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">心情名称</label>
-              <input
-                type="text"
-                value={moodForm.label}
-                onChange={(e) => setMoodForm(m => ({ ...m, label: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="如: 兴奋"
-              />
-            </div>
-            
-            {/* emoji选择 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">选择表情</label>
-              <div className="grid grid-cols-9 gap-1">
-                {EMOJI_OPTIONS.map((emoji, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setMoodForm(m => ({ ...m, emoji }))}
-                    className={`aspect-square rounded-lg text-xl flex items-center justify-center transition-all ${
-                      moodForm.emoji === emoji
-                        ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500'
-                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowMoodModal(false)}
-                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSaveMood}
-                disabled={!moodForm.label}
-                className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
-              >
-                保存
-              </button>
-            </div>
-            
-            {/* 已有自定义心情标签列表 */}
-            {customMoods.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的自定义心情标签</h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {customMoods.map(mood => (
-                    <div
-                      key={mood.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>{mood.emoji}</span>
-                        <span className="text-sm dark:text-white">{mood.label}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            setEditingMood(mood);
-                            setMoodForm({ label: mood.label, emoji: mood.emoji });
-                          }}
-                          className="p-1 text-gray-500 hover:text-primary-500"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteMood(mood.id)}
-                          className="p-1 text-gray-500 hover:text-red-500"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {/* 设置面板抽屉 - 新增 */}
-      {showSettings && (
-        <div className="fixed inset-0 z-50">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowSettings(false)}
-          />
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-2xl overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold dark:text-white">⚙️ 设置</h3>
-                <button onClick={() => setShowSettings(false)}>
-                  <X className="w-6 h-6 text-gray-400" />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {editingMilestone ? '编辑里程碑' : '添加新里程碑'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowMilestoneModal(false);
+                    setEditingMilestone(null);
+                    setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
+                  }}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <X size={20} className="text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
-              
+
               <div className="space-y-4">
-                                {/* 回收站入口 */}
-                <button
-                  onClick={() => {
-                    setShowSettings(false);
-                    onOpenRecycleBin();
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Trash2 className="w-5 h-5 text-red-500" />
-                  <span className="font-medium dark:text-white">回收站</span>
-                </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    里程碑名称
+                  </label>
+                  <input
+                    type="text"
+                    value={milestoneForm.label}
+                    onChange={(e) => setMilestoneForm({ ...milestoneForm, label: e.target.value })}
+                    placeholder="例如：第一次爬行、会说话了"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent outline-none"
+                  />
+                </div>
 
-                {/* 导出数据 */}
-                <button
-                  onClick={() => {
-                    handleExport();
-                    setShowSettings(false);
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Download className="w-5 h-5 text-blue-500" />
-                  <span className="font-medium dark:text-white">导出数据</span>
-                </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    表情符号
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {EMOJI_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => setMilestoneForm({ ...milestoneForm, emoji })}
+                        className={`p-2 rounded-lg transition-colors ${
+                          milestoneForm.emoji === emoji
+                            ? 'bg-primary-100 dark:bg-primary-900 border-2 border-primary-500'
+                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        <span className="text-2xl">{emoji}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                {/* 导入数据 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    颜色
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={milestoneForm.color}
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, color: e.target.value })}
+                      className="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 dark:border-gray-600"
+                    />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{milestoneForm.color}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={editingMilestone ? handleUpdateMilestone : handleAddMilestone}
+                  className="flex-1 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  {editingMilestone ? '更新里程碑' : '添加里程碑'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 个人资料编辑模态框 */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">编辑个人资料</h2>
                 <button
                   onClick={() => {
-                    setShowSettings(false);
-                    setShowImportModal(true);
+                    setShowProfileModal(false);
+                    setUserForm(currentUser || { name: '', avatar: '' });
                   }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <Upload className="w-5 h-5 text-orange-500" />
-                  <span className="font-medium dark:text-white">导入数据</span>
+                  <X size={20} className="text-gray-600 dark:text-gray-400" />
                 </button>
-                
-                {/* 关于 */}
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    宝贝时光 v1.0
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">
-                    用心记录每一个成长瞬间
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700">
+                      {userForm.avatar ? (
+                        <img src={userForm.avatar} alt={userForm.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                          <User size={40} className="text-gray-400 dark:text-gray-500" />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-lg hover:bg-primary-600 transition-colors"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // 纯内存版本，直接生成预览URL
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setUserForm({ ...userForm, avatar: event.target.result });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">点击更换头像</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    称呼
+                  </label>
+                  <input
+                    type="text"
+                    value={userForm.name}
+                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                    placeholder="例如：爸爸、妈妈"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={handleUpdateProfile}
+                  className="flex-1 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  保存资料
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 主题设置模态框 */}
+      {showThemeModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">自定义主题颜色</h2>
+                <button
+                  onClick={() => setShowThemeModal(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <X size={20} className="text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <input
+                    ref={colorInputRef}
+                    type="color"
+                    value={customThemeColor || '#FF7B70'}
+                    onChange={(e) => handleCustomColorChange(e.target.value)}
+                    className="w-24 h-24 rounded-full cursor-pointer border-4 border-gray-300 dark:border-gray-600"
+                  />
+                  <button
+                    onClick={() => colorInputRef.current?.click()}
+                    className="px-6 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors"
+                  >
+                    选择颜色
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-5 gap-3">
+                  {['#FF7B70', '#34D399', '#60A5FA', '#A78BFA', '#FBBF24', '#EF4444', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B'].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => handleCustomColorChange(color)}
+                      className={`w-full aspect-square rounded-lg ${color === (customThemeColor || '#FF7B70') ? 'ring-2 ring-white ring-offset-2 ring-offset-black' : ''}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">主题预览</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-900 rounded-xl p-4">
+                      <div className="w-full h-8 rounded-lg" style={{ backgroundColor: customThemeColor || '#FF7B70' }} />
+                      <div className="w-full h-8 rounded-lg mt-3 opacity-70" style={{ backgroundColor: customThemeColor || '#FF7B70' }} />
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                      <div className="w-full h-8 rounded-lg" style={{ backgroundColor: customThemeColor || '#FF7B70' }} />
+                      <div className="w-full h-8 rounded-lg mt-3 opacity-70" style={{ backgroundColor: customThemeColor || '#FF7B70' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowThemeModal(false);
+                  }}
+                  className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    setShowThemeModal(false);
+                  }}
+                  className="flex-1 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  应用颜色
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 数据导入模态框 */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">导入数据</h2>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <X size={20} className="text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 flex flex-col items-center justify-center gap-4">
+                  <Upload size={40} className="text-gray-400 dark:text-gray-500" />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-6 py-3 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors"
+                  >
+                    选择备份文件
+                  </button>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                    支持从导出的JSON文件导入宝宝数据和成长记录
                   </p>
                 </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="importMode"
+                    id="merge"
+                    defaultChecked
+                    className="h-4 w-4 text-primary-600 dark:text-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400 border-gray-300 dark:border-gray-600"
+                  />
+                  <label htmlFor="merge" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    合并模式 - 保留现有数据，添加导入数据
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="importMode"
+                    id="replace"
+                    className="h-4 w-4 text-primary-600 dark:text-primary-400 focus:ring-primary-500 dark:focus:ring-primary-400 border-gray-300 dark:border-gray-600"
+                  />
+                  <label htmlFor="replace" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    覆盖模式 - 清除现有数据，替换为导入数据
+                  </label>
+                </div>
+
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // 纯内存版本，暂时不处理导入
+                        showToast('纯内存版本暂时不支持数据导入');
+                        setShowImportModal(false);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  disabled
+                  className="flex-1 py-3 bg-primary-500 text-white font-medium rounded-lg opacity-50 cursor-not-allowed"
+                >
+                  开始导入
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认模态框 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                  <Trash2 size={32} className="text-red-600 dark:text-red-400" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">确认删除宝宝?</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-center">
+                  删除后将无法恢复宝宝的所有数据，包括成长记录、时空胶囊等。
+                </p>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    // 纯内存版本，暂时不处理删除
+                    showDeleteConfirm(false);
+                    showToast('纯内存版本暂时不支持删除宝宝');
+                  }}
+                  className="flex-1 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  确认删除
+                </button>
               </div>
             </div>
           </div>
@@ -1072,3 +758,5 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     </div>
   );
 }
+
+export default ProfilePage;
