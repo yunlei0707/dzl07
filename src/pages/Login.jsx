@@ -1,77 +1,77 @@
 /**
- * 登录页面
+ * 登录页面 - 亲属角色选择版
  * 温馨可爱的UI风格，与宝贝时光主题一致
- * 支持忘记密码和游客登录功能
  */
 
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Heart, User, Lock, Eye, EyeOff, Baby, HelpCircle, AlertCircle } from 'lucide-react';
-import { loginUser, verifySecurityAnswer, decryptPassword, createGuestAccount, createSampleBaby } from '../utils/db';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Heart, Baby, Camera, Upload } from 'lucide-react';
+import { createGuestAccount, createSampleBaby } from '../utils/db';
+
+// 亲属角色配置
+const FAMILY_ROLES = [
+  { id: 'dad', label: '无敌奶爸', emoji: '👨', buttonText: '欢迎爸爸光临' },
+  { id: 'mom', label: '温柔宝妈', emoji: '👩', buttonText: '欢迎妈妈光临' },
+  { id: 'grandpa', label: '慈祥姥爷', emoji: '👴', buttonText: '欢迎姥爷光临' },
+  { id: 'grandma', label: '和蔼姥姥', emoji: '👵', buttonText: '欢迎姥姥光临' },
+  { id: 'uncle', label: '帅气老舅', emoji: '🧔', buttonText: '欢迎舅舅光临' },
+  { id: 'aunt', label: '漂亮小姨', emoji: '👧', buttonText: '欢迎小姨光临' },
+  { id: 'grandpa_pat', label: '慈祥爷爷', emoji: '👴', buttonText: '欢迎爷爷光临' },
+  { id: 'baby', label: '宝宝本人', emoji: '👶', buttonText: '欢迎宝宝回来' },
+  { id: 'guest', label: '访客参观', emoji: '👀', buttonText: '欢迎访客参观' },
+];
 
 export function LoginPage({ onLogin }) {
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  // 忘记密码模态框
-  const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotStep, setForgotStep] = useState(1); // 1: 输入昵称, 2: 安全问题, 3: 显示密码
-  const [forgotNickname, setForgotNickname] = useState('');
-  const [securityQuestion, setSecurityQuestion] = useState('');
-  const [securityAnswer, setSecurityAnswer] = useState('');
-  const [revealedPassword, setRevealedPassword] = useState('');
+  const [customBackground, setCustomBackground] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    // 简单的表单验证
-    if (!nickname.trim()) {
-      setError('请输入昵称');
-      return;
+  // 初始化时从localStorage读取自定义背景
+  useEffect(() => {
+    const savedBg = localStorage.getItem('loginBackground');
+    if (savedBg) {
+      setCustomBackground(savedBg);
     }
-    if (!password) {
-      setError('请输入密码');
-      return;
-    }
+  }, []);
 
-    setIsLoading(true);
-    try {
-      const user = await loginUser(nickname, password);
-      
-      // 保存登录状态到 localStorage
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      
-      // 回调通知父组件
-      if (onLogin) {
-        onLogin(user);
-      }
-      
-      // 跳转到首页
-      navigate('/', { replace: true });
-    } catch (err) {
-      setError(err.message || '登录失败，请检查昵称和密码');
-    } finally {
-      setIsLoading(false);
+  // 处理背景图上传
+  const handleBackgroundUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target.result;
+        setCustomBackground(base64);
+        localStorage.setItem('loginBackground', base64);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // 游客登录
-  const handleGuestLogin = async () => {
+  // 重置背景图
+  const handleResetBackground = () => {
+    setCustomBackground(null);
+    localStorage.removeItem('loginBackground');
+  };
+
+  // 登录处理
+  const handleLogin = async () => {
+    if (!selectedRole) {
+      return;
+    }
+
     setIsLoading(true);
-    setError('');
     
     try {
-      // 创建游客账号
+      // 创建游客账号（复用现有逻辑）
       const guestUser = await createGuestAccount();
       
       // 创建示例宝宝
       await createSampleBaby(guestUser.id);
+
+      // 保存亲属角色信息
+      localStorage.setItem('familyRole', JSON.stringify(selectedRole));
       
       // 保存登录状态
       localStorage.setItem('isLoggedIn', 'true');
@@ -85,303 +85,128 @@ export function LoginPage({ onLogin }) {
       // 跳转到首页
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err.message || '游客登录失败');
+      console.error('登录失败:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 打开忘记密码模态框
-  const handleOpenForgot = () => {
-    setShowForgotModal(true);
-    setForgotStep(1);
-    setForgotNickname('');
-    setSecurityQuestion('');
-    setSecurityAnswer('');
-    setRevealedPassword('');
-  };
+  // 获取当前选择的角色
+  const currentRole = FAMILY_ROLES.find(r => r.id === selectedRole);
 
-  // 关闭忘记密码模态框
-  const handleCloseForgot = () => {
-    setShowForgotModal(false);
-    setForgotStep(1);
-    setForgotNickname('');
-    setSecurityQuestion('');
-    setSecurityAnswer('');
-    setRevealedPassword('');
-  };
-
-  // 验证昵称（获取安全问题）
-  const handleVerifyUsername = async () => {
-    if (!forgotNickname.trim()) {
-      setError('请输入昵称');
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const { getUserByUsername } = await import('../utils/db');
-      const user = await getUserByNickname(forgotNickname);
-      
-      if (!user) {
-        setError('昵称不存在');
-        return;
-      }
-      
-      if (!user.securityQuestion) {
-        setError('该用户未设置安全问题，请联系客服');
-        return;
-      }
-      
-      setSecurityQuestion(user.securityQuestion);
-      setForgotStep(2);
-      setError('');
-    } catch (err) {
-      setError('验证失败，请重试');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 验证安全问题答案
-  const handleVerifyAnswer = async () => {
-    if (!securityAnswer.trim()) {
-      setError('请输入答案');
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const user = await verifySecurityAnswer(forgotUsername, securityAnswer);
-      const decryptedPwd = decryptPassword(user.password);
-      setRevealedPassword(decryptedPwd);
-      setForgotStep(3);
-      setError('');
-    } catch (err) {
-      setError(err.message || '答案错误');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 背景图样式
+  const backgroundStyle = customBackground
+    ? { backgroundImage: `url(${customBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : {};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-cream-50 to-orange-50 flex flex-col items-center justify-center px-4 safe-top safe-bottom">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-primary-50 via-cream-50 to-orange-50 flex flex-col items-center justify-center px-4 safe-top safe-bottom relative overflow-hidden"
+      style={backgroundStyle}
+    >
+      {/* 背景遮罩（当有自定义背景时显示） */}
+      {customBackground && (
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      )}
+
       {/* 装饰元素 */}
       <div className="absolute top-10 left-10 w-20 h-20 bg-primary-200/30 rounded-full blur-2xl" />
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-orange-200/30 rounded-full blur-3xl" />
       
-      {/* Logo 区域 */}
-      <div className="mb-8 animate-bounce-in">
-        <div className="relative">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-500 rounded-3xl flex items-center justify-center shadow-lg shadow-primary-200/50">
-            <Baby className="w-10 h-10 text-white" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center shadow-sm animate-wiggle">
-            <Heart className="w-3 h-3 text-white fill-current" />
+      {/* 内容容器 */}
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+        {/* Logo 区域 */}
+        <div className="mb-6 animate-bounce-in">
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-200/50">
+              <Baby className="w-8 h-8 text-white" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center shadow-sm animate-wiggle">
+              <Heart className="w-2.5 h-2.5 text-white fill-current" />
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* 标题 */}
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">欢迎回来</h1>
-      <p className="text-gray-500 mb-8">记录宝宝成长的美好时光</p>
+        
+        {/* 标题 */}
+        <h1 className="text-xl font-bold text-gray-800 mb-1">你是宝宝的</h1>
+        <p className="text-gray-500 text-sm mb-6">选择你的身份，开启记录之旅</p>
 
-      {/* 登录表单 */}
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
-        {/* 昵称输入 */}
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-            <User className="w-5 h-5" />
-          </div>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="请输入昵称"
-            className="input-field pl-12 pr-4"
-            autoComplete="username"
-            disabled={isLoading}
-          />
+        {/* 亲属角色选择 */}
+        <div className="grid grid-cols-3 gap-3 mb-8 w-full">
+          {FAMILY_ROLES.map((role) => (
+            <button
+              key={role.id}
+              onClick={() => setSelectedRole(role.id)}
+              className={`
+                flex flex-col items-center justify-center py-3 rounded-xl transition-all duration-200
+                ${selectedRole === role.id
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-200 scale-105'
+                  : 'bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 hover:bg-white hover:shadow-md'
+                }
+              `}
+            >
+              <span className="text-2xl mb-1">{role.emoji}</span>
+              <span className="text-xs font-medium">{role.label}</span>
+            </button>
+          ))}
         </div>
 
-        {/* 密码输入 */}
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-            <Lock className="w-5 h-5" />
-          </div>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="请输入密码"
-            className="input-field pl-12 pr-12"
-            autoComplete="current-password"
-            disabled={isLoading}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
+        {/* 自定义背景图上传 */}
+        <div className="mb-6 w-full">
+          <label className="flex items-center justify-center gap-2 w-full py-2.5 px-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            {customBackground ? (
+              <>
+                <Camera className="w-4 h-4 text-primary-500" />
+                <span className="text-sm text-primary-500">更换背景图</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-500">上传自定义背景图</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleBackgroundUpload}
+              className="hidden"
+            />
+          </label>
+          {customBackground && (
+            <button
+              onClick={handleResetBackground}
+              className="mt-2 text-xs text-gray-400 hover:text-gray-600 mx-auto block"
+            >
+              重置为默认背景
+            </button>
+          )}
         </div>
-
-        {/* 忘记密码链接 */}
-        <div className="text-right -mt-2">
-          <button
-            type="button"
-            onClick={handleOpenForgot}
-            className="text-sm text-primary-500 hover:text-primary-600 flex items-center gap-1 ml-auto"
-          >
-            <HelpCircle className="w-3 h-3" />
-            忘记密码？
-          </button>
-        </div>
-
-        {/* 错误提示 */}
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl animate-shake">
-            {error}
-          </div>
-        )}
 
         {/* 登录按钮 */}
         <button
-          type="submit"
-          disabled={isLoading}
-          className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleLogin}
+          disabled={!selectedRole || isLoading}
+          className={`
+            w-full py-3.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all duration-200
+            ${selectedRole && !isLoading
+              ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow-lg shadow-primary-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+            }
+          `}
         >
           {isLoading ? (
             <>
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>登录中...</span>
+              <span>进入中...</span>
             </>
           ) : (
             <>
               <Heart className="w-5 h-5" />
-              <span>登录</span>
+              <span>{currentRole ? currentRole.buttonText : '请选择你的身份'}</span>
             </>
           )}
         </button>
-      </form>
-
-      {/* 注册链接 */}
-      <div className="mt-8 flex items-center gap-2 text-sm">
-        <span className="text-gray-400">还没有账号？</span>
-        <Link
-          to="/register"
-          className="text-primary-500 hover:text-primary-600 font-medium transition-colors"
-        >
-          立即注册 →
-        </Link>
       </div>
-
-      {/* 游客模式 */}
-      <button
-        onClick={handleGuestLogin}
-        disabled={isLoading}
-        className="mt-6 px-6 py-2.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
-      >
-        游客体验
-      </button>
-
-      {/* 忘记密码模态框 */}
-      {showForgotModal && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={handleCloseForgot}
-        >
-          <div 
-            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 animate-bounce-in"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-primary-500" />
-              找回密码
-            </h3>
-
-            {/* 步骤1：输入昵称 */}
-            {forgotStep === 1 && (
-              <div className="space-y-4">
-<p className="text-sm text-gray-500">请输入您注册的昵称</p>
-                <input
-                  type="text"
-                  value={forgotUsername}
-                  onChange={e => setForgotUsername(e.target.value)}
-placeholder="昵称"
-                  className="input-field"
-                />
-                <button
-                  onClick={handleVerifyUsername}
-                  disabled={isLoading}
-                  className="btn-primary w-full disabled:opacity-50"
-                >
-                  {isLoading ? '验证中...' : '下一步'}
-                </button>
-              </div>
-            )}
-
-            {/* 步骤2：安全问题 */}
-            {forgotStep === 2 && (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500">请回答以下安全问题</p>
-                <div className="p-3 bg-cream-50 dark:bg-gray-700 rounded-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{securityQuestion}</p>
-                </div>
-                <input
-                  type="text"
-                  value={securityAnswer}
-                  onChange={e => setSecurityAnswer(e.target.value)}
-                  placeholder="请输入答案"
-                  className="input-field"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setForgotStep(1)}
-                    className="flex-1 btn-secondary"
-                  >
-                    上一步
-                  </button>
-                  <button
-                    onClick={handleVerifyAnswer}
-                    disabled={isLoading}
-                    className="flex-1 btn-primary disabled:opacity-50"
-                  >
-                    {isLoading ? '验证中...' : '验证'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 步骤3：显示密码 */}
-            {forgotStep === 3 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                  <AlertCircle className="w-5 h-5 text-green-500" />
-                  <p className="text-sm text-green-700 dark:text-green-400">
-                    验证成功！您的密码是：
-                  </p>
-                </div>
-                <div className="p-4 bg-cream-50 dark:bg-gray-700 rounded-xl text-center">
-                  <p className="text-2xl font-bold text-gray-800 dark:text-white tracking-wider">
-                    {revealedPassword}
-                  </p>
-                </div>
-                <p className="text-xs text-gray-400 text-center">
-                  建议登录后修改密码
-                </p>
-                <button
-                  onClick={handleCloseForgot}
-                  className="btn-primary w-full"
-                >
-                  完成
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
