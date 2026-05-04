@@ -212,26 +212,38 @@ export function MusicProvider({ children }) {
     }
   }, [playlist, volume, isMuted]);
 
-  // 添加本地音乐
+  // 添加本地音乐 - 转base64存储，刷新后可以继续播放
   const addLocalMusic = useCallback((file, category = 'piano') => {
-    const url = URL.createObjectURL(file);
-    const localMusic = {
-      id: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-      title: file.name.replace(/\.[^/.]+$/, ''),
-      artist: '本地音乐',
-      url: url,
-      cover: '🎵',
-      isLocal: true,
-      category: category,
-      addedAt: new Date().toISOString(),
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Url = e.target.result;
+      const localMusic = {
+        id: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        artist: '本地音乐',
+        url: base64Url,
+        cover: '🎵',
+        isLocal: true,
+        category: category,
+        addedAt: new Date().toISOString(),
+      };
+      
+      setPlaylist(prev => [localMusic, ...prev]);
+      setCurrentIndex(0);
+      
+      // 自动播放
+      setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.src = base64Url;
+          audioRef.current.volume = isMuted ? 0 : volume;
+          audioRef.current.load();
+          audioRef.current.play().catch(e => console.log("播放失败:", e));
+          setIsPlaying(true);
+        }
+      }, 200);
     };
-    
-    setPlaylist(prev => [localMusic, ...prev]);
-    setCurrentIndex(0);
-    
-    // 自动播放
-    setTimeout(() => play(), 300);
-  }, [play]);
+    reader.readAsDataURL(file);
+  }, [volume, isMuted]);
 
   // 导入示例音乐
   const importSampleMusic = useCallback(() => {
@@ -243,8 +255,17 @@ export function MusicProvider({ children }) {
     }));
     setPlaylist(prev => [...sampleWithIds, ...prev]);
     setCurrentIndex(0);
-    setTimeout(() => play(), 300);
-  }, [play]);
+    setIsPlaying(true);
+    // 自动播放第一首
+    setTimeout(() => {
+      if (audioRef.current && sampleWithIds[0]?.url) {
+        audioRef.current.src = sampleWithIds[0].url;
+        audioRef.current.volume = isMuted ? 0 : volume;
+        audioRef.current.load();
+        audioRef.current.play().catch(e => console.log("播放失败:", e));
+      }
+    }, 200);
+  }, [volume, isMuted]);
 
 
   // 删除音乐
