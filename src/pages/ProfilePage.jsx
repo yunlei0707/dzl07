@@ -41,6 +41,7 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     showToast,
     currentUser,
     logout,
+    refreshBabies,
     updateUserProfile,
     customMilestones,
     addMilestone,
@@ -516,10 +517,11 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                     </span>
                   </button>
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
                       if (confirm(`确定要删除宝宝"${baby.nickname || baby.name}"吗？所有相关的成长记录都会被删除！`)) {
-                        deleteBaby(baby.id);
+                        await deleteBaby(baby.id);
+                        await refreshBabies();
                         showToast('已删除宝宝', 'success');
                       }
                     }}

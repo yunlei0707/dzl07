@@ -107,9 +107,16 @@ export function AppProvider({ children }) {
           }
         }
         
-        // 检查并初始化示例数据
+        // 检查并初始化示例数据（带超时保护）
         if (currentUserId) {
-          await checkAndInitSampleData(currentUserId);
+          try {
+            await Promise.race([
+              checkAndInitSampleData(currentUserId),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+            ]);
+          } catch (e) {
+            console.log('示例数据初始化超时或失败，继续加载');
+          }
         }
         
         // 加载数据
@@ -135,17 +142,24 @@ export function AppProvider({ children }) {
           applyThemePreset(settings.themePreset || 'pink');
         }
         
-        // 加载动态和胶囊
+        // 加载动态和胶囊（如果有宝宝）
         if (baby) {
-          const babyMoments = await getMomentsByBaby(baby.id);
-          const babyCapsules = await getCapsulesByBaby(baby.id);
-          setMoments(babyMoments);
-          setCapsules(babyCapsules);
+          try {
+            const [babyMoments, babyCapsules] = await Promise.all([
+              getMomentsByBaby(baby.id),
+              getCapsulesByBaby(baby.id)
+            ]);
+            setMoments(babyMoments);
+            setCapsules(babyCapsules);
+          } catch (e) {
+            console.error('加载动态和胶囊失败:', e);
+          }
         }
       } catch (error) {
         console.error('初始化失败:', error);
-        showToast('初始化失败，请刷新重试', 'error');
+        showToast('部分数据加载失败，请刷新重试', 'error');
       } finally {
+        // 确保无论成功失败，都要结束加载状态
         setIsLoading(false);
       }
     }
