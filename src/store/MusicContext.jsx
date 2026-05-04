@@ -201,7 +201,14 @@ export function MusicProvider({ children }) {
     const index = playlist.findIndex(m => m.id === musicId);
     if (index !== -1) {
       setCurrentIndex(index);
-      setTimeout(() => play(), 100);
+      // 强制确保 audio src 更新后再播放
+      setTimeout(() => {
+        if (audioRef.current && playlist[index]?.url) {
+          audioRef.current.src = playlist[index].url;
+          audioRef.current.load();
+          play();
+        }
+      }, 50);
     }
   }, [playlist, play]);
 

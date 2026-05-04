@@ -6,9 +6,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
+import { useMusic } from '../store/MusicContext';
 import { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
-  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
+  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database, Music
 } from 'lucide-react';
 import { exportAllData, importAllData, PRESET_AVATARS, generateInviteToken, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
 import { calculateAge } from '../utils/dateUtils';
@@ -54,6 +55,8 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     updateMood,
     deleteMood,
   } = useApp();
+  
+  const { importSampleMusic } = useMusic();
   
   const fileInputRef = useRef(null);
   const colorInputRef = useRef(null);
@@ -629,6 +632,21 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
             </p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
+        
+        {/* 导入示例数据（音乐） */}
+        <button
+          onClick={importSampleMusic}
+          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+            <Music className="w-5 h-5 text-purple-500" />
+          </div>
+          <div className="flex-1 text-left">
+            <span className="font-medium dark:text-white">导入示例数据（音乐）</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">添加钢琴、自然声、助眠、儿歌等示例</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>

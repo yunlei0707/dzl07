@@ -828,13 +828,17 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                       </button>
                       <div className="flex-1">
                         <div className="h-8 bg-primary-200 dark:bg-primary-700 rounded-full overflow-hidden flex items-end px-1">
-                          {(audio.waveform || []).slice(-1)[0]?.map((val, i) => (
-                            <div
-                              key={i}
-                              className="w-1 bg-primary-500 mx-px rounded-full"
-                              style={{ height: `${Math.max(4, val / 4)}%` }}
-                            />
-                          )) || <div className="flex-1" />}
+                          {Array.isArray(audio.waveform) && audio.waveform.length > 0 ? (
+                            audio.waveform.slice(-40).map((frame, i) => (
+                              <div
+                                key={i}
+                                className="w-1 bg-primary-500 mx-px rounded-full"
+                                style={{ height: `${Math.max(4, (Array.isArray(frame) ? frame[0] : frame) / 4)}%` }}
+                              />
+                            ))
+                          ) : (
+                            <div className="flex-1" />
+                          )}
                         </div>
                       </div>
                       <span className="text-sm text-gray-500">{formatTime2(audio.duration)}</span>

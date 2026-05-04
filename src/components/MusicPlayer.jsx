@@ -436,11 +436,18 @@ export function MusicPlayer() {
                     </p>
                   </div>
                 ))}
+                {/* 添加音乐按钮 */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 text-primary-500 rounded-xl text-sm font-medium border-2 border-dashed border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                >
+                  <Plus className="w-4 h-4 inline mr-1" /> 添加音乐
+                </button>
               </div>
             ) : (
               <div className="text-center py-12">
                 <Music className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-2">该分类暂无音乐</p>
+                <p className="text-gray-500 mb-4">该分类暂无音乐</p>
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm"
