@@ -8,9 +8,9 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
 import { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
-  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown
+  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
 } from 'lucide-react';
-import { exportAllData, importAllData, PRESET_AVATARS, generateInviteToken, getAllBabies, getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
+import { exportAllData, importAllData, PRESET_AVATARS, generateInviteToken, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment } from '../utils/db';
 import { calculateAge } from '../utils/dateUtils';
 
 // 主题预设配置
@@ -90,6 +90,102 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const [importMode, setImportMode] = useState('merge');
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  
+  // 导入示例数据
+  const [isImportingSample, setIsImportingSample] = useState(false);
+  
+  const generateWaveform = useCallback(() => {
+    return Array(32).fill(0).map(() => Array(6).fill(0).map(() => Math.random() * 255));
+  }, []);
+  
+  // 导入示例数据
+  const handleImportSampleData = useCallback(async () => {
+    if (!currentBaby || isImportingSample) return;
+    
+    setIsImportingSample(true);
+    try {
+      const now = new Date();
+      
+      // 示例动态1：照片 - 三个月前
+      const date1 = new Date(now);
+      date1.setMonth(date1.getMonth() - 3);
+      
+      await addMoment({
+        babyId: currentBaby.id,
+        type: 'photo',
+        date: date1.toISOString(),
+        content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
+        photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
+        mood: 'happy',
+        weather: 'sunny',
+        milestone: 'first',
+        milestoneLabel: '第一次翻身',
+      });
+
+      // 示例动态2：视频 - 两个月前
+      const date2 = new Date(now);
+      date2.setMonth(date2.getMonth() - 2);
+      
+      await addMoment({
+        babyId: currentBaby.id,
+        type: 'video',
+        date: date2.toISOString(),
+        content: '今天学会了爬行，追着球球跑得好开心呀！',
+        video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+        thumbnail: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+        mood: 'excited',
+        weather: 'cloudy',
+        milestone: 'growth',
+        milestoneLabel: '学会爬行',
+      });
+
+      // 示例动态3：语音 - 一个月前
+      const date3 = new Date(now);
+      date3.setMonth(date3.getMonth() - 1);
+      
+      await addMoment({
+        babyId: currentBaby.id,
+        type: 'audio',
+        date: date3.toISOString(),
+        content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
+        audios: [{
+          url: 'https://www.w3schools.com/html/horse.ogg',
+          duration: 8,
+          waveform: generateWaveform(),
+        }],
+        mood: 'touched',
+        weather: 'sunny',
+        milestone: 'growth',
+        milestoneLabel: '学会说话',
+      });
+
+      // 示例动态4：日记 - 两周前
+      const date4 = new Date(now);
+      date4.setDate(date4.getDate() - 14);
+      
+      await addMoment({
+        babyId: currentBaby.id,
+        type: 'diary',
+        date: date4.toISOString(),
+        content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
+        mood: 'happy',
+        weather: 'windy',
+        milestone: 'daily',
+        milestoneLabel: '户外活动',
+      });
+
+      // 刷新数据
+      const babyMoments = await getMomentsByBaby(currentBaby.id);
+      setMoments(babyMoments);
+      
+      showToast('已导入4条示例数据', 'success');
+    } catch (error) {
+      console.error('导入示例数据失败:', error);
+      showToast('导入失败', 'error');
+    } finally {
+      setIsImportingSample(false);
+    }
+  }, [currentBaby, isImportingSample, generateWaveform, setMoments, showToast]);
   
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -510,6 +606,24 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
           <div className="flex-1 text-left">
             <span className="font-medium dark:text-white">心情标签管理</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">添加和管理自定义心情标签</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
+        
+        {/* 导入示例数据 */}
+        <button
+          onClick={handleImportSampleData}
+          disabled={!currentBaby || isImportingSample}
+          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
+        >
+          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+            <Database className="w-5 h-5 text-blue-500" />
+          </div>
+          <div className="flex-1 text-left">
+            <span className="font-medium dark:text-white">导入示例数据（时光轴）</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
+            </p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
@@ -1013,63 +1127,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
                 {/* 关于 */}
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                   <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                
-                {/* 导入示例数据 */}
-                <button
-                  onClick={async () => {
-                    if (!currentBaby) {
-                      showToast("请先创建宝宝档案", "error");
-                      return;
-                    }
-                    try {
-                      showToast("正在导入示例数据...", "info");
-                      const sampleMoments = [
-                        {
-                          babyId: currentBaby.id,
-                          type: "photo",
-                          content: "今天宝宝第一次自己翻身了，太开心了！",
-                          mood: "happy",
-                          milestone: "first",
-                          media: [{ type: "image", url: "https://picsum.photos/seed/baby1/400/600" }],
-                          createdAt: new Date().toISOString()
-                        },
-                        {
-                          babyId: currentBaby.id,
-                          type: "diary",
-                          content: "今天天气很好，带宝宝去公园散步。宝宝第一次看到这么多花，眼睛都看直了！",
-                          mood: "excited",
-                          milestone: "daily",
-                          media: [],
-                          createdAt: new Date(Date.now() - 86400000).toISOString()
-                        },
-                        {
-                          babyId: currentBaby.id,
-                          type: "photo",
-                          content: "宝宝第一次自己拿勺子吃饭，虽然弄得到处都是，但值得纪念！",
-                          mood: "happy",
-                          milestone: "first",
-                          media: [{ type: "image", url: "https://picsum.photos/seed/baby2/400/400" }],
-                          createdAt: new Date(Date.now() - 172800000).toISOString()
-                        }
-                      ];
-                      
-                      for (const moment of sampleMoments) {
-                        await addMoment(moment);
-                      }
-                      
-                      const updatedMoments = await getMomentsByBaby(currentBaby.id);
-                      setMoments(updatedMoments);
-                      showToast("示例数据导入成功！", "success");
-                    } catch (error) {
-                      console.error("导入失败:", error);
-                      showToast("导入失败，请重试", "error");
-                    }
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <span className="text-2xl">✨</span>
-                  <span className="font-medium dark:text-white">导入示例数据</span>
-                </button>
                     宝贝时光 v1.0
                   </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">
