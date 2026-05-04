@@ -82,10 +82,6 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     };
   }, []);
   
-  // 初始化高德地图
-
-    });
-  };
 
   // 视频上传 - 生成封面图并存储视频数据
   const handleVideoUpload = (e) => {
