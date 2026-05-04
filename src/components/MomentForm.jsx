@@ -80,14 +80,8 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
-      // 清理视频Blob URL释放内存
-      videos.forEach(video => {
-        if (video.url && video.url.startsWith('blob:')) {
-          URL.revokeObjectURL(video.url);
-        }
-      });
     };
-  }, [videos]);
+  }, []);
   
 
   // 照片上传
@@ -107,66 +101,73 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     e.target.value = '';
   };
 
-  // 视频上传 - 使用Blob URL优化内存占用，限制文件大小
+  // 视频上传 - 使用base64持久化存储，严格限制大小避免卡顿
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // 限制视频大小：最大 50MB
-    const MAX_SIZE = 50 * 1024 * 1024;
+    // 严格限制视频大小：最大 10MB，超过会严重卡顿
+    const MAX_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      alert('视频文件过大，请选择小于50MB的视频');
+      alert('视频文件过大（建议小于10MB），请压缩后再上传');
       return;
     }
     
-    // 使用Blob URL而不是base64，大幅减少内存占用
-    const blobUrl = URL.createObjectURL(file);
-    
-    // 创建视频元素读取封面
-    const video = document.createElement('video');
-    video.src = blobUrl;
-    video.currentTime = 0.5;
-    video.muted = true;
-    video.playsInline = true;
-    
-    video.onloadeddata = () => {
-      // 创建canvas绘制封面
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.min(video.videoWidth, 320);
-      canvas.height = Math.min(video.videoHeight, 240);
-      const ctx = canvas.getContext('2d');
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const videoDataURL = event.target.result;
       
-      try {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const coverImage = canvas.toDataURL('image/jpeg', 0.6);
+      // 创建视频元素读取封面和时长
+      const video = document.createElement('video');
+      video.src = videoDataURL;
+      video.currentTime = 0.5;
+      video.muted = true;
+      video.playsInline = true;
+      
+      video.onloadeddata = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.min(video.videoWidth, 320);
+        canvas.height = Math.min(video.videoHeight, 240);
+        const ctx = canvas.getContext('2d');
         
-        const videoData = {
-          url: blobUrl,
-          cover: coverImage,
-          name: file.name,
-          size: file.size,
-          duration: Math.round(video.duration)
-        };
-        
-        setVideos(prev => [...prev, videoData]);
-      } catch (err) {
+        try {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const coverImage = canvas.toDataURL('image/jpeg', 0.5);
+          
+          const videoData = {
+            url: videoDataURL,
+            cover: coverImage,
+            name: file.name,
+            size: file.size,
+            duration: Math.round(video.duration)
+          };
+          
+          setVideos(prev => [...prev, videoData]);
+        } catch (err) {
+          setVideos(prev => [...prev, {
+            url: videoDataURL,
+            cover: null,
+            name: file.name,
+            size: file.size
+          }]);
+        }
+      };
+      
+      video.onerror = () => {
         setVideos(prev => [...prev, {
-          url: blobUrl,
+          url: videoDataURL,
           cover: null,
           name: file.name,
           size: file.size
         }]);
-      }
+      };
     };
     
-    video.onerror = () => {
-      setVideos(prev => [...prev, {
-        url: blobUrl,
-        cover: null,
-        name: file.name,
-        size: file.size
-      }]);
+    reader.onerror = () => {
+      alert('读取视频文件失败，请重试');
     };
+    
+    reader.readAsDataURL(file);
   };
 
   const removePhoto = (index) => {
