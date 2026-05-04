@@ -5,6 +5,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   getAllBabies,
+  getBabiesByUser,
   getCurrentBaby,
   updateSettings,
   checkAndInitSampleData,
@@ -23,6 +24,7 @@ import {
   deleteCustomMood,
   updateUser,
   deleteBaby,
+  addMoment,
 } from '../utils/db';
 
 const AppContext = createContext(null);
@@ -92,11 +94,13 @@ export function AppProvider({ children }) {
         // 检查登录状态
         const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
         const userStr = localStorage.getItem('currentUser');
+        let currentUserId = null;
         if (loggedIn && userStr) {
           try {
             const user = JSON.parse(userStr);
             setCurrentUser(user);
             setIsLoggedIn(true);
+            currentUserId = user.id;
           } catch (e) {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('currentUser');
@@ -104,10 +108,12 @@ export function AppProvider({ children }) {
         }
         
         // 检查并初始化示例数据
-        await checkAndInitSampleData();
+        if (currentUserId) {
+          await checkAndInitSampleData(currentUserId);
+        }
         
         // 加载数据
-        const allBabies = await getAllBabies();
+        const allBabies = currentUserId ? await getBabiesByUser(currentUserId) : await getAllBabies();
         const settings = await getSettingsFromDB();
         const baby = await getCurrentBaby();
         const milestones = await getCustomMilestones();
@@ -195,6 +201,18 @@ export function AppProvider({ children }) {
     }
   }, [currentBaby]);
 
+  // 添加动态
+  const addMomentToContext = useCallback(async (momentData) => {
+    try {
+      const newMoment = await addMoment(momentData);
+      setMoments(prev => [newMoment, ...prev]);
+      return newMoment;
+    } catch (error) {
+      console.error('添加动态失败:', error);
+      showToast('添加失败', 'error');
+      throw error;
+    }
+  }, [showToast]);
 
   // 删除宝宝
   const deleteBaby = useCallback(async (babyId) => {
@@ -377,6 +395,7 @@ export function AppProvider({ children }) {
     refreshBabies,
     refreshMoments,
     refreshCapsules,
+    addMoment: addMomentToContext,
     deleteBaby,
     toggleTheme,
     setTheme,

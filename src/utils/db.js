@@ -70,6 +70,15 @@ export async function getAllBabies() {
 }
 
 /**
+ * 获取指定用户的所有宝宝
+ */
+export async function getBabiesByUser(userId) {
+  const db = await initDB();
+  const allBabies = await db.getAll('babies');
+  return allBabies.filter(baby => baby.userId === userId);
+}
+
+/**
  * 获取当前选中的宝宝
  */
 export async function getCurrentBaby() {
@@ -556,7 +565,7 @@ export async function isUsernameExists(username) {
 
 export async function getUserByNickname(nickname) {
   const db = await initDB();
-  const users = await db.getAll("users");
+  const users = await db.getAll(users);
   return users.find(u => u.nickname === nickname) || null;
 }
 
@@ -630,10 +639,18 @@ export async function updateUser(id, updates) {
 // ==================== 初始化示例数据 ====================
 
 /**
+ * 生成波形数据
+ * @returns {Array} 32帧 x 6个数值 的二维数组
+ */
+function generateWaveform() {
+  return Array(32).fill(0).map(() => Array(6).fill(0).map(() => Math.random() * 255));
+}
+
+/**
  * 检查是否需要初始化示例数据
  */
-export async function checkAndInitSampleData() {
-  const babies = await getAllBabies();
+export async function checkAndInitSampleData(userId) {
+  const babies = await getBabiesByUser(userId);
   if (babies.length === 0) {
     // 创建默认宝宝
     const defaultBaby = await addBaby({
@@ -642,12 +659,13 @@ export async function checkAndInitSampleData() {
       avatar: null,
       birthDate: getDefaultBirthDate(),
       gender: 'girl',
+      userId: userId,
     });
 
     // 创建示例动态
     const now = new Date();
     
-    // 示例动态1：三个月前
+    // 示例动态1：照片 - 三个月前
     const date1 = new Date(now);
     date1.setMonth(date1.getMonth() - 3);
     
@@ -663,19 +681,56 @@ export async function checkAndInitSampleData() {
       milestoneLabel: '第一次翻身',
     });
 
-    // 示例动态2：一个月前
+    // 示例动态2：视频 - 两个月前
     const date2 = new Date(now);
-    date2.setMonth(date2.getMonth() - 1);
+    date2.setMonth(date2.getMonth() - 2);
+    
+    await addMoment({
+      babyId: defaultBaby.id,
+      type: 'video',
+      date: date2.toISOString(),
+      content: '今天学会了爬行，追着球球跑得好开心呀！🎉',
+      video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+      thumbnail: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+      mood: 'excited',
+      weather: 'cloudy',
+      milestone: 'growth',
+      milestoneLabel: '学会爬行',
+    });
+
+    // 示例动态3：语音 - 一个月前
+    const date3 = new Date(now);
+    date3.setMonth(date3.getMonth() - 1);
+    
+    await addMoment({
+      babyId: defaultBaby.id,
+      type: 'audio',
+      date: date3.toISOString(),
+      content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
+      audios: [{
+        url: 'https://www.w3schools.com/html/horse.ogg',
+        duration: 8,
+        waveform: generateWaveform(),
+      }],
+      mood: 'touched',
+      weather: 'sunny',
+      milestone: 'growth',
+      milestoneLabel: '学会说话',
+    });
+
+    // 示例动态4：日记 - 两周前
+    const date4 = new Date(now);
+    date4.setDate(date4.getDate() - 14);
     
     await addMoment({
       babyId: defaultBaby.id,
       type: 'diary',
-      date: date2.toISOString(),
-      content: '今天学会叫"妈妈"了！虽然还不太清晰，但是听到的那一刻真的太感动了。',
-      mood: 'touched',
-      weather: 'cloudy',
-      milestone: 'growth',
-      milestoneLabel: '学会说话',
+      date: date4.toISOString(),
+      content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
+      mood: 'happy',
+      weather: 'windy',
+      milestone: 'daily',
+      milestoneLabel: '户外活动',
     });
 
     // 更新当前宝宝设置
@@ -1148,7 +1203,7 @@ export async function createSampleBaby(userId) {
   // 创建示例动态
   const now = new Date();
   
-  // 示例动态1：三个月前
+  // 示例动态1：照片 - 三个月前
   const date1 = new Date(now);
   date1.setMonth(date1.getMonth() - 3);
   
@@ -1164,19 +1219,56 @@ export async function createSampleBaby(userId) {
     milestoneLabel: '第一次翻身',
   });
 
-  // 示例动态2：一个月前
+  // 示例动态2：视频 - 两个月前
   const date2 = new Date(now);
-  date2.setMonth(date2.getMonth() - 1);
+  date2.setMonth(date2.getMonth() - 2);
+  
+  await addMoment({
+    babyId: defaultBaby.id,
+    type: 'video',
+    date: date2.toISOString(),
+    content: '今天学会了爬行，追着球球跑得好开心呀！',
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    thumbnail: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+    mood: 'excited',
+    weather: 'cloudy',
+    milestone: 'growth',
+    milestoneLabel: '学会爬行',
+  });
+
+  // 示例动态3：语音 - 一个月前
+  const date3 = new Date(now);
+  date3.setMonth(date3.getMonth() - 1);
+  
+  await addMoment({
+    babyId: defaultBaby.id,
+    type: 'audio',
+    date: date3.toISOString(),
+    content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
+    audios: [{
+      url: 'https://www.w3schools.com/html/horse.ogg',
+      duration: 8,
+      waveform: generateWaveform(),
+    }],
+    mood: 'touched',
+    weather: 'sunny',
+    milestone: 'growth',
+    milestoneLabel: '学会说话',
+  });
+
+  // 示例动态4：日记 - 两周前
+  const date4 = new Date(now);
+  date4.setDate(date4.getDate() - 14);
   
   await addMoment({
     babyId: defaultBaby.id,
     type: 'diary',
-    date: date2.toISOString(),
-    content: '今天学会叫"妈妈"了！虽然还不太清晰，但是听到的那一刻真的太感动了。',
-    mood: 'touched',
-    weather: 'cloudy',
-    milestone: 'growth',
-    milestoneLabel: '学会说话',
+    date: date4.toISOString(),
+    content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
+    mood: 'happy',
+    weather: 'windy',
+    milestone: 'daily',
+    milestoneLabel: '户外活动',
   });
 
   // 更新当前宝宝设置
