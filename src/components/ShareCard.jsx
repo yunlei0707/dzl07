@@ -1,22 +1,63 @@
 /**
  * 分享卡片组件
- * 使用html2canvas将DOM转成图片
+ * 接收动态数据，渲染成漂亮的卡片，然后用html2canvas转成图片
  */
 import { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
-import { X, Download, Share2, Image as ImageIcon } from 'lucide-react';
+import { X, Download, Image as ImageIcon, Music, Video, Camera, BookOpen } from 'lucide-react';
+
+// 心情图标映射
+const moodIcons = {
+  happy: '😊',
+  excited: '🎉',
+  touched: '🥹',
+  calm: '😌',
+  sad: '😢',
+  angry: '😠',
+  surprised: '😲',
+  love: '❤️',
+};
+
+// 里程碑图标映射
+const milestoneIcons = {
+  first: '⭐',
+  growth: '🌱',
+  daily: '📅',
+  special: '✨',
+};
 
 export function ShareCard({ 
   visible, 
   onClose, 
-  cardRef,
-  title = '宝贝时光',
+  babyName = '宝宝',
+  date = '',
   content = '',
-  subContent = '',
-  qrCodeData = null
+  type = 'photo',
+  thumbnail = '',
+  mood = 'happy',
+  milestone = 'daily',
+  milestoneLabel = '',
 }) {
   const [generating, setGenerating] = useState(false);
   const [shareImage, setShareImage] = useState(null);
+  const cardRef = useRef(null);
+
+  // 获取类型图标
+  const getTypeIcon = () => {
+    switch (type) {
+      case 'video': return <Video className="w-4 h-4" />;
+      case 'audio': return <Music className="w-4 h-4" />;
+      case 'diary': return <BookOpen className="w-4 h-4" />;
+      default: return <Camera className="w-4 h-4" />;
+    }
+  };
+
+  // 格式化日期
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  };
 
   // 生成分享图片
   const generateShareImage = async () => {
@@ -61,7 +102,7 @@ export function ShareCard({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl animate-scale-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
         {/* 标题栏 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
           <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -80,9 +121,68 @@ export function ShareCard({
         <div className="p-4">
           {!shareImage ? (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                点击下方按钮，将卡片生成为图片
-              </p>
+              {/* 预览卡片 - 这是真正要截图的部分 */}
+              <div 
+                ref={cardRef}
+                className="relative bg-gradient-to-br from-pink-50 via-orange-50 to-yellow-50 rounded-2xl overflow-hidden shadow-lg"
+              >
+                {/* 装饰背景 */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-200/30 to-orange-200/30 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-yellow-200/30 to-pink-200/30 rounded-full translate-y-1/2 -translate-x-1/2" />
+                
+                {/* 卡片内容 */}
+                <div className="relative p-6">
+                  {/* 顶部标题 */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">👶</span>
+                      <span className="font-bold text-gray-800">{babyName}</span>
+                    </div>
+                    {milestoneLabel && (
+                      <span className="px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-xs font-medium flex items-center gap-1">
+                        <span>{milestoneIcons[milestone] || '📅'}</span>
+                        {milestoneLabel}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 媒体内容（图片/视频封面） */}
+                  {thumbnail && type !== 'diary' && (
+                    <div className="mb-4 rounded-xl overflow-hidden shadow-md">
+                      <img 
+                        src={thumbnail} 
+                        alt="分享图片" 
+                        className="w-full aspect-square object-cover"
+                        crossOrigin="anonymous"
+                      />
+                    </div>
+                  )}
+
+                  {/* 内容文字 */}
+                  <p className="text-gray-700 leading-relaxed mb-4 text-sm">
+                    {content}
+                  </p>
+
+                  {/* 底部信息 */}
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-3">
+                      <span>{moodIcons[mood] || '😊'}</span>
+                      <span className="flex items-center gap-1">
+                        {getTypeIcon()}
+                        {type === 'photo' ? '照片' : type === 'video' ? '视频' : type === 'audio' ? '语音' : '日记'}
+                      </span>
+                    </div>
+                    <span>{formatDate(date)}</span>
+                  </div>
+
+                  {/* 水印 */}
+                  <div className="mt-4 pt-4 border-t border-gray-200/50 text-center">
+                    <span className="text-xs text-gray-400">✨ 宝贝时光 - 用心记录每一个成长瞬间</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 生成按钮 */}
               <button
                 onClick={generateShareImage}
                 disabled={generating}
@@ -103,6 +203,7 @@ export function ShareCard({
             </div>
           ) : (
             <div className="space-y-4">
+              {/* 生成后的图片预览 */}
               <div className="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
                 <img 
                   src={shareImage} 
