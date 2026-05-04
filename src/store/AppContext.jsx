@@ -2,7 +2,8 @@
  * React Context - 应用状态管理
  */
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { getPerformanceConfig, getDeviceLevel, setCache, getCache } from '../utils/performance';
 import {
   getAllBabies,
   getBabiesByUser,
@@ -69,6 +70,9 @@ export function AppProvider({ children }) {
   // 认证状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // ✅ 性能配置：根据设备等级自动降级
+  const perfConfig = useMemo(() => getPerformanceConfig(), []);
 
   // 显示Toast
   const showToast = useCallback((message, type = 'success') => {
@@ -441,6 +445,9 @@ export function AppProvider({ children }) {
     currentUser,
     login,
     logout,
+    // ✅ 性能配置
+    perfConfig,
+    deviceLevel: perfConfig.level,
   };
 
   return (

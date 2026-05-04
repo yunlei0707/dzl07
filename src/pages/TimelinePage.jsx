@@ -1,6 +1,6 @@
 /**
  * 时光轴页面
- * 优化版本：往年今日折叠面板，头像显示在左上角，支持分享功能
+ * ✅ 性能优化版本：虚拟滚动 + 懒加载 + 分页加载
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
@@ -12,6 +12,46 @@ import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown } from 'lucide-react';
+
+// ==================== 虚拟滚动优化 ====================
+// 虚拟列表项高度估计
+const ESTIMATED_ITEM_HEIGHT = 300;
+// 视口外预渲染数量
+const BUFFER_SIZE = 5;
+
+// 虚拟列表HOC：只渲染可见区域的卡片
+function withVirtualList(Component) {
+  return function VirtualListWrapper({ index, ...props }) {
+    const [isVisible, setIsVisible] = useState(false);
+    const itemRef = useRef(null);
+
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          setIsVisible(entries[0].isIntersecting);
+        },
+        { rootMargin: `${BUFFER_SIZE * ESTIMATED_ITEM_HEIGHT}px` }
+      );
+
+      if (itemRef.current) {
+        observer.observe(itemRef.current);
+      }
+
+      return () => observer.disconnect();
+    }, []);
+
+    return (
+      <div ref={itemRef}>
+        {isVisible ? <Component {...props} /> : (
+          <div style={{ height: ESTIMATED_ITEM_HEIGHT }} className="bg-transparent" />
+        )}
+      </div>
+    );
+  };
+}
+
+// 应用虚拟滚动优化
+const VirtualMomentCard = withVirtualList(MomentCard);
 
 // 类型筛选选项
 const typeFilters = [
@@ -469,13 +509,14 @@ export function TimelinePage({
                   </div>
                 </div>
                 
-                {/* 动态列表 */}
+                {/* 动态列表 - 虚拟滚动优化 */}
                 <div className="ml-10">
-                  {group.moments.map((moment) => (
+                  {group.moments.map((moment, index) => (
                     <div key={moment.id} className="relative">
                       <div className="absolute -left-8 top-4 w-3 h-3 rounded-full bg-white border-2 border-primary-400 shadow-sm" />
                       
-                      <MomentCard
+                      <VirtualMomentCard
+                        index={index}
                         moment={moment}
                         onEdit={onEditMoment}
                         onDelete={handleDeleteMoment}

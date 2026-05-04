@@ -155,6 +155,82 @@ export async function deleteMediaByMomentId(momentId) {
   return true;
 }
 
+// ==================== 存储配额管理 ====================
+
+/**
+ * 获取存储使用情况
+ */
+export async function getStorageUsage() {
+  if (navigator.storage && navigator.storage.estimate) {
+    const estimate = await navigator.storage.estimate();
+    return {
+      used: estimate.usage,
+      total: estimate.quota,
+      percent: ((estimate.usage / estimate.quota) * 100).toFixed(1),
+      usedMB: (estimate.usage / 1024 / 1024).toFixed(2),
+      totalMB: (estimate.quota / 1024 / 1024).toFixed(2),
+    };
+  }
+  return null;
+}
+
+/**
+ * 检查存储空间是否即将满
+ */
+export async function isStorageAlmostFull(threshold = 80) {
+  const usage = await getStorageUsage();
+  if (!usage) return false;
+  return parseFloat(usage.percent) >= threshold;
+}
+
+/**
+ * 智能压缩图片（超过阈值自动压缩）
+ */
+export async function smartCompressImage(file, maxSizeMB = 2, quality = 0.8) {
+  const maxSize = maxSizeMB * 1024 * 1024;
+  
+  // 如果没超过阈值，直接返回原文件
+  if (file.size <= maxSize) {
+    return file;
+  }
+  
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // 计算缩放比例，限制最大宽度为1920
+        const maxWidth = 1920;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          const ratio = maxWidth / width;
+          width = maxWidth;
+          height = height * ratio;
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // 转为blob
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name, { 
+            type: 'image/jpeg', 
+            lastModified: Date.now() 
+          }));
+        }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ==================== 宝宝档案操作 ====================
 
 /**
