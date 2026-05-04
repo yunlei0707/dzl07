@@ -292,6 +292,23 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       return;
     }
     
+    // 获取当前登录用户信息
+    let createdBy = null;
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        createdBy = {
+          id: currentUser.id,
+          name: currentUser.username,
+          avatar: currentUser.avatar,
+          role: currentUser.role
+        };
+      }
+    } catch (e) {
+      console.error('获取用户信息失败', e);
+    }
+    
     const momentData = {
       babyId: babyId,
       type,
@@ -309,6 +326,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       milestone,
       milestoneLabel: milestone ? milestoneLabel : '',
       milestoneEmoji: milestone ? milestoneEmoji : '',
+      createdBy, // 记录人信息
     };
     
     setSaving(true);

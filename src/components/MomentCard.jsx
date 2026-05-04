@@ -89,11 +89,18 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
     <div className="card mb-4 animate-fade-in">
       {/* 头部 */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-lg">{typeIcons[moment.type]}</span>
           <span className="text-sm text-gray-500 dark:text-gray-400">
             {formatDateFriendly(moment.date)} {formatTime(moment.createdAt)}
           </span>
+          {/* 记录人信息 */}
+          {moment.createdBy && (
+            <span className="flex items-center gap-1 text-xs text-primary-500 bg-primary-50 px-2 py-0.5 rounded-full">
+              <span>{moment.createdBy.avatar}</span>
+              <span>{moment.createdBy.name}</span>
+            </span>
+          )}
         </div>
         
         <div className="relative">
