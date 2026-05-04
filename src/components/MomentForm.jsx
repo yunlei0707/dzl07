@@ -3,8 +3,8 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Image, Video, FileText, Star, AlertCircle, Mic, Square, Play, Pause } from 'lucide-react';
-import { useApp } from '../store/AppContext';
+import { X, Image, Video, FileText, Star, AlertCircle, Mic, Square, Play, Pause , MapPin } from 'lucide-react';
+import { useApp  } from '../store/AppContext';
 
 const weatherOptions = [
   { value: 'sunny', emoji: '☀️', label: '晴天' },
@@ -28,6 +28,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const [audios, setAudios] = useState(moment?.audios || []); // [{url, duration, waveform}]
   const [mood, setMood] = useState(moment?.mood || '');
   const [location, setLocation] = useState(moment?.location || '');
+  const [weather, setWeather] = useState(moment?.weather || '');
   const [moodEmoji, setMoodEmoji] = useState(moment?.moodEmoji || '');
   const [moodLabel, setMoodLabel] = useState(moment?.moodLabel || '');
   const [milestone, setMilestone] = useState(moment?.milestone || '');
