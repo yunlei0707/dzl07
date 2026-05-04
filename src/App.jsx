@@ -64,7 +64,8 @@ function AppContent() {
     setBabies,
     switchBaby,
     showToast,
-    login
+    login,
+    babies
   } = useApp();
   
   const [activeTab, setActiveTab] = useState('timeline');
