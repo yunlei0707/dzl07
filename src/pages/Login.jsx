@@ -66,7 +66,7 @@ export function LoginPage({ onLogin }) {
   };
 
   // 登录处理
-  const handleLogin = async () => {
+  const handleLogin = () => {
     if (!selectedRole) return;
 
     setIsLoading(true);
@@ -88,11 +88,10 @@ export function LoginPage({ onLogin }) {
       onLogin(user);
     }
 
-    // 模拟加载效果
+    // 立即跳转
     setTimeout(() => {
-      setIsLoading(false);
       navigate('/', { replace: true });
-    }, 800);
+    }, 300);
   };
 
   return (
