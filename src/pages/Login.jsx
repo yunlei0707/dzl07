@@ -97,7 +97,7 @@ export function LoginPage({ onLogin }) {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-primary-50 via-cream-50 to-orange-50 flex flex-col items-center justify-center px-4 safe-top safe-bottom relative overflow-hidden"
+      className="min-h-screen bg-gradient-to-br from-primary-50 via-cream-50 to-orange-50 flex flex-col items-center px-4 safe-top safe-bottom relative overflow-hidden py-8"
       style={customBg ? { backgroundImage: `url(${customBg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
     >
       {/* 背景遮罩 - 当有自定义背景时显示 */}
@@ -137,31 +137,31 @@ export function LoginPage({ onLogin }) {
       {/* Logo 区域 */}
       <div className="mb-6 animate-bounce-in z-10">
         <div className="relative">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-500 rounded-3xl flex items-center justify-center shadow-lg shadow-primary-200/50">
-            <Baby className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-primary-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-200/50">
+            <Baby className="w-8 h-8 text-white" />
           </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center shadow-sm animate-wiggle">
-            <Heart className="w-3 h-3 text-white fill-current" />
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center shadow-sm animate-wiggle">
+            <Heart className="w-2.5 h-2.5 text-white fill-current" />
           </div>
         </div>
       </div>
 
       {/* 标题 */}
-      <h1 className="text-2xl font-bold text-gray-800 mb-2 z-10" style={customBg ? { color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)' } : {}}>
+      <h1 className="text-xl font-bold text-gray-800 mb-1 z-10 text-center" style={customBg ? { color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)' } : {}}>
         欢迎来到宝贝时光
       </h1>
-      <p className="text-gray-500 mb-6 z-10" style={customBg ? { color: 'rgba(255,255,255,0.9)' } : {}}>
+      <p className="text-gray-500 mb-6 z-10 text-center text-sm" style={customBg ? { color: 'rgba(255,255,255,0.9)' } : {}}>
         请选择您的身份
       </p>
 
       {/* 角色选择网格 */}
-      <div className="w-full max-w-md z-10 mb-6">
-        <div className="grid grid-cols-3 gap-3">
+      <div className="w-full max-w-sm z-10 mb-4">
+        <div className="grid grid-cols-3 gap-2">
           {FAMILY_ROLES.map((role) => (
             <button
               key={role.id}
               onClick={() => handleRoleSelect(role)}
-              className={`relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 ${
+              className={`relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 ${
                 selectedRole?.id === role.id
                   ? `bg-gradient-to-br ${role.color} text-white shadow-lg scale-105`
                   : customBg
@@ -169,7 +169,7 @@ export function LoginPage({ onLogin }) {
                   : 'bg-white text-gray-700 hover:shadow-md hover:scale-102'
               }`}
             >
-              <span className="text-3xl mb-2">{role.icon}</span>
+              <span className="text-2xl mb-1">{role.icon}</span>
               <span className="text-xs font-medium">{role.name}</span>
               {selectedRole?.id === role.id && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full flex items-center justify-center">
@@ -181,12 +181,23 @@ export function LoginPage({ onLogin }) {
         </div>
       </div>
 
+      {/* 选择角色后显示的欢迎区域 */}
+      {selectedRole && (
+        <div className="w-full max-w-sm z-10 mb-4">
+          <div className={`bg-gradient-to-r ${selectedRole.color} rounded-xl p-4 shadow-lg text-center`}>
+            <div className="text-4xl mb-2">{selectedRole.icon}</div>
+            <div className="text-white text-lg font-bold">{selectedRole.welcome}</div>
+            <div className="text-white/80 text-sm mt-1">点击下方按钮开始记录美好时光</div>
+          </div>
+        </div>
+      )}
+
       {/* 登录按钮 */}
       <button
         onClick={handleLogin}
         disabled={!selectedRole || isLoading}
-        className={`btn-primary w-full max-w-sm flex items-center justify-center gap-2 z-10 ${
-          !selectedRole ? 'opacity-50 cursor-not-allowed' : ''
+        className={`btn-primary w-full max-w-sm flex items-center justify-center gap-2 z-10 py-4 text-base font-bold rounded-xl shadow-lg transition-all ${
+          !selectedRole ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
         }`}
         style={selectedRole ? {
           background: `linear-gradient(to right, var(--tw-gradient-stops))`,
@@ -200,13 +211,13 @@ export function LoginPage({ onLogin }) {
         ) : (
           <>
             <Heart className="w-5 h-5" />
-            <span>{selectedRole ? selectedRole.welcome : '请选择您的身份'}</span>
+            <span>{selectedRole ? selectedRole.welcome : '请先选择您的身份'}</span>
           </>
         )}
       </button>
 
       {/* 底部提示 */}
-      <p className="mt-6 text-sm text-gray-400 z-10" style={customBg ? { color: 'rgba(255,255,255,0.7)' } : {}}>
+      <p className="mt-4 text-xs text-gray-400 z-10 text-center" style={customBg ? { color: 'rgba(255,255,255,0.7)' } : {}}>
         选择角色后即可开始记录美好时光
       </p>
     </div>
