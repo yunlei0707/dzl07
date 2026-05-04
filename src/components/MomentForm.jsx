@@ -174,6 +174,93 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setVideos(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeAudio = (index) => {
+    setAudios(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const audioData = {
+            url: event.target.result,
+            duration: recordingTime,
+            waveform: audioWaveform.length > 0 ? audioWaveform.slice(-40) : []
+          };
+          setAudios(prev => [...prev, audioData]);
+          setRecordingTime(0);
+          setAudioWaveform([]);
+        };
+        reader.readAsDataURL(blob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+      // 波形分析
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const updateWaveform = () => {
+          analyser.getByteFrequencyData(dataArray);
+          const avg = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
+          setAudioWaveform(prev => [...prev, avg]);
+          animationRef.current = requestAnimationFrame(updateWaveform);
+        };
+        updateWaveform();
+      } catch (e) {
+        // 波形分析失败不影响录音
+      }
+    } catch (error) {
+      alert('无法访问麦克风，请检查权限设置');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setIsRecording(false);
+  };
+
+
   const handleSubmit = async () => {
     if (!content.trim() && photos.length === 0 && videos.length === 0 && audios.length === 0) {
       alert('请添加内容、照片、视频或语音');
