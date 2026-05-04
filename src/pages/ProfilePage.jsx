@@ -6,7 +6,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
-import { PRESET_AVATARS } from '../utils/constants';
+import { PRESET_AVATARS } from '../utils/db';
 import {
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
   Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
