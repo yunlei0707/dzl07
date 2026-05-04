@@ -10,7 +10,7 @@ import {
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
   Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
 } from 'lucide-react';
-import { exportAllData, importAllData, PRESET_AVATARS, generateInviteToken, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
+import { exportAllData, importAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
 import { calculateAge } from '../utils/dateUtils';
 
 // 主题预设配置
@@ -71,11 +71,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [editingMood, setEditingMood] = useState(null);
   const [moodForm, setMoodForm] = useState({ label: '', emoji: '😊' });
-  
-  // 邀约打卡状态
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteLink, setInviteLink] = useState('');
-  const [copied, setCopied] = useState(false);
   
   // 设置面板抽屉状态
   const [showSettings, setShowSettings] = useState(false);
@@ -264,32 +259,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
     }
     setPullDistance(0);
   }, [pullDistance, refreshData]);
-  
-  // 生成邀约链接
-  const generateInviteLink = useCallback(() => {
-    if (!currentBaby) {
-      showToast('请先添加宝宝', 'error');
-      return;
-    }
-    
-    const token = generateInviteToken(currentBaby.id);
-    const link = `${window.location.origin}/invite?babyId=${currentBaby.id}&token=${token}`;
-    setInviteLink(link);
-    setShowInviteModal(true);
-  }, [currentBaby, showToast]);
-  
-  // 复制邀约链接
-  const copyInviteLink = useCallback(() => {
-    if (!inviteLink) return;
-    
-    navigator.clipboard.writeText(inviteLink).then(() => {
-      setCopied(true);
-      showToast('链接已复制', 'success');
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      showToast('复制失败', 'error');
-    });
-  }, [inviteLink, showToast]);
   
   // 导出数据
   const handleExport = useCallback(async () => {
@@ -547,20 +516,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
       
       {/* 功能菜单 */}
       <div className="px-4 space-y-3">
-        {/* 邀约打卡 */}
-        <button
-          onClick={generateInviteLink}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <Users className="w-5 h-5 text-green-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">邀约打卡</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">邀请家人一起记录宝宝成长</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
 
         {/* 主题设置 */}
         <button
@@ -650,41 +605,6 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
         <Heart className="w-4 h-4 inline mx-1 text-red-400" />
         用心记录每一个成长瞬间
       </div>
-      
-      {/* 邀约打卡弹窗 */}
-      {showInviteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50" onClick={() => setShowInviteModal(false)}>
-          <div 
-            className="w-full bg-white dark:bg-gray-800 rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold dark:text-white">邀约家人一起记录</h3>
-              <button onClick={() => setShowInviteModal(false)}>
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-            
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                分享链接给家人朋友，让他们可以为 {currentBaby?.nickname || currentBaby?.name} 打卡~
-              </p>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4 break-all">
-              <p className="text-sm text-gray-600 dark:text-gray-300 font-mono">{inviteLink}</p>
-            </div>
-            
-            <button
-              onClick={copyInviteLink}
-              className="w-full py-3 bg-primary-500 text-white rounded-lg font-medium flex items-center justify-center gap-2"
-            >
-              {copied ? <CheckIcon className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              {copied ? '已复制' : '复制链接'}
-            </button>
-          </div>
-        </div>
-      )}
       
       {/* 导入数据弹窗 */}
       {showImportModal && (

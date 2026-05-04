@@ -20,7 +20,6 @@ import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
-import { InvitePage } from './pages/InvitePage';
 import { RecycleBin } from './components/RecycleBin';
 import { MonthlyReport } from './components/MonthlyReport';
 import { 
@@ -470,8 +469,6 @@ function AppRoutes() {
           )
         } 
       />
-      {/* 访客打卡页面 */}
-      <Route path="/invite" element={<InvitePage />} />
       
       {/* 受保护的路由 */}
       <Route

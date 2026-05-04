@@ -78,13 +78,16 @@ export function AppProvider({ children }) {
 
   // 获取所有可用的里程碑（预设 + 自定义）
   const getAllMilestones = useCallback(() => {
-    return DEFAULT_MILESTONES.filter(m => !hiddenMilestones.includes(m.id))
-      .concat(customMilestones);
+    const hidden = Array.isArray(hiddenMilestones) ? hiddenMilestones : [];
+    const custom = Array.isArray(customMilestones) ? customMilestones : [];
+    return DEFAULT_MILESTONES.filter(m => !hidden.includes(m.id))
+      .concat(custom);
   }, [customMilestones, hiddenMilestones]);
 
   // 获取所有可用的心情（预设 + 自定义）
   const getAllMoods = useCallback(() => {
-    return DEFAULT_MOODS.concat(customMoods);
+    const custom = Array.isArray(customMoods) ? customMoods : [];
+    return DEFAULT_MOODS.concat(custom);
   }, [customMoods]);
 
   // 初始化应用
