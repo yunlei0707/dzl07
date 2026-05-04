@@ -385,7 +385,7 @@ export async function deleteCustomMilestone(id) {
  * 获取自定义心情标签
  */
 export async function getCustomMoods() {
-  const settings = await getSettingsFromDB();
+  const settings = await getSettings();
   return settings.customMoods || [];
 }
 
