@@ -1,10 +1,63 @@
 /**
  * 动态卡片组件
+ * ✅ 性能优化：图片懒加载 + 占位符
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { formatDateFriendly, formatTime } from '../utils/dateUtils';
 import { Smile, CloudSun, MapPin, MoreHorizontal, Trash2, Edit3, Play, Pause, Mic, Share2 } from 'lucide-react';
+
+// 懒加载图片组件
+function LazyImage({ src, alt, className }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const imgRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // 进入视口时才开始加载
+          const img = new Image();
+          img.onload = () => setLoaded(true);
+          img.onerror = () => setError(true);
+          img.src = src;
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px' } // 提前100px预加载
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [src]);
+
+  return (
+    <div ref={imgRef} className={`relative w-full h-full ${className || ''}`}>
+      {!loaded && !error && (
+        <div className="absolute inset-0 bg-cream-100 dark:bg-gray-700 animate-pulse flex items-center justify-center">
+          <span className="text-2xl opacity-50">📷</span>
+        </div>
+      )}
+      {loaded && (
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover transition-opacity duration-300"
+          loading="lazy"
+        />
+      )}
+      {error && (
+        <div className="absolute inset-0 bg-cream-100 dark:bg-gray-700 flex items-center justify-center">
+          <span className="text-xl opacity-50">❌</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // 格式化时间
 const formatTime2 = (seconds) => {
@@ -245,11 +298,9 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                 moment.photos.length === 1 ? 'aspect-video' : 'aspect-square'
               } ${moment.photos.length === 3 && index === 0 ? 'row-span-2 aspect-auto' : ''}`}
             >
-              <img
+              <LazyImage
                 src={photo}
                 alt={`照片 ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
               />
               {index === 3 && moment.photos.length > 4 && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-bold">

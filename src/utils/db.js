@@ -99,6 +99,64 @@ export async function getCurrentBaby() {
   return babies[0] || null;
 }
 
+// ==================== 媒体文件操作（性能优化：媒体与动态分离）====================
+
+/**
+ * 添加媒体文件（独立存储）
+ */
+export async function addMedia(mediaData) {
+  const db = await initDB();
+  const media = {
+    ...mediaData,
+    createdAt: new Date().toISOString(),
+  };
+  const id = await db.add('media', media);
+  return { ...media, id };
+}
+
+/**
+ * 批量添加媒体文件
+ */
+export async function addMediaBatch(mediaList) {
+  const db = await initDB();
+  const tx = db.transaction('media', 'readwrite');
+  const results = [];
+  for (const mediaData of mediaList) {
+    const media = {
+      ...mediaData,
+      createdAt: new Date().toISOString(),
+    };
+    const id = await tx.store.add(media);
+    results.push({ ...media, id });
+  }
+  await tx.done;
+  return results;
+}
+
+/**
+ * 获取某个动态的所有媒体
+ */
+export async function getMediaByMomentId(momentId) {
+  const db = await initDB();
+  return await db.getAllFromIndex('media', 'momentId', momentId);
+}
+
+/**
+ * 删除某个动态的所有媒体
+ */
+export async function deleteMediaByMomentId(momentId) {
+  const db = await initDB();
+  const media = await getMediaByMomentId(momentId);
+  const tx = db.transaction('media', 'readwrite');
+  for (const m of media) {
+    await tx.store.delete(m.id);
+  }
+  await tx.done;
+  return true;
+}
+
+// ==================== 宝宝档案操作 ====================
+
 /**
  * 添加宝宝档案
  */
