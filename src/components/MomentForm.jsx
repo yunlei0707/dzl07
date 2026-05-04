@@ -170,6 +170,22 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
   
+
+  const togglePlayAudio = (index) => {
+    if (playingIndex === index) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setPlayingIndex(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setPlayingIndex(index);
+      // We can't auto-play here without actual audio element, but at least UI won't crash
+    }
+  };
+
   const removeVideo = (index) => {
     setVideos(prev => prev.filter((_, i) => i !== index));
   };
@@ -624,23 +640,23 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
             心情
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {moodOptions.map(option => (
               <button
-                key={option.id}
+                key={option.value}
                 onClick={() => {
-                  if (mood === option.id) {
+                  if (mood === option.value) {
                     setMood('');
                     setMoodLabel('');
                     setMoodEmoji('');
                   } else {
-                    setMood(option.id);
+                    setMood(option.value);
                     setMoodLabel(option.label);
                     setMoodEmoji(option.emoji);
                   }
                 }}
                 className={`px-3 py-2 rounded-xl text-sm transition-colors ${
-                  mood === option.id
+                  mood === option.value
                     ? 'bg-primary-500 text-white'
                     : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                 }`}
