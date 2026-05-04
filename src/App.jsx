@@ -267,8 +267,12 @@ function AppContent() {
     }
   };
   
-  // 添加宝宝
+  // 添加宝宝（最多2个）
   const handleAddBaby = () => {
+    if (babies.length >= 2) {
+      showToast('最多只能添加2个宝宝哦', 'info');
+      return;
+    }
     setEditingBaby(null);
     setShowBabyForm(true);
   };

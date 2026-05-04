@@ -505,13 +505,19 @@ export function ProfilePage({ onEditBaby, onAddBaby, onOpenRecycleBin }) {
         )}
         
         {/* 添加宝宝按钮 */}
-        <button
-          onClick={onAddBaby}
-          className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:border-primary-400 hover:text-primary-500 transition-colors mb-4"
-        >
-          <Plus className="w-5 h-5" />
-          <span>添加宝宝</span>
-        </button>
+        {babies.length < 2 ? (
+          <button
+            onClick={onAddBaby}
+            className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:border-primary-400 hover:text-primary-500 transition-colors mb-4"
+          >
+            <Plus className="w-5 h-5" />
+            <span>添加宝宝</span>
+          </button>
+        ) : (
+          <div className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 mb-4">
+            <span className="text-sm">已达到最多宝宝数量（2个）</span>
+          </div>
+        )}
       </div>
       
       {/* 功能菜单 */}
