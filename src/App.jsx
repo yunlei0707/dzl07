@@ -16,6 +16,7 @@ import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
+import { isSystemAccount } from './utils/dbV2';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby } from './utils/db';
@@ -228,6 +229,7 @@ function AppContent() {
       {showBabyForm && (
         <BabyForm
           baby={editingBaby}
+          isSystem={isSystemAccount()}
           onSave={handleSaveBaby}
           onCancel={() => {
             setShowBabyForm(false);

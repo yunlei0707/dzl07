@@ -18,7 +18,8 @@ import {
   getCurrentTimeline, 
   addMomentToCurrentAccount,
   deleteMomentFromCurrentAccount,
-  isSystemAccount as checkIsSystemAccount 
+  isSystemAccount as checkIsSystemAccount,
+  getCurrentBabyInfo 
 } from '../utils/dbV2';
 
 // ==================== 虚拟滚动优化 ====================
@@ -85,6 +86,7 @@ export function TimelinePage({
   // v2 账号系统状态
   const [v2Moments, setV2Moments] = useState([]);
   const [isSystemAccount, setIsSystemAccount] = useState(false);
+  const [hasV2Baby, setHasV2Baby] = useState(false);
   
   // 监听账号切换，刷新 v2 数据
   useEffect(() => {
@@ -92,14 +94,11 @@ export function TimelinePage({
       const account = getCurrentV2Account();
       const timeline = getCurrentTimeline();
       const isSystem = checkIsSystemAccount();
+      const babyInfo = getCurrentBabyInfo();
       
       setV2Moments(timeline);
       setIsSystemAccount(isSystem);
-      
-      // 如果是系统账号或没有 currentBaby，使用 v2 数据
-      if (isSystem || !currentBaby) {
-        // v2 数据通过 BabyHeader 显示，不需要额外处理
-      }
+      setHasV2Baby(!!babyInfo);
     };
     
     updateV2Info();
@@ -113,7 +112,7 @@ export function TimelinePage({
       window.removeEventListener('storage', updateV2Info);
       clearInterval(interval);
     };
-  }, [currentBaby]);
+  }, []);
   
   // 获取所有里程碑选项（包含预设和自定义）
   const milestoneFilters = useMemo(() => {
@@ -176,12 +175,19 @@ export function TimelinePage({
   
   // 刷新数据
   const handleRefresh = useCallback(async () => {
-    if (!currentBaby || isRefreshing) return;
+    if (isRefreshing) return;
     
     setIsRefreshing(true);
     try {
-      const babyMoments = await getMomentsByBaby(currentBaby.id);
-      setMoments(babyMoments);
+      if (isSystemAccount) {
+        // 系统账号刷新 v2 数据
+        const timeline = getCurrentTimeline();
+        setV2Moments(timeline);
+      } else if (currentBaby) {
+        // 用户账号刷新 db 数据
+        const babyMoments = await getMomentsByBaby(currentBaby.id);
+        setMoments(babyMoments);
+      }
       showToast('已刷新');
     } catch (error) {
       showToast('刷新失败', 'error');
@@ -189,7 +195,7 @@ export function TimelinePage({
       setIsRefreshing(false);
       setPullDistance(0);
     }
-  }, [currentBaby, isRefreshing, setMoments, showToast]);
+  }, [isSystemAccount, currentBaby, isRefreshing, setMoments, showToast]);
   
   // 下拉刷新手势处理
   const handleTouchStart = useCallback((e) => {
@@ -221,9 +227,11 @@ export function TimelinePage({
     }
   }, [pullDistance, isRefreshing, handleRefresh]);
   
-  // 筛选后的动态
+  // 筛选后的动态 - 根据账号类型选择数据源
   const filteredMoments = useMemo(() => {
-    let result = moments.filter(m => !m.isDeleted); // 排除已删除的记录
+    // 系统账号使用 v2Moments，用户账号使用 moments
+    const sourceMoments = isSystemAccount ? v2Moments : moments;
+    let result = sourceMoments.filter(m => !m.isDeleted); // 排除已删除的记录
     
     if (selectedType) {
       result = result.filter(m => m.type === selectedType);
@@ -236,7 +244,7 @@ export function TimelinePage({
     }
     
     return result;
-  }, [moments, selectedType, selectedMood, selectedMilestone]);
+  }, [v2Moments, moments, isSystemAccount, selectedType, selectedMood, selectedMilestone]);
   
   // 按年月分组
   const groupedMoments = useMemo(() => {
@@ -276,60 +284,74 @@ export function TimelinePage({
   
   // 检查往年今日
   const checkSameDayLastYear = async () => {
-    if (!currentBaby) {
+    if (!currentBaby && !hasV2Baby) {
       showToast('请先创建宝宝档案', 'error');
       return;
     }
     
     if (!showSameDay) {
-      const today = new Date();
-      const sameDay = await getMomentsOnSameDayLastYear(currentBaby.id, today.toISOString());
-      setSameDayMoments(sameDay);
-    }
-    setShowSameDay(!showSameDay);
-  };
-  
-  const handlePhotoClick = (photos, index = 0) => {
-    setSelectedPhotos(photos);
-    setPhotoIndex(index);
-  };
-  
-  // 删除动态（软删除）
-  const handleDeleteMoment = async (id) => {
-    try {
-      await deleteMoment(id);
-      
-      if (currentBaby?.id) {
-        const updatedMoments = await getMomentsByBaby(currentBaby.id);
-        setMoments(updatedMoments);
+      setShowSameDay(true);
+      try {
+        const sameDay = await getMomentsOnSameDayLastYear(currentBaby?.id);
+        setSameDayMoments(sameDay);
+      } catch (error) {
+        showToast('获取失败', 'error');
       }
-      
+    } else {
+      setShowSameDay(false);
+    }
+  };
+
+  // 删除动态
+  const handleDeleteMoment = useCallback(async (momentId) => {
+    if (isSystemAccount) {
+      showToast('系统账号不可删除', 'error');
+      return;
+    }
+    
+    if (!window.confirm('确定要删除这条记录吗？')) return;
+    
+    try {
+      if (isSystemAccount) {
+        deleteMomentFromCurrentAccount(momentId);
+      } else {
+        await deleteMoment(momentId);
+      }
+      // 从列表中移除
+      if (isSystemAccount) {
+        setV2Moments(prev => prev.filter(m => m.id !== momentId));
+      } else {
+        setMoments(prev => prev.filter(m => m.id !== momentId));
+      }
       showToast('已删除');
     } catch (error) {
-      showToast('删除失败: ' + error.message, 'error');
+      showToast('删除失败', 'error');
     }
-  };
-  
-  // 计算筛选后的记录数
+  }, [isSystemAccount, showToast, setMoments]);
+
+  // 照片点击
+  const handlePhotoClick = useCallback((photos, index) => {
+    setSelectedPhotos(photos);
+    setPhotoIndex(index);
+  }, []);
+
+  // 统计
+  const totalCount = filteredMoments.length;
   const filteredCount = filteredMoments.length;
-  const totalCount = moments.filter(m => !m.isDeleted).length;
-  
+
   return (
     <div 
       ref={containerRef}
-      className="min-h-screen pb-20" 
-      onTouchStart={handleTouchStart} 
-      onTouchMove={handleTouchMove} 
+      className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {/* 下拉刷新指示器 */}
-      {(pullDistance > 0 || isRefreshing) && (
-        <div 
-          className="flex items-center justify-center py-3 text-gray-400 transition-transform"
-          style={{ transform: `translateY(${pullDistance}px)` }}
-        >
+      {pullDistance > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-2">
           {isRefreshing ? (
-            <div className="animate-spin w-5 h-5 border-2 border-primary-400 border-t-transparent rounded-full" />
+            <div className="w-5 h-5 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
           ) : (
             <div 
               className="w-5 h-5 border-2 border-gray-300 border-t-primary-400 rounded-full transition-transform"

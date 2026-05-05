@@ -52,7 +52,7 @@ export function VirtualTimePage() {
       window.removeEventListener('storage', updateV2Info);
       clearInterval(interval);
     };
-  }, []);
+  }, [currentBaby]);
   
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;

@@ -1,23 +1,28 @@
 /**
  * 宝宝档案表单组件
+ * 支持系统账号只读模式
  */
 
 import { useState } from 'react';
 import { X, User, Camera } from 'lucide-react';
 
-export function BabyForm({ baby, onSave, onCancel }) {
+export function BabyForm({ baby, onSave, onCancel, isSystem = false }) {
+  // 处理 birthDate 和 birthday 两种字段名
+  const initialBirthday = baby?.birthday 
+    ? new Date(baby.birthday).toISOString().split('T')[0]
+    : baby?.birthDate
+      ? new Date(baby.birthDate).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+
   const [name, setName] = useState(baby?.name || '');
   const [nickname, setNickname] = useState(baby?.nickname || '');
   const [gender, setGender] = useState(baby?.gender || 'girl');
-  const [birthday, setBirthday] = useState(
-    baby?.birthday 
-      ? new Date(baby.birthday).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0]
-  );
+  const [birthDate, setBirthDate] = useState(initialBirthday);
   const [avatar, setAvatar] = useState(baby?.avatar || '');
   const [saving, setSaving] = useState(false);
   
   const handleAvatarUpload = (e) => {
+    if (isSystem) return;
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -29,6 +34,8 @@ export function BabyForm({ baby, onSave, onCancel }) {
   };
   
   const handleSubmit = async () => {
+    if (isSystem) return;
+    
     if (!name.trim()) {
       alert('请输入宝宝姓名');
       return;
@@ -43,7 +50,7 @@ export function BabyForm({ baby, onSave, onCancel }) {
       name: name.trim(),
       nickname: nickname.trim() || name.trim(),
       gender,
-      birthday: new Date(birthday).toISOString(),
+      birthday: new Date(birthDate).toISOString(),
       avatar,
     };
     
@@ -51,7 +58,6 @@ export function BabyForm({ baby, onSave, onCancel }) {
       if (typeof onSave === 'function') {
         await onSave(babyData);
       }
-      // 无论成功失败都重置状态
       setSaving(false);
     } catch (error) {
       alert('保存失败: ' + error.message);
@@ -67,21 +73,34 @@ export function BabyForm({ baby, onSave, onCancel }) {
             <X className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
           <h2 className="font-bold text-gray-800 dark:text-white">
-            {baby ? '编辑宝宝信息' : '添加宝宝'}
+            {isSystem ? '查看宝宝信息' : (baby ? '编辑宝宝信息' : '添加宝宝')}
           </h2>
-          <button 
-            onClick={handleSubmit}
-            disabled={saving}
-            className="px-4 py-1.5 bg-primary-500 text-white rounded-lg font-medium text-sm hover:bg-primary-600 transition-colors disabled:opacity-50"
-          >
-            {saving ? '保存中...' : '保存'}
-          </button>
+          {isSystem ? (
+            <div className="w-16" />
+          ) : (
+            <button 
+              onClick={handleSubmit}
+              disabled={saving}
+              className="px-4 py-1.5 bg-primary-500 text-white rounded-lg font-medium text-sm hover:bg-primary-600 transition-colors disabled:opacity-50"
+            >
+              {saving ? '保存中...' : '保存'}
+            </button>
+          )}
         </div>
       </div>
       
+      {/* 系统账号提示 */}
+      {isSystem && (
+        <div className="mx-4 mt-4 px-4 py-3 bg-amber-50 dark:bg-amber-900/30 rounded-xl">
+          <p className="text-sm text-amber-700 dark:text-amber-400 text-center">
+            ⚠️ 系统账号不可编辑，此为示例数据
+          </p>
+        </div>
+      )}
+      
       <div className="p-4 pb-24 space-y-4 max-w-lg mx-auto">
         <div className="flex flex-col items-center">
-          <label className="relative cursor-pointer group">
+          <div className={`relative ${!isSystem ? 'cursor-pointer group' : ''}`}>
             <div className="w-28 h-28 rounded-full overflow-hidden bg-cream-100 dark:bg-gray-700 border-4 border-white dark:border-gray-600 shadow-lg">
               {avatar ? (
                 <img src={avatar} alt="" className="w-full h-full object-cover" />
@@ -91,17 +110,23 @@ export function BabyForm({ baby, onSave, onCancel }) {
                 </div>
               )}
             </div>
-            <div className="absolute bottom-1 right-1 w-9 h-9 bg-primary-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-              <Camera className="w-5 h-5 text-white" />
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-          </label>
-          <p className="text-sm text-gray-500 mt-2">点击更换头像</p>
+            {!isSystem && (
+              <>
+                <div className="absolute bottom-1 right-1 w-9 h-9 bg-primary-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </>
+            )}
+          </div>
+          <p className={`text-sm mt-2 ${isSystem ? 'text-gray-400' : 'text-gray-500'}`}>
+            {isSystem ? '系统示例' : '点击更换头像'}
+          </p>
         </div>
         
         <div>
@@ -113,7 +138,8 @@ export function BabyForm({ baby, onSave, onCancel }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="输入宝宝姓名"
-            className="input-field"
+            disabled={isSystem}
+            className={`input-field ${isSystem ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60' : ''}`}
           />
         </div>
         
@@ -126,7 +152,8 @@ export function BabyForm({ baby, onSave, onCancel }) {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="输入宝宝小名（选填）"
-            className="input-field"
+            disabled={isSystem}
+            className={`input-field ${isSystem ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60' : ''}`}
           />
         </div>
         
@@ -136,23 +163,25 @@ export function BabyForm({ baby, onSave, onCancel }) {
           </label>
           <div className="flex gap-3">
             <button
-              onClick={() => setGender('girl')}
+              onClick={() => !isSystem && setGender('girl')}
+              disabled={isSystem}
               className={`flex-1 py-4 rounded-xl font-medium transition-all flex flex-col items-center ${
                 gender === 'girl'
                   ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 border-2 border-pink-400'
                   : 'bg-cream-100 dark:bg-gray-700 text-gray-500 border-2 border-transparent'
-              }`}
+              } ${isSystem ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <span className="text-2xl mb-1">👧</span>
               女宝宝
             </button>
             <button
-              onClick={() => setGender('boy')}
+              onClick={() => !isSystem && setGender('boy')}
+              disabled={isSystem}
               className={`flex-1 py-4 rounded-xl font-medium transition-all flex flex-col items-center ${
                 gender === 'boy'
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-2 border-blue-400'
                   : 'bg-cream-100 dark:bg-gray-700 text-gray-500 border-2 border-transparent'
-              }`}
+              } ${isSystem ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <span className="text-2xl mb-1">👦</span>
               男宝宝
@@ -169,7 +198,8 @@ export function BabyForm({ baby, onSave, onCancel }) {
             value={birthDate}
             onChange={(e) => setBirthDate(e.target.value)}
             max={new Date().toISOString().split('T')[0]}
-            className="input-field"
+            disabled={isSystem}
+            className={`input-field ${isSystem ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60' : ''}`}
           />
         </div>
       </div>
