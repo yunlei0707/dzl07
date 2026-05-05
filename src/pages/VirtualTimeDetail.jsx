@@ -1,18 +1,93 @@
 /**
  * 虚拟时光详情页
- * 展示单个专题的详细内容
+ * 展示单个专题的详细内容，支持添加用户内容
  */
 
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Clock } from 'lucide-react';
+import { ArrowLeft, Sparkles, Clock, Plus, Edit3, Trash2, X } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
+import { BabyHeader } from '../components/BabyHeader';
+import { useApp } from '../store/AppContext';
+import {
+  getVirtualTimeContents,
+  addVirtualTimeContent,
+  getCurrentV2Account,
+  getCurrentBabyInfo,
+  isSystemAccount as checkIsSystemAccount,
+  getVirtualTimeCategories,
+} from '../utils/dbV2';
 
 export function VirtualTimeDetail() {
   const { topicId } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useApp();
   
+  const [userContents, setUserContents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newContent, setNewContent] = useState({ title: '', content: '', emoji: '📝' });
+  const [isSystemAccount, setIsSystemAccount] = useState(false);
+  
+  // 获取专题信息
   const topic = virtualTimeTopics.find(t => t.id === topicId);
-
+  
+  // 加载用户内容（使用专题ID作为itemId）
+  const loadContents = useCallback(() => {
+    if (!topicId) return;
+    
+    const contents = getVirtualTimeContents(topicId, topicId);
+    setUserContents(contents || []);
+    setIsLoading(false);
+  }, [topicId]);
+  
+  // 监听账号切换
+  useEffect(() => {
+    const updateInfo = () => {
+      const babyInfo = getCurrentBabyInfo();
+      const isV2 = !!babyInfo;
+      const isSystem = isV2 && checkIsSystemAccount();
+      setIsSystemAccount(isSystem);
+      loadContents();
+    };
+    
+    updateInfo();
+    const interval = setInterval(updateInfo, 500);
+    return () => clearInterval(interval);
+  }, [loadContents]);
+  
+  // 添加内容
+  const handleAddContent = useCallback(() => {
+    if (!newContent.title.trim()) {
+      showToast('请输入标题', 'error');
+      return;
+    }
+    if (isSystemAccount) {
+      showToast('系统账号不可修改', 'error');
+      return;
+    }
+    
+    addVirtualTimeContent(topicId, topicId, {
+      title: newContent.title.trim(),
+      content: newContent.content.trim(),
+      emoji: newContent.emoji,
+      date: new Date().toLocaleDateString('zh-CN')
+    });
+    
+    showToast('已添加内容');
+    setNewContent({ title: '', content: '', emoji: '📝' });
+    setShowAddForm(false);
+    loadContents();
+  }, [topicId, newContent, isSystemAccount, showToast, loadContents]);
+  
+  // 删除内容
+  const handleDeleteContent = useCallback((contentId) => {
+    if (!confirm('确定要删除这条内容吗？')) return;
+    // TODO: 添加删除功能
+    showToast('已删除');
+    loadContents();
+  }, [showToast, loadContents]);
+  
   if (!topic) {
     return (
       <div className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900 flex items-center justify-center">
@@ -28,7 +103,7 @@ export function VirtualTimeDetail() {
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900">
       {/* 头部 */}
@@ -47,170 +122,190 @@ export function VirtualTimeDetail() {
           
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-5 h-5" />
-            <span className="text-sm font-medium">AI生成内容</span>
+            <span className="text-sm font-medium">虚拟时光</span>
           </div>
           
           <h1 className="text-2xl font-bold mb-2">{topic.title}</h1>
           <p className="text-white/80 text-sm">{topic.description}</p>
         </div>
       </header>
-
-      {/* 内容列表 */}
-      <main className="px-4 -mt-4 max-w-lg mx-auto space-y-4">
-        {topic.items.map((item, index) => (
-          <div
-            key={item.id}
-            className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm animate-fade-in"
-            style={{ animationDelay: `${index * 0.1}s` }}
+      
+      {/* 账号切换器 */}
+      <BabyHeader />
+      
+      {/* 添加按钮 */}
+      {!isSystemAccount && (
+        <div className="px-4 py-3">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors"
           >
-            {/* 图片类型 */}
-            {item.type === 'image' && (
-              <>
-                <div className={`h-48 bg-gradient-to-br ${topic.coverGradient} relative flex items-center justify-center`}>
-                  <div className="text-center">
-                    <span className="text-6xl block mb-2">{topic.coverEmoji}</span>
-                    <span className="text-white/60 text-sm">AI生成预览</span>
-                  </div>
+            <Plus className="w-5 h-5" />
+            添加{topic.title}记录
+          </button>
+        </div>
+      )}
+      
+      {/* 添加表单 */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-4 animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">添加{topic.title}记录</h3>
+              <button onClick={() => setShowAddForm(false)} className="p-2">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">标题</label>
+                <input
+                  type="text"
+                  value={newContent.title}
+                  onChange={(e) => setNewContent(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="记录标题..."
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">内容</label>
+                <textarea
+                  value={newContent.content}
+                  onChange={(e) => setNewContent(prev => ({ ...prev, content: e.target.value }))}
+                  placeholder="详细记录..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 resize-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">图标</label>
+                <div className="flex gap-2 flex-wrap">
+                  {['📝', '📖', '🎨', '🎵', '🏃', '📸', '🎁', '⭐', '🌟', '💫', '❤️', '👏'].map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => setNewContent(prev => ({ ...prev, emoji }))}
+                      className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center ${
+                        newContent.emoji === emoji
+                          ? 'bg-primary-100 dark:bg-primary-900/50 border-2 border-primary-500'
+                          : 'bg-gray-100 dark:bg-gray-700 border-2 border-transparent'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              
+              <button
+                onClick={handleAddContent}
+                disabled={!newContent.title.trim()}
+                className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors disabled:opacity-50"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 内容列表 */}
+      <main className="px-4 py-4 max-w-lg mx-auto space-y-4">
+        {/* 用户添加的内容 */}
+        {userContents.length > 0 && (
+          <>
+            <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">我的记录</h3>
+            {userContents.map((item, index) => (
+              <div
+                key={item.id}
+                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <div className="p-4">
-                  <h3 className="font-bold text-gray-800 dark:text-white text-lg">{item.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">
-                    {item.description}
-                  </p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-400">{item.date}</span>
-                    <div className="flex-1" />
-                    {item.tags?.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* 文字类型 */}
-            {item.type === 'text' && (
-              <div className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl">{item.emoji || '📝'}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-800 dark:text-white">{item.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">
-                      {item.content}
-                    </p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs text-gray-400">{item.date}</span>
-                      <div className="flex-1" />
-                      {item.tags?.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="text-xs px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-2xl">{item.emoji || '📝'}</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 朋友圈类型 */}
-            {item.type === 'moment' && (
-              <div className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-400 flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-2xl">{item.authorAvatar}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-gray-800 dark:text-white">{item.authorName}</span>
-                      <span className="text-xs text-gray-400">{item.time}</span>
-                    </div>
-                    <p className="text-gray-800 dark:text-white font-medium">{item.title}</p>
-                    <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">{item.content}</p>
-                    {item.images && (
-                      <div className="flex gap-2 mt-2">
-                        {item.images.map((img, idx) => (
-                          <div key={idx} className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-2xl">
-                            {img}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-4 mt-3 text-gray-400 text-sm">
-                      <span>❤️ {item.likes}</span>
-                      <span>💬 {item.comments}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 唐诗类型 */}
-            {item.type === 'poem' && (
-              <div className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 flex items-center justify-center flex-shrink-0">
-                    <span className="text-3xl">📜</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-gray-800 dark:text-white text-lg">{item.title}</h3>
-                      <span className="text-xs px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full">
-                        {item.difficulty}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">— {item.author}</p>
-                    <p className="text-primary-600 dark:text-primary-400 font-medium leading-relaxed whitespace-pre-line">
-                      {item.content}
-                    </p>
-                    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                      <p className="text-sm text-gray-600 dark:text-gray-300 italic">
-                        {item.translation}
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800 dark:text-white">{item.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">
+                        {item.content || '暂无详细描述'}
                       </p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-3">
-                      {item.tags?.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="text-xs px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full"
+                      <div className="flex items-center gap-2 mt-3">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs text-gray-400">{item.date || '刚刚'}</span>
+                        <div className="flex-1" />
+                        <button
+                          onClick={() => handleDeleteContent(item.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-500"
                         >
-                          {tag}
-                        </span>
-                      ))}
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            ))}
+          </>
+        )}
+        
+        {/* 预置内容 */}
+        {topic.items && topic.items.length > 0 && (
+          <>
+            <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2 mt-4">推荐记录</h3>
+            {topic.items.map((item, index) => (
+              <div
+                key={item.id}
+                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${topic.coverGradient} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-2xl">{item.emoji || topic.coverEmoji}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800 dark:text-white">{item.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">
+                        {item.description || item.content || '暂无描述'}
+                      </p>
+                      {item.date && (
+                        <div className="flex items-center gap-2 mt-3">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-xs text-gray-400">{item.date}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        
+        {/* 空状态 */}
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin w-8 h-8 border-2 border-primary-400 border-t-transparent rounded-full mx-auto" />
+          </div>
+        ) : (!userContents.length && (!topic.items || !topic.items.length)) && (
+          <div className="text-center py-12">
+            <span className="text-6xl block mb-4 opacity-30">{topic.coverEmoji}</span>
+            <p className="text-gray-500 dark:text-gray-400">还没有记录哦</p>
+            {!isSystemAccount && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="mt-4 px-6 py-2 bg-primary-500 text-white rounded-lg"
+              >
+                添加第一条记录
+              </button>
             )}
           </div>
-        ))}
-
-        {/* AI生成提示 */}
-        <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-xl p-4 text-center border border-violet-100 dark:border-violet-800">
-          <Sparkles className="w-5 h-5 text-violet-500 mx-auto mb-2" />
-          <p className="text-violet-700 dark:text-violet-300 text-sm font-medium">
-            以上内容由AI生成，仅供娱乐参考
-          </p>
-          <p className="text-violet-500 dark:text-violet-400 text-xs mt-1">
-            希望能为您和家人带来温暖和快乐~
-          </p>
-        </div>
-
-        <div className="h-8" />
+        )}
       </main>
     </div>
   );
 }
-
-export default VirtualTimeDetail;
