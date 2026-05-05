@@ -439,7 +439,11 @@ export function addVirtualTimeToCurrentAccount(virtualTimeData) {
   
   const newItem = {
     ...virtualTimeData,
-    id: `vt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    id: `vt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    // 联动相关字段（新增）
+    linked_from_record_id: virtualTimeData.linked_from_record_id || null,
+    link_type: virtualTimeData.link_type || null,
+    is_linked: virtualTimeData.is_linked || false
   };
   
   const virtualTime = accountData.virtualTime || [];
