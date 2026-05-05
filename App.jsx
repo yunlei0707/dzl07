@@ -121,31 +121,100 @@ function AppContent() {
     if (!latestContent) return;
     
     try {
-      // 优先：点击SDK悬浮按钮打开聊天窗
+      // 最全的SDK悬浮按钮选择器（覆盖各种可能的类名）
       const sdkSelectors = [
         'button[class*="coze-chat-float-btn"]',
         '[class*="coze-chat-float-btn"]',
         'button[class*="float-btn"]',
-        'button[class*="asst-btn"]'
+        'button[class*="asst-btn"]',
+        '[class*="coze"] button',
+        '[class*="coze"] [class*="btn"]',
+        'button[aria-label*="chat"]',
+        'button[aria-label*="对话"]',
+        'button[aria-label*="助手"]',
+        '[class*="chat"] button',
+        '[class*="Chat"] button',
+        'div[class*="coze"]',
+        'div[class*="coze"] *',
+        // 兜底：查找右下角固定位置的元素
+        'div[style*="position: fixed"]',
+        'div[style*="bottom:"]'
       ];
       
       let opened = false;
+      let targetBtn = null;
+      
+      // 1. 先尝试各种选择器
       for (const selector of sdkSelectors) {
         const btn = document.querySelector(selector);
         if (btn) {
-          btn.click();
-          opened = true;
-          break;
+          // 验证元素是否可见
+          const style = window.getComputedStyle(btn);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            targetBtn = btn;
+            break;
+          }
         }
       }
       
-      // 备用：尝试旧接口
-      if (!opened && window.cozeChat) {
-        window.cozeChat.open();
+      // 2. 如果没找到，尝试查找iframe里的元素
+      if (!targetBtn) {
+        const iframes = document.querySelectorAll('iframe');
+        for (const iframe of iframes) {
+          try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDoc) {
+              for (const selector of sdkSelectors) {
+                const btn = iframeDoc.querySelector(selector);
+                if (btn) {
+                  targetBtn = btn;
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            // 跨域访问失败，跳过
+          }
+        }
       }
       
-      // 延迟一点，让聊天窗完全打开后填入内容
-      setTimeout(() => {
+      // 3. 点击找到的按钮
+      if (targetBtn) {
+        targetBtn.click();
+        opened = true;
+      }
+      
+      // 4. 备用：尝试旧接口
+      if (!opened && window.cozeChat) {
+        try {
+          window.cozeChat.open();
+          opened = true;
+        } catch (e) {
+          console.log('cozeChat.open 失败:', e);
+        }
+      }
+      
+      // 5. 如果都失败了，给用户提示
+      if (!opened) {
+        showToast('请点击右下角的AI助手图标打开聊天窗口', 'info');
+        // 高亮提示用户点击右下角
+        const floatBtns = document.querySelectorAll('*');
+        floatBtns.forEach(el => {
+          const style = window.getComputedStyle(el);
+          if (style.position === 'fixed' && style.bottom && style.right) {
+            el.style.transition = 'all 0.3s';
+            el.style.transform = 'scale(1.2)';
+            el.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.8)';
+            setTimeout(() => {
+              el.style.transform = 'scale(1)';
+              el.style.boxShadow = '';
+            }, 1000);
+          }
+        });
+      }
+      
+      // 6. 延迟填入内容
+      const fillPrompt = () => {
         const babyName = currentBaby?.name || '宝宝';
         const prompt = `请帮我为以下宝宝成长记录创作一段未来时光想象：
 
@@ -154,16 +223,35 @@ function AppContent() {
 
 请发挥想象力，用温暖、有画面感的语言，创作一段100-200字的未来时光回响。`;
         
-        // 找到输入框并填入内容
-        const inputElement = document.querySelector('.coze-chat-input textarea, .coze-chat-input input');
-        if (inputElement) {
-          inputElement.value = prompt;
-          inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        // 查找输入框（覆盖更多选择器）
+        const inputSelectors = [
+          '.coze-chat-input textarea',
+          '.coze-chat-input input',
+          '[class*="chat-input"] textarea',
+          '[class*="chat-input"] input',
+          'textarea[placeholder*="输入"]',
+          'textarea[placeholder*="消息"]',
+          'input[placeholder*="输入"]',
+          'input[placeholder*="消息"]'
+        ];
+        
+        for (const selector of inputSelectors) {
+          const inputElement = document.querySelector(selector);
+          if (inputElement) {
+            inputElement.value = prompt;
+            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+            inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+            break;
+          }
         }
-      }, 800);
+      };
+      
+      setTimeout(fillPrompt, 800);
+      setTimeout(fillPrompt, 1500); // 重试一次
       
     } catch (e) {
       console.error('打开扣子聊天窗失败:', e);
+      showToast('请直接点击右下角的AI助手图标', 'info');
     }
   };
 
