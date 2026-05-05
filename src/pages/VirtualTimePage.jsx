@@ -51,12 +51,19 @@ export function VirtualTimePage() {
     // 轮询更新
     const interval = setInterval(updateV2Info, 500);
     
-    return () => {
-      window.removeEventListener('storage', updateV2Info);
-      clearInterval(interval);
-    };
-  }, [currentBaby]);
-  
+    return (
+    <div className="virtual-time-page">
+      <h2>AI 未来时光</h2>
+      <p>和 AI 聊聊宝宝的成长，生成专属的未来想象~</p>
+      <iframe
+        src="https://www.coze.cn/s/7636350042466418731"
+        width="100%"
+        height="600"
+        frameBorder="0"
+        allow="microphone; camera"
+      />
+    </div>
+  );
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
   
