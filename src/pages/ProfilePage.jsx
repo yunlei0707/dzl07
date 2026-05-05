@@ -679,7 +679,7 @@ export function ProfilePage(
             <Database className="w-5 h-5 text-blue-500" />
           </div>
           <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导入示例数据（虚拟时光）</span>
+            <span className="font-medium dark:text-white">导入数据示例（我的宝宝）</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               
 {isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
