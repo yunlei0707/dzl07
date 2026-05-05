@@ -2,7 +2,7 @@
  * 登录页面 - 亲属角色选择模式
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Baby, Camera, X, User, Users, Smile, Eye } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export function LoginPage({ onLogin }) {
   const [isLoading, setIsLoading] = useState(false);
 
   // 从 localStorage 恢复状态
-  useState(() => {
+  useEffect(() => {
     const savedRole = localStorage.getItem('selectedFamilyRole');
     const savedBg = localStorage.getItem('customBackground');
     if (savedRole) {
@@ -36,7 +36,7 @@ export function LoginPage({ onLogin }) {
     if (savedBg) {
       setCustomBg(savedBg);
     }
-  });
+  }, []);
 
   // 保存选择的角色
   const handleRoleSelect = (role) => {
