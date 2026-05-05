@@ -88,6 +88,7 @@ export function TimelinePage({
   const [v2Moments, setV2Moments] = useState([]);
   const [isSystemAccount, setIsSystemAccount] = useState(false);
   const [hasV2Baby, setHasV2Baby] = useState(false);
+  const [v2AccountInfo, setV2AccountInfo] = useState(null);
   
   // 删除确认弹窗状态
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, momentId: null, momentContent: '' });
@@ -103,6 +104,7 @@ export function TimelinePage({
       setV2Moments(timeline);
       setIsSystemAccount(isSystem);
       setHasV2Baby(!!babyInfo);
+      setV2AccountInfo(account?.accountData || null);
     };
     
     updateV2Info();
@@ -412,9 +414,15 @@ export function TimelinePage({
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              {/* 头像显示在左上角 */}
+              {/* 头像显示在左上角（使用v2账号身份信息） */}
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-                {currentUser?.avatar ? (
+                {v2AccountInfo?.identityAvatar ? (
+                  v2AccountInfo.identityAvatar.startsWith('data:') || v2AccountInfo.identityAvatar.startsWith('http') ? (
+                    <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{v2AccountInfo.identityAvatar}</span>
+                  )
+                ) : currentUser?.avatar ? (
                   currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
                     <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
                   ) : (

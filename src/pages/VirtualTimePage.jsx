@@ -492,14 +492,20 @@ export function VirtualTimePage() {
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              {currentUser?.avatar ? (
+              {v2AccountInfo?.identityAvatar ? (
+                v2AccountInfo.identityAvatar.startsWith('data:') || v2AccountInfo.identityAvatar.startsWith('http') ? (
+                  <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{v2AccountInfo.identityAvatar}</span>
+                )
+              ) : currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
                   <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span>{currentUser.avatar}</span>
                 )
               ) : (
-                <span>👶</span>
+                <span>✨</span>
               )}
             </div>
             <h1 className="text-xl font-bold">✨ 虚拟时光</h1>
