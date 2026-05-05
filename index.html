@@ -40,10 +40,11 @@
     <script src="/static/coze-chat-sdk.js"></script>
     
     <script type="module" src="/src/main.jsx"></script>
-  </body><!-- 扣子 Chat SDK -->
-<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.20/libs/cn/index.js"></script>
-<style>
-  /* ===== 扣子 SDK 样式定制 ===== */
+  </body>
+  <!-- 扣子 Chat SDK -->
+  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.20/libs/cn/index.js"></script>
+  <style>
+  /* ===== 扣子 SDK 样式定制 - 强制隐藏美观输出 ===== */
   
   /* 1. 确保悬浮按钮正常显示并强制显示图标 */
   [class*="coze-chat-float-btn"],
@@ -81,42 +82,85 @@
     background-size: 28px 28px !important;
   }
   
-  /* 2. 隐藏聊天窗口内的"美观输出"文字 */
+  /* 2. 【强制】隐藏聊天窗口内的"美观输出"文字 - 增强版选择器 */
+  /* 使用多种选择器组合确保彻底隐藏 */
   [class*="coze-chat"] [class*="aesthetic"],
   [class*="coze-chat"] [class*="beautify"],
+  [class*="coze-chat"] [class*="beauty"],
   [class*="coze-chat"] [class*="output"],
+  [class*="coze-chat"] [class*="美化"],
+  [class*="coze-chat"] [class*="美观"],
+  [class*="coze-chat"] [class*="format"],
+  [class*="coze-chat"] [class*="formatting"],
+  [class*="coze-chat"] [class*="rich-text"],
+  [class*="coze-chat"] [class*="richText"],
+  /* 通配符匹配更广泛的类名 */
+  [class*="coze-chat"] [class*="format"],
+  [class*="coze-chat"] [class*="beaut"],
+  [class*="coze-chat"] [class*="aesth"],
+  [class*="coze-chat"] [class*="style"],
+  /* 隐藏包含特定文字的span/div/button */
+  [class*="coze-chat"] span:has-text("美观"),
+  [class*="coze-chat"] div:has-text("美观输出"),
+  [class*="coze-chat"] button:has-text("美化"),
   [class*="coze-chat"] *:contains("美观输出"),
+  [class*="coze-chat"] *:contains("美化输出"),
+  [class*="coze-chat"] *:contains("beautify"),
+  [class*="coze-chat"] *:contains("aesthetic"),
   [class*="coze-chat"] *:contains("美化") {
     display: none !important;
     height: 0 !important;
+    width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    border: none !important;
     overflow: hidden !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
   }
   
-  /* 3. 隐藏聊天窗口底部空白区域和footer */
+  /* 3. 隐藏聊天窗口底部空白区域和footer - 增强版 */
   [class*="coze-chat"] [class*="footer"],
   [class*="coze-chat-footer"],
   [class*="coze-chat"] > div:last-child:empty,
   [class*="coze-chat"] > div:last-child > div:empty,
   [class*="coze-chat"] [class*="bottom-space"],
   [class*="coze-chat"] [class*="bottom-padding"],
-  [class*="coze-chat"] [class*="footer-space"] {
+  [class*="coze-chat"] [class*="footer-space"],
+  [class*="coze-chat"] [class*="bottom-area"],
+  [class*="coze-chat"] [class*="toolbar"],
+  [class*="coze-chat"] [class*="action-bar"],
+  [class*="coze-chat"] [class*="format-bar"],
+  [class*="coze-chat"] [class*="beautify-bar"],
+  [class*="coze-chat"] [class*="aesthetic-bar"] {
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
     max-height: 0 !important;
+    width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    border: none !important;
+    position: absolute !important;
+    pointer-events: none !important;
   }
   
   /* 4. 隐藏水印和Powered by */
   [class*="coze-chat"] [class*="watermark"],
   [class*="coze-chat"] [class*="powered-by"],
   [class*="coze-chat"] [class*="powered"],
-  [class*="coze-chat"] [class*="branding"] {
+  [class*="coze-chat"] [class*="branding"],
+  [class*="coze-chat"] [class*="coze-brand"],
+  [class*="coze-chat"] [class*="by-coze"] {
     display: none !important;
+    visibility: hidden !important;
   }
   
   /* 5. 保持聊天窗口原有布局样式 */
@@ -152,16 +196,34 @@
     width: 28px !important;
     height: 28px !important;
   }
-</style>
+  
+  /* 7. 【新增】强制隐藏聊天输入框上方的美化按钮区域 */
+  [class*="coze-chat"] [class*="input-toolbar"],
+  [class*="coze-chat"] [class*="input-action"],
+  [class*="coze-chat"] [class*="input-bar"],
+  [class*="coze-chat"] [class*="rich-editor"],
+  [class*="coze-chat"] [class*="editor-toolbar"],
+  [class*="coze-chat"] [class*="format-toolbar"],
+  [class*="coze-chat"] [class*="beautify-toolbar"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  </style>
 
-<script>
-  // ===== 扣子 SDK 定制功能 =====
+  <script>
+  // ===== 扣子 SDK 定制功能 - 优化版 =====
+  // 版本标识: v2.1.0 - 强制隐藏美化输出
   (function() {
     let floatBtn = null;
     let chatWindow = null;
     let isDragging = false;
     let startX = 0, startY = 0;
     let initialLeft = 0, initialTop = 0;
+    
+    // 版本日志
+    console.log('[Coze SDK Customizer] v2.1.0 加载中...');
     
     // 从 localStorage 恢复位置
     function loadPosition() {
@@ -194,36 +256,67 @@
       floatBtn.style.visibility = 'visible';
     }
     
-    // ===== 清理聊天窗口元素 =====
+    // ===== 清理聊天窗口元素 - 增强版 =====
     function cleanupChatWindow() {
       // 查找聊天窗口
       const chatSelectors = [
         '[class*="coze-chat"]',
         '[class*="chat-window"]',
-        '[class*="coze-web-chat"]'
+        '[class*="coze-web-chat"]',
+        '[class*="coze-float"]'
       ];
       
       for (const selector of chatSelectors) {
-        const el = document.querySelector(selector);
-        if (el) {
-          chatWindow = el;
-          break;
-        }
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          if (el && el.querySelector('*')) {
+            chatWindow = el;
+          }
+        });
       }
       
-      if (!chatWindow) return;
+      if (!chatWindow) {
+        // 尝试在iframe中查找
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+          try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const iframeChat = iframeDoc.querySelector('[class*="coze-chat"]');
+            if (iframeChat) {
+              cleanupElement(iframeChat);
+            }
+          } catch(e) {
+            // 跨域限制，忽略
+          }
+        });
+        return;
+      }
+      
+      cleanupElement(chatWindow);
+    }
+    
+    // 清理单个元素
+    function cleanupElement(el) {
+      if (!el) return;
       
       // 1. 隐藏包含"美观输出"、"美化"文字的元素
-      const allElements = chatWindow.querySelectorAll('*');
-      allElements.forEach(el => {
-        const text = el.textContent || el.innerText || '';
-        if (text.includes('美观输出') || text.includes('美化') || text.includes('output')) {
-          el.style.display = 'none';
-          el.style.height = '0';
-          el.style.margin = '0';
-          el.style.padding = '0';
-          el.style.overflow = 'hidden';
-        }
+      const allElements = el.querySelectorAll('*');
+      allElements.forEach(element => {
+        try {
+          const text = element.textContent || element.innerText || '';
+          if (text.includes('美观输出') || text.includes('美化输出') || 
+              text.includes('美化') || text.includes('beautify') || 
+              text.includes('aesthetic') || text.includes('format')) {
+            element.style.display = 'none';
+            element.style.height = '0';
+            element.style.width = '0';
+            element.style.margin = '0';
+            element.style.padding = '0';
+            element.style.overflow = 'hidden';
+            element.style.visibility = 'hidden';
+            element.style.opacity = '0';
+          }
+        } catch(e) {}
       });
       
       // 2. 隐藏底部空白区域
@@ -232,43 +325,74 @@
         '[class*="bottom-space"]',
         '[class*="bottom-padding"]',
         '[class*="footer-space"]',
+        '[class*="bottom-area"]',
         '[class*="watermark"]',
         '[class*="powered"]',
-        '[class*="branding"]'
+        '[class*="branding"]',
+        '[class*="toolbar"]',
+        '[class*="action-bar"]',
+        '[class*="format-bar"]',
+        '[class*="beautify-bar"]',
+        '[class*="beautify"]',
+        '[class*="aesthetic"]',
+        '[class*="beauty"]',
+        '[class*="format"]'
       ];
       
       footerSelectors.forEach(selector => {
-        const elements = chatWindow.querySelectorAll(selector);
-        elements.forEach(el => {
-          el.style.display = 'none';
-          el.style.height = '0';
-          el.style.minHeight = '0';
-          el.style.maxHeight = '0';
-          el.style.margin = '0';
-          el.style.padding = '0';
-          el.style.overflow = 'hidden';
-        });
+        try {
+          const elements = el.querySelectorAll(selector);
+          elements.forEach(element => {
+            element.style.display = 'none';
+            element.style.height = '0';
+            element.style.minHeight = '0';
+            element.style.maxHeight = '0';
+            element.style.width = '0';
+            element.style.margin = '0';
+            element.style.padding = '0';
+            element.style.overflow = 'hidden';
+            element.style.visibility = 'hidden';
+            element.style.opacity = '0';
+          });
+        } catch(e) {}
       });
       
       // 3. 移除聊天窗口底部的padding
-      chatWindow.style.paddingBottom = '0';
-      chatWindow.style.marginBottom = '0';
+      el.style.paddingBottom = '0';
+      el.style.marginBottom = '0';
+      
+      // 4. 隐藏最后一级div容器
+      const lastDivs = el.querySelectorAll(':scope > div:last-child');
+      lastDivs.forEach(div => {
+        if (div.children.length === 0 || div.textContent.trim() === '') {
+          div.style.display = 'none';
+          div.style.height = '0';
+        }
+      });
     }
     
     // 监听DOM变化，持续清理
     function observeChatWindow() {
+      // 监听整个document
       const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
           if (mutation.addedNodes.length > 0) {
-            cleanupChatWindow();
+            // 延迟执行，等待DOM完全加载
+            setTimeout(cleanupChatWindow, 100);
+            setTimeout(cleanupChatWindow, 500);
+            setTimeout(cleanupChatWindow, 1000);
           }
         });
       });
       
       observer.observe(document.body, {
         childList: true,
-        subtree: true
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
       });
+      
+      console.log('[Coze SDK Customizer] DOM监听已启动');
     }
     
     // 初始化拖拽
@@ -279,27 +403,45 @@
         '[class*="coze-chat-float-btn"]',
         'button[class*="float-btn"]',
         'button[class*="asst-btn"]',
-        'button[aria-label*="chat"]'
+        'button[aria-label*="chat"]',
+        'div[class*="coze-chat-float"]',
+        '[class*="coze-float-btn"]'
       ];
       
       for (const selector of selectors) {
-        const el = document.querySelector(selector);
-        if (el) {
+        const elements = document.querySelectorAll(selector);
+        for (const el of elements) {
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
             floatBtn = el;
             break;
           }
         }
+        if (floatBtn) break;
+      }
+      
+      // 如果主选择器找不到，尝试更广泛的选择
+      if (!floatBtn) {
+        const allButtons = document.querySelectorAll('button, [role="button"]');
+        allButtons.forEach(btn => {
+          const rect = btn.getBoundingClientRect();
+          if (rect.width >= 40 && rect.width <= 80 && rect.height >= 40 && rect.height <= 80) {
+            // 可能是悬浮按钮
+            if (btn.textContent.includes('AI') || btn.textContent.includes('助手') || 
+                btn.querySelector('svg') || btn.querySelector('img')) {
+              floatBtn = btn;
+            }
+          }
+        });
       }
       
       if (!floatBtn) {
-        console.log('🔍 未找到悬浮按钮，稍后重试...');
+        console.log('[Coze SDK] 未找到悬浮按钮，500ms后重试...');
         setTimeout(initDrag, 500);
         return;
       }
       
-      console.log('✅ 找到悬浮按钮，启用拖拽功能');
+      console.log('[Coze SDK] ✅ 找到悬浮按钮，启用拖拽功能');
       
       // 确保按钮显示
       floatBtn.style.display = 'flex';
@@ -359,7 +501,7 @@
         isDragging = false;
       }, true);
       
-      // 触摸事件支持
+      // 触摸事件支持（移动端）
       floatBtn.addEventListener('touchstart', function(e) {
         isDragging = true;
         const touch = e.touches[0];
@@ -404,16 +546,37 @@
       
       // 点击悬浮按钮时清理聊天窗口
       floatBtn.addEventListener('click', function() {
+        console.log('[Coze SDK] 悬浮按钮点击，开始清理聊天窗口...');
         setTimeout(cleanupChatWindow, 300);
         setTimeout(cleanupChatWindow, 800);
+        setTimeout(cleanupChatWindow, 1500);
       });
+      
+      // 同时监听聊天窗口打开事件
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('[class*="coze-chat"]')) {
+          setTimeout(cleanupChatWindow, 300);
+          setTimeout(cleanupChatWindow, 800);
+        }
+      }, true);
     }
     
     // 页面加载后初始化
     window.addEventListener('load', function() {
+      console.log('[Coze SDK Customizer] 页面加载完成，初始化中...');
       setTimeout(initDrag, 1000);
+      setTimeout(cleanupChatWindow, 2000);
+      setTimeout(cleanupChatWindow, 3000);
       observeChatWindow();
     });
+    
+    // 页面可见性变化时重新清理
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        setTimeout(cleanupChatWindow, 500);
+      }
+    });
+    
   })();
   
   // 初始化扣子 SDK
@@ -434,5 +597,5 @@
       console.error('❌ CozeWebSDK 加载失败');
     }
   });
-</script>
+  </script>
 </html>
