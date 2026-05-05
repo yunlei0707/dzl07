@@ -3,7 +3,7 @@
  * ✅ 稳定极简版本 - 只保留核心功能，确保构建通过
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
 import { TabBar } from './components/TabBar';
@@ -19,6 +19,7 @@ import { BabyForm } from './components/BabyForm';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby } from './utils/db';
+import { initializeApp } from './utils/dbV2';
 
 // 登录保护
 function AuthGuard({ children }) {
@@ -33,7 +34,7 @@ function AuthGuard({ children }) {
 
 // 主应用内容
 function AppContent() {
-  const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies } = useApp();
+  const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies, currentUser } = useApp();
   
   const [activeTab, setActiveTab] = useState('timeline');
   const [showMomentForm, setShowMomentForm] = useState(false);
@@ -43,6 +44,19 @@ function AppContent() {
   const [editingCapsule, setEditingCapsule] = useState(null);
   const [editingBaby, setEditingBaby] = useState(null);
   const [showCapsulesPage, setShowCapsulesPage] = useState(false);
+
+  // v2 双账号系统初始化
+  useEffect(() => {
+    if (currentUser && currentUser.name) {
+      initializeApp(currentUser.name).then(result => {
+        if (result.isNewUser) {
+          console.log('已为新用户初始化双账号系统');
+        }
+      }).catch(err => {
+        console.error('v2 初始化失败:', err);
+      });
+    }
+  }, [currentUser]);
 
   // 添加宝宝
   const handleAddBaby = () => {
