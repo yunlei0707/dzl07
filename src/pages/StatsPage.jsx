@@ -244,13 +244,13 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-2 mb-4">
-            {/* 头像显示在左上角 */}
+            {/* 头像显示在左上角 - 修复：统一使用 v2AccountInfo.accountData?.avatar */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
               {v2AccountInfo?.accountData?.avatar ? (
                 v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
-                  <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
+                  <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{v2AccountInfo.identityAvatar}</span>
+                  <span>{v2AccountInfo.accountData.avatar}</span>
                 )
               ) : currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (

@@ -494,9 +494,9 @@ export function VirtualTimePage() {
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
               {v2AccountInfo?.accountData?.avatar ? (
                 v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
-                  <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
+                  <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{v2AccountInfo.identityAvatar}</span>
+                  <span>{v2AccountInfo.accountData.avatar}</span>
                 )
               ) : currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
