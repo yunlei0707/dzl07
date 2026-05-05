@@ -32,7 +32,7 @@ function AuthGuard({ children }) {
 
 // 主应用内容
 function AppContent() {
-  const { toasts, showToast, removeToast } = useApp();
+  const { toasts, showToast, removeToast, currentBaby } = useApp();
   const [activeTab, setActiveTab] = useState('timeline');
   const [showCapsulesPage, setShowCapsulesPage] = useState(false);
   const [showMomentForm, setShowMomentForm] = useState(false);
@@ -41,6 +41,10 @@ function AppContent() {
   const [editingMoment, setEditingMoment] = useState(null);
   const [editingCapsule, setEditingCapsule] = useState(null);
   const [editingBaby, setEditingBaby] = useState(null);
+  
+  // AI 创作选择弹窗状态
+  const [showAIChoice, setShowAIChoice] = useState(false);
+  const [latestContent, setLatestContent] = useState('');
 
   // 统计页面跳转筛选状态
   const [filterType, setFilterType] = useState(''); // photo/video/diary/audio
@@ -90,16 +94,57 @@ function AppContent() {
         updatedMoment = {
           ...momentData,
           id: `moment-${Date.now()}`,
-          babyId: useApp().currentBaby?.id,
+          babyId: currentBaby?.id,
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
       }
-      showToast('动态已保存', 'success');
+      showToast('记录已保存！🎉', 'success');
       setShowMomentForm(false);
       setEditingMoment(null);
+      
+      // 显示 AI 创作选择弹窗
+      const content = momentData.content?.text || momentData.content || '';
+      if (content) {
+        setLatestContent(content);
+        setShowAIChoice(true);
+      }
     } catch (error) {
       showToast('保存失败: ' + error.message, 'error');
+    }
+  };
+  
+  // 确认 AI 创作
+  const handleConfirmAICreate = () => {
+    setShowAIChoice(false);
+    
+    if (!window.cozeChat || !latestContent) return;
+    
+    try {
+      // 打开聊天窗
+      window.cozeChat.open();
+      
+      // 延迟一点，让聊天窗完全打开
+      setTimeout(() => {
+        // 构造提示词
+        const babyName = currentBaby?.name || '宝宝';
+        const prompt = `请帮我为以下宝宝成长记录创作一段未来时光想象：
+
+宝宝小名：${babyName}
+记录内容：${latestContent}
+
+请发挥想象力，用温暖、有画面感的语言，创作一段100-200字的未来时光回响。`;
+        
+        // 找到输入框并填入内容
+        const inputElement = document.querySelector('.coze-chat-input textarea, .coze-chat-input input');
+        if (inputElement) {
+          inputElement.value = prompt;
+          inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, 500);
+      
+    } catch (e) {
+      console.error('打开扣子聊天窗失败:', e);
     }
   };
 
@@ -206,6 +251,62 @@ function AppContent() {
       
       {/* Toast 提示 */}
       <Toast toasts={toasts} onRemove={removeToast} />
+      
+      {/* AI 创作选择弹窗 */}
+      {showAIChoice && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '320px',
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+            <h3 style={{ marginBottom: '12px' }}>记录已保存！</h3>
+            <p style={{ color: '#666', marginBottom: '20px' }}>
+              要不要让 AI 为这条记录创作一段未来时光想象？
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowAIChoice(false)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: '1px solid #ddd',
+                  background: 'white',
+                  cursor: 'pointer',
+                }}
+              >
+                不用了，谢谢
+              </button>
+              <button 
+                onClick={handleConfirmAICreate}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                好的，帮我创作 ✨
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* 时空胶囊页面 */}
       {showCapsulesPage && (
