@@ -1,20 +1,38 @@
 /**
- * 悬浮 AI 助手按钮组件
+ * 悬浮 AI 助手按钮组件 v2.2.0
  * 
  * 功能：
  * 1. 初始化扣子 SDK
  * 2. 点击时触发 SDK 聊天窗口
+ * 3. 支持拖拽调整位置，位置保存到 localStorage
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MessageCircle } from 'lucide-react';
 
 export function FloatingButton() {
   const [isReady, setIsReady] = useState(false);
+  const buttonRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // 初始化位置（从 localStorage 读取）
+  useEffect(() => {
+    const saved = localStorage.getItem('floating-button-position');
+    if (saved) {
+      try {
+        const pos = JSON.parse(saved);
+        setPosition(pos);
+      } catch (e) {
+        // 使用默认位置
+      }
+    }
+  }, []);
 
   // 初始化扣子 SDK - 只执行一次
   useEffect(() => {
-    console.log('[FloatingButton] 开始初始化...');
+    console.log('[FloatingButton v2.2.0] 开始初始化...');
 
     const initSDK = () => {
       // 避免重复初始化
@@ -38,6 +56,9 @@ export function FloatingButton() {
           window.cozeChatInitialized = true;
           setIsReady(true);
           console.log('[FloatingButton] ✅ CozeWebSDK 初始化成功');
+          
+          // 隐藏 SDK 自带的悬浮按钮（用我们自己的）
+          setTimeout(hideSDKFloatButton, 500);
         } catch (e) {
           console.error('[FloatingButton] ❌ SDK 初始化失败:', e);
         }
@@ -56,30 +77,60 @@ export function FloatingButton() {
     return () => clearTimeout(timer);
   }, []);
 
+  // 隐藏 SDK 自带的悬浮按钮
+  const hideSDKFloatButton = () => {
+    const selectors = [
+      '[class*="coze-chat-float-btn"]',
+      '[class*="float-btn"]',
+      '[class*="asst-btn"]',
+      '[class*="coze"] button',
+      '[class*="Coze"] button',
+      'button[aria-label*="chat"]',
+      'button[aria-label*="助手"]',
+      'div[style*="position: fixed"] button',
+    ];
+    
+    selectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+      });
+    });
+  };
+
   // 点击打开聊天窗口 - 尝试找到 SDK 的按钮并点击
   const handleClick = () => {
     console.log('[FloatingButton] 点击打开聊天窗口');
     
-    // 尝试找到 SDK 渲染的浮动按钮并点击
+    // 先尝试直接调用 SDK 的 open 方法
+    if (window.cozeChat && typeof window.cozeChat.open === 'function') {
+      try {
+        window.cozeChat.open();
+        console.log('[FloatingButton] 直接调用 open() 成功');
+        return;
+      } catch (e) {
+        console.error('[FloatingButton] 直接调用失败:', e);
+      }
+    }
+    
+    // 备用方案：查找并点击 SDK 渲染的元素
     setTimeout(() => {
-      // 查找 SDK 可能渲染的按钮
       const selectors = [
         'button[class*="coze"]',
         'button[class*="Coze"]', 
         'div[class*="coze"] button',
         'div[class*="Coze"] button',
-        'iframe[class*="coze"]',
-        'iframe[class*="Coze"]',
       ];
       
       for (const selector of selectors) {
         const elements = document.querySelectorAll(selector);
         if (elements.length > 0) {
-          console.log(`[FloatingButton] 找到 ${elements.length} 个元素: ${selector}`);
-          // 点击第一个元素
           try {
             elements[0].click();
-            console.log('[FloatingButton] 点击成功');
             return;
           } catch (e) {
             console.error('[FloatingButton] 点击失败:', e);
@@ -87,9 +138,43 @@ export function FloatingButton() {
         }
       }
       
-      // 如果找不到 SDK 按钮，提示用户
-      alert('请点击右下角的聊天图标与 AI 助手对话');
+      alert('请刷新页面后重试');
     }, 100);
+  };
+
+  // 拖拽开始
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setDragStart({
+      x: clientX - position.x,
+      y: clientY - position.y
+    });
+    e.preventDefault();
+  };
+
+  // 拖拽中
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // 计算新位置，带边界限制
+    const maxX = window.innerWidth - 70;
+    const maxY = window.innerHeight - 70;
+    const newX = Math.max(0, Math.min(maxX, clientX - dragStart.x));
+    const newY = Math.max(0, Math.min(maxY, clientY - dragStart.y));
+    
+    setPosition({ x: newX, y: newY });
+  };
+
+  // 拖拽结束
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    // 保存位置到 localStorage
+    localStorage.setItem('floating-button-position', JSON.stringify(position));
   };
 
   // 暴露打开函数供其他地方调用
@@ -103,12 +188,25 @@ export function FloatingButton() {
   // 渲染我们自己的按钮
   return (
     <button
+      ref={buttonRef}
       onClick={handleClick}
-      className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+      onMouseDown={handleDragStart}
+      onMouseMove={handleDragMove}
+      onMouseUp={handleDragEnd}
+      onMouseLeave={handleDragEnd}
+      onTouchStart={handleDragStart}
+      onTouchMove={handleDragMove}
+      onTouchEnd={handleDragEnd}
+      className="fixed z-50 w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform duration-200 select-none"
       style={{
-        boxShadow: '0 4px 20px rgba(255, 123, 112, 0.4)'
+        right: position.x ? 'auto' : '16px',
+        bottom: position.y ? 'auto' : '80px',
+        left: position.x ? `${position.x}px` : 'auto',
+        top: position.y ? `${position.y}px` : 'auto',
+        boxShadow: '0 4px 20px rgba(255, 123, 112, 0.4)',
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
-      title={isReady ? '打开 AI 助手' : 'AI 助手加载中...'}
+      title={isReady ? 'AI 助手 (可拖拽)' : 'AI 助手加载中...'}
     >
       <MessageCircle className="w-7 h-7 text-white" />
     </button>

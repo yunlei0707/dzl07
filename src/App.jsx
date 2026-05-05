@@ -312,20 +312,11 @@ function AppContent() {
       {/* 悬浮 AI 助手按钮 */}
       <FloatingButton />
       
-      {/* AI 创作选择弹窗 */}
+      {/* AI 创作提示弹窗 */}
       <AIChoiceModal
         show={showAIChoice}
-        content={aiChoiceContent}
-        onConfirm={() => {
-          console.log('[App] 用户点击"好的，帮我创作"');
-          setShowAIChoice(false);
-          // 调用全局打开聊天窗口函数
-          if (window.openCozeChat) {
-            window.openCozeChat();
-          }
-        }}
         onCancel={() => {
-          console.log('[App] 用户点击"不用了，谢谢"');
+          console.log('[App] 用户关闭 AI 提示弹窗');
           setShowAIChoice(false);
         }}
       />
