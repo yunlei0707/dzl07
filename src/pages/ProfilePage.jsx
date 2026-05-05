@@ -484,25 +484,18 @@ export function ProfilePage(
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-2 mb-4">
             
-{/* 账号头像显示在左上角 */}
-            <button 
-              onClick=
-{() => setShowProfileModal(true)}
-              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden"
-            >
-              
-{currentUser?.avatar ? (
+            {/* 账号头像显示在左上角（只展示登录身份） */}
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+              {currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
-                  <img src=
-{currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                  <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span>
-{currentUser.avatar}</span>
+                  <span>{currentUser.avatar}</span>
                 )
               ) : (
                 <User className="w-5 h-5" />
               )}
-            </button>
+            </div>
             <h1 className="text-xl font-bold">
 {currentUser?.nickname || "我的"}</h1>
             <div className="flex-1" />
