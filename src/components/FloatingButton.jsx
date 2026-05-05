@@ -27,7 +27,7 @@ export function FloatingButton() {
       
       if (window.CozeWebSDK && !window.cozeChat) {
         try {
-          console.log('[FloatingButton] 初始化 CozeWebSDK...');
+          console.log('[FloatingButton] 初始化 Coze SDK...');
           window.cozeChat = new window.CozeWebSDK.WebChatClient({
             config: {
               bot_id: '7636350042466418731',
@@ -88,8 +88,8 @@ export function FloatingButton() {
         } else {
           // 兜底：直接创建新实例
           console.log('[FloatingButton] 没有找到open方法，尝试重新创建实例');
-          if (window.Coze && window.Coze.WebChatClient) {
-            window.cozeChat = new window.Coze.WebChatClient({
+          if (window.CozeWebSDK && window.CozeWebSDK.WebChatClient) {
+            window.cozeChat = new window.CozeWebSDK.WebChatClient({
               config: { bot_id: '7636350042466418731' },
               componentProps: { title: '虚拟时光助手' },
             });
@@ -98,7 +98,7 @@ export function FloatingButton() {
         return;
       }
       
-      // 没有实例，重新初始化
+      // 没有实例，重新初始化（正确的变量名是 window.CozeWebSDK！）
       if (window.CozeWebSDK) {
         console.log('[FloatingButton] 重新初始化 SDK...');
         window.cozeChat = new window.CozeWebSDK.WebChatClient({
