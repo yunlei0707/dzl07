@@ -301,12 +301,32 @@ export function VirtualTimeDetail() {
             {userContents.map((item, index) => (
               <div
                 key={item.id}
-                className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm"
+                className={`rounded-2xl overflow-hidden shadow-sm transition-all ${
+                  item.is_linked 
+                    ? 'bg-gradient-to-br from-white to-pink-50 dark:from-gray-800 dark:to-pink-900/20 border-2 border-pink-200 dark:border-pink-800 relative' 
+                    : 'bg-white dark:bg-gray-800'
+                }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
+                title={item.is_linked ? '这条内容基于你添加的真实记录自动生成' : ''}
               >
+                {/* 联动内容标识 */}
+                {item.is_linked && (
+                  <div className="px-4 pt-3 flex items-center gap-2">
+                    <div className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-medium rounded-full shadow-sm flex items-center gap-1">
+                      💖 来自真实记录
+                    </div>
+                    <span className="text-xs text-pink-600 dark:text-pink-400">
+                      本内容基于你添加的真实记录自动生成
+                    </span>
+                  </div>
+                )}
                 <div className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center flex-shrink-0">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      item.is_linked 
+                        ? 'bg-gradient-to-br from-pink-400 to-rose-400' 
+                        : 'bg-gradient-to-br from-primary-400 to-primary-500'
+                    }`}>
                       <span className="text-2xl">{item.emoji || '📝'}</span>
                     </div>
                     <div className="flex-1">
@@ -329,12 +349,14 @@ export function VirtualTimeDetail() {
                             <Share2 className="w-4 h-4" />
                           )}
                         </button>
-                        <button
-                          onClick={() => handleDeleteContent(item.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!item.is_linked && (
+                          <button
+                            onClick={() => handleDeleteContent(item.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

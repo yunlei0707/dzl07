@@ -557,8 +557,19 @@ export function VirtualTimePage() {
               {v2VirtualTime.map((item) => (
                 <div 
                   key={item.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm"
+                  className={`rounded-xl p-4 shadow-sm transition-all ${
+                    item.is_linked 
+                      ? 'bg-gradient-to-br from-white to-pink-50 dark:from-gray-800 dark:to-pink-900/20 border-2 border-pink-200 dark:border-pink-800 relative' 
+                      : 'bg-white dark:bg-gray-800'
+                  }`}
+                  title={item.is_linked ? '这条内容基于你添加的真实记录自动生成' : ''}
                 >
+                  {/* 联动内容标识 */}
+                  {item.is_linked && (
+                    <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-medium rounded-full shadow-sm flex items-center gap-1">
+                      💖 来自真实记录
+                    </div>
+                  )}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h4 className="font-bold text-gray-800 dark:text-white">{item.title}</h4>
