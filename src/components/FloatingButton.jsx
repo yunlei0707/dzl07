@@ -72,10 +72,29 @@ export function FloatingButton() {
 
     // 直接尝试打开或初始化
     try {
-      // 如果已经有实例，直接打开
-      if (window.cozeChat && typeof window.cozeChat.open === 'function') {
-        window.cozeChat.open();
-        console.log('[FloatingButton] ✅ 聊天窗口已打开');
+      // 如果已经有实例，尝试打开（尝试各种可能的方法名）
+      if (window.cozeChat) {
+        console.log('[FloatingButton] 尝试所有可能的打开方法:', Object.keys(window.cozeChat));
+        
+        // 尝试所有可能的方法名
+        if (typeof window.cozeChat.open === 'function') {
+          window.cozeChat.open();
+        } else if (typeof window.cozeChat.show === 'function') {
+          window.cozeChat.show();
+        } else if (typeof window.cozeChat.toggle === 'function') {
+          window.cozeChat.toggle();
+        } else if (typeof window.cozeChat.display === 'function') {
+          window.cozeChat.display();
+        } else {
+          // 兜底：直接创建新实例
+          console.log('[FloatingButton] 没有找到open方法，尝试重新创建实例');
+          if (window.Coze && window.Coze.WebChatClient) {
+            window.cozeChat = new window.Coze.WebChatClient({
+              config: { bot_id: '7636350042466418731' },
+              componentProps: { title: '虚拟时光助手' },
+            });
+          }
+        }
         return;
       }
       
