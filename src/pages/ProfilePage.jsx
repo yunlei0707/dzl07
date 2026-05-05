@@ -81,7 +81,6 @@ export function ProfilePage(
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
@@ -95,14 +94,6 @@ export function ProfilePage(
   
   // 设置面板抽屉状态
   const [showSettings, setShowSettings] = useState(false);
-  
-  // 个人资料编辑状态
-  const [editProfile, setEditProfile] = useState(
-{
-    nickname: '',
-    avatar: '',
-    signature: ''
-  });
   
   // 导入模式
   const [importMode, setImportMode] = useState('merge');
@@ -256,21 +247,6 @@ export function ProfilePage(
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef(0);
   const scrollTop = useRef(0);
-  const containerRef = useRef(null);
-  
-  // 初始化编辑资料
-  useEffect(() => 
-{
-    if (currentUser) 
-{
-      setEditProfile(
-{
-        nickname: currentUser.nickname || '',
-        avatar: currentUser.avatar || '',
-        signature: currentUser.signature || ''
-      });
-    }
-  }, [currentUser]);
   
   // 刷新数据
   const refreshData = useCallback(async () => 
@@ -386,20 +362,6 @@ export function ProfilePage(
     }
   }, [importFile, importMode, showToast, refreshData]);
   
-  // 保存个人资料
-  const handleSaveProfile = useCallback(async () => 
-{
-    try 
-{
-      await updateUserProfile(editProfile);
-      showToast('保存成功', 'success');
-      setShowProfileModal(false);
-    } catch (error) 
-{
-      console.error('保存失败:', error);
-      showToast('保存失败', 'error');
-    }
-  }, [editProfile, updateUserProfile, showToast]);
   
   // 退出登录
   const handleLogout = useCallback(() => 
@@ -798,92 +760,6 @@ export function ProfilePage(
       
       
 {/* 个人资料编辑弹窗 */}
-      
-{showProfileModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold mb-6 dark:text-white">编辑个人资料</h3>
-            
-            
-{/* 头像选择 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-3 dark:text-gray-300">选择头像</label>
-              <div className="grid grid-cols-6 gap-2 mb-3">
-                
-{PRESET_AVATARS.slice(0, 12).map((avatar, i) => (
-                  <button
-                    key=
-{i}
-                    onClick=
-{() => setEditProfile(p => (
-{ ...p, avatar }))}
-                    className=
-{`aspect-square rounded-lg text-2xl flex items-center justify-center transition-all $
-{
-                      editProfile.avatar === avatar 
-                        ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500' 
-                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    
-{avatar}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            
-{/* 昵称 */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">昵称</label>
-              <input
-                type="text"
-                value=
-{editProfile.nickname}
-                onChange=
-{(e) => setEditProfile(p => (
-{ ...p, nickname: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="请输入昵称"
-              />
-            </div>
-            
-            
-{/* 个性签名 */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">个性签名</label>
-              <textarea
-                value=
-{editProfile.signature}
-                onChange=
-{(e) => setEditProfile(p => (
-{ ...p, signature: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                rows=
-{3}
-                placeholder="写下你的个性签名..."
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick=
-{() => setShowProfileModal(false)}
-                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
-              >
-                取消
-              </button>
-              <button
-                onClick=
-{handleSaveProfile}
-                className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium"
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       
       
 {/* 主题设置弹窗 */}
