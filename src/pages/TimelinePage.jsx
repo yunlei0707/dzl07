@@ -20,7 +20,8 @@ import {
   deleteMomentFromCurrentAccount,
   updateMomentInCurrentAccount,
   isSystemAccount as checkIsSystemAccount,
-  getCurrentBabyInfo 
+  getCurrentBabyInfo,
+  deleteLinkedContentByRecordId
 } from '../utils/dbV2';
 
 // ==================== 虚拟滚动优化 ====================
@@ -341,6 +342,13 @@ export function TimelinePage({
         });
         // 从列表中移除（显示上删除）
         setV2Moments(prev => prev.filter(m => m.id !== momentId));
+        
+        // 删除对应的联动内容（静默处理，不影响主流程）
+        try {
+          deleteLinkedContentByRecordId(momentId);
+        } catch (e) {
+          console.error('[Timeline] 删除联动内容失败:', e);
+        }
       } else {
         // IndexedDB：使用软删除
         await deleteMoment(momentId);
@@ -364,6 +372,13 @@ export function TimelinePage({
         // v2 账号：永久删除
         deleteMomentFromCurrentAccount(momentId);
         setV2Moments(prev => prev.filter(m => m.id !== momentId));
+        
+        // 删除对应的联动内容（静默处理，不影响主流程）
+        try {
+          deleteLinkedContentByRecordId(momentId);
+        } catch (e) {
+          console.error('[Timeline] 删除联动内容失败:', e);
+        }
       } else {
         // IndexedDB：永久删除
         await deleteMoment(momentId);
@@ -375,7 +390,7 @@ export function TimelinePage({
     } finally {
       setDeleteConfirm({ show: false, momentId: null, momentContent: '' });
     }
-  }, [deleteConfirm, hasV2Baby]);
+  }, [deleteConfirm, hasV2Baby, showToast]);
 
   // 照片点击
   const handlePhotoClick = useCallback((photos, index) => {

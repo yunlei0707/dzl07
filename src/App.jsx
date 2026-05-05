@@ -203,10 +203,10 @@ function AppContent() {
             
             // 触发联动
             handleRecordLink(record).then(linkedResult => {
-              // （可选）如果有联动结果，可以给个轻提示
-              // if (linkedResult) {
-              //   showToast('已为你生成一条虚拟时光回响 ✨');
-              // }
+              // 如果有联动结果，给个轻提示
+              if (linkedResult) {
+                showToast('✨ 已生成虚拟时光回响', 'success');
+              }
             });
             
           } catch (e) {

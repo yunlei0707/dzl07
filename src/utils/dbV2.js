@@ -943,3 +943,55 @@ export function deleteVirtualTimeContent(topicId, itemId, contentId) {
   return true;
 }
 
+
+// ==================== 联动内容管理 ====================
+
+/**
+ * 删除与某个真实记录关联的所有联动内容
+ * 当真实记录被删除时，自动清理对应的虚拟时光联动内容
+ * @param {string} recordId - 真实记录的ID
+ * @returns {number} 删除的联动内容数量
+ */
+export function deleteLinkedContentByRecordId(recordId) {
+  try {
+    const current = getCurrentV2Account();
+    if (!current) return 0;
+    
+    const { identityName, accountId, accountData } = current;
+    const virtualTime = accountData.virtualTime || [];
+    
+    // 过滤掉关联到此 recordId 的内容
+    const filteredVirtualTime = virtualTime.filter(
+      item => !(item.is_linked && item.linked_from_record_id === recordId)
+    );
+    
+    const deletedCount = virtualTime.length - filteredVirtualTime.length;
+    
+    if (deletedCount > 0) {
+      updateV2AccountData(identityName, accountId, {
+        virtualTime: filteredVirtualTime
+      });
+      console.log(`[Link] 已删除 ${deletedCount} 条联动内容 (recordId: ${recordId})`);
+    }
+    
+    return deletedCount;
+  } catch (error) {
+    console.error('[Link] 删除联动内容失败:', error);
+    return 0;
+  }
+}
+
+/**
+ * 获取与某个真实记录关联的所有联动内容
+ * @param {string} recordId - 真实记录的ID
+ * @returns {Array} 联动内容列表
+ */
+export function getLinkedContentByRecordId(recordId) {
+  const current = getCurrentV2Account();
+  if (!current) return [];
+  
+  const virtualTime = current.accountData?.virtualTime || [];
+  return virtualTime.filter(
+    item => item.is_linked && item.linked_from_record_id === recordId
+  );
+}
