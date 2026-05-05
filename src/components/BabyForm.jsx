@@ -43,7 +43,7 @@ export function BabyForm({ baby, onSave, onCancel }) {
       name: name.trim(),
       nickname: nickname.trim() || name.trim(),
       gender,
-      birthDate: new Date(birthDate).toISOString(),
+      birthday: new Date(birthday).toISOString(),
       avatar,
     };
     
