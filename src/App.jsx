@@ -24,6 +24,7 @@ import { RegisterPage } from './pages/Register';
 import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby } from './utils/db';
 import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount, updateCurrentBabyInfo } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
+import { handleRecordLink } from './utils/linkService';
 
 // 登录保护
 function AuthGuard({ children }) {
@@ -177,12 +178,42 @@ function AppContent() {
         showToast('已更新');
       } else {
         // 新增操作
+        let savedMoment;
         if (babyInfo) {
-          await addMomentToCurrentAccount(momentData);
+          savedMoment = await addMomentToCurrentAccount(momentData);
         } else {
-          await addMoment(momentData);
+          savedMoment = await addMoment(momentData);
         }
         showToast('记录已保存！🎉');
+        
+        // 保存记录成功后，异步触发联动（不阻塞用户操作）
+        setTimeout(() => {
+          try {
+            // 构造 record 对象，包含：id、type、title、content、tags等信息
+            const record = {
+              id: savedMoment?.id || `temp_${Date.now()}`,
+              type: momentData.type || 'moment',
+              title: momentData.content?.title || momentData.milestoneLabel || '',
+              content: momentData.content?.text || momentData.content || '',
+              tags: momentData.tags || [],
+              date: momentData.date || new Date().toISOString(),
+              mood: momentData.mood,
+              milestoneLabel: momentData.milestoneLabel
+            };
+            
+            // 触发联动
+            handleRecordLink(record).then(linkedResult => {
+              // （可选）如果有联动结果，可以给个轻提示
+              // if (linkedResult) {
+              //   showToast('已为你生成一条虚拟时光回响 ✨');
+              // }
+            });
+            
+          } catch (e) {
+            // 静默失败，不影响主流程
+            console.error('[App] 联动处理失败:', e);
+          }
+        }, 0);
       }
       
       // 通知 TimelinePage 刷新数据
