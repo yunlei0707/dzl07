@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { X, RotateCcw, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { getDeletedMomentsByBaby, restoreMoment, deleteMomentPermanently, emptyRecycleBin } from '../utils/db';
-import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount } from '../utils/dbV2';
+import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount, updateMomentInCurrentAccount, getCurrentBabyInfo } from '../utils/dbV2';
 
 export function RecycleBin({ onClose }) {
   const { currentBaby, showToast, setMoments } = useApp();
@@ -24,12 +24,14 @@ export function RecycleBin({ onClose }) {
   const loadDeletedMoments = async () => {
     setIsLoading(true);
     try {
-      // 检查是否为 v2 系统账号
-      const isSystem = isSystemAccount();
-      setIsV2System(isSystem);
+      // 检查是否为 v2 账号系统（有 v2 宝宝信息）
+      const v2BabyInfo = getCurrentBabyInfo();
+      const isV2Account = !!v2BabyInfo;
       
-      if (isSystem) {
-        // v2 系统账号：从 timeline 中获取已删除的记录
+      setIsV2System(isV2Account);
+      
+      if (isV2Account) {
+        // v2 账号（系统账号或用户账号）：从 timeline 中获取已删除的记录
         const account = getCurrentV2Account();
         if (account?.accountData?.timeline) {
           const deleted = account.accountData.timeline.filter(m => m.isDeleted) || [];
@@ -38,7 +40,7 @@ export function RecycleBin({ onClose }) {
           setDeletedMoments([]);
         }
       } else {
-        // 普通账号：从 IndexedDB 获取
+        // 非 v2 系统：从 IndexedDB 获取
         if (currentBaby?.id) {
           const moments = await getDeletedMomentsByBaby(currentBaby.id);
           setDeletedMoments(moments);

@@ -12,12 +12,13 @@ import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
-import { Plus, Calendar, Clock, X, ChevronDown, Lock } from 'lucide-react';
+import { Plus, Calendar, Clock, X, ChevronDown, Lock, Trash2, AlertTriangle } from 'lucide-react';
 import { 
   getCurrentV2Account, 
   getCurrentTimeline, 
   addMomentToCurrentAccount,
   deleteMomentFromCurrentAccount,
+  updateMomentInCurrentAccount,
   isSystemAccount as checkIsSystemAccount,
   getCurrentBabyInfo 
 } from '../utils/dbV2';
@@ -88,7 +89,10 @@ export function TimelinePage({
   const [isSystemAccount, setIsSystemAccount] = useState(false);
   const [hasV2Baby, setHasV2Baby] = useState(false);
   
-  // 监听账号切换，刷新 v2 数据
+  // 删除确认弹窗状态
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, momentId: null, momentContent: '' });
+  
+  // 监听账号切换和动态更新，刷新 v2 数据
   useEffect(() => {
     const updateV2Info = () => {
       const account = getCurrentV2Account();
@@ -105,12 +109,17 @@ export function TimelinePage({
     
     // 监听 localStorage 变化
     window.addEventListener('storage', updateV2Info);
-    // 轮询更新
-    const interval = setInterval(updateV2Info, 500);
+    // 轮询更新（检测添加动态等操作）
+    const interval = setInterval(updateV2Info, 300);
+    
+    // 监听自定义事件（添加动态后主动刷新）
+    const handleMomentAdded = () => updateV2Info();
+    window.addEventListener('v2-moment-updated', handleMomentAdded);
     
     return () => {
       window.removeEventListener('storage', updateV2Info);
       clearInterval(interval);
+      window.removeEventListener('v2-moment-updated', handleMomentAdded);
     };
   }, []);
   
@@ -302,32 +311,69 @@ export function TimelinePage({
     }
   };
 
-  // 删除动态
-  const handleDeleteMoment = useCallback(async (momentId) => {
+  // 删除动态 - 显示确认弹窗
+  const handleDeleteMoment = useCallback((momentId) => {
     if (isSystemAccount) {
       showToast('系统账号不可删除', 'error');
       return;
     }
     
-    if (!window.confirm('确定要删除这条记录吗？')) return;
+    // 获取动态内容用于显示
+    const moment = v2Moments.find(m => m.id === momentId) || moments.find(m => m.id === momentId);
+    const content = moment?.content?.substring(0, 30) || '这条记录';
+    
+    setDeleteConfirm({ show: true, momentId, momentContent: content });
+  }, [isSystemAccount, v2Moments, moments]);
+  
+  // 执行删除（放入回收站）
+  const executeDeleteToBin = useCallback(async () => {
+    const { momentId } = deleteConfirm;
+    if (!momentId) return;
     
     try {
-      if (isSystemAccount) {
-        deleteMomentFromCurrentAccount(momentId);
-      } else {
-        await deleteMoment(momentId);
-      }
-      // 从列表中移除
-      if (isSystemAccount) {
+      if (hasV2Baby) {
+        // v2 账号：将动态标记为已删除（放入回收站）
+        updateMomentInCurrentAccount(momentId, { 
+          isDeleted: true, 
+          deletedAt: new Date().toISOString() 
+        });
+        // 从列表中移除（显示上删除）
         setV2Moments(prev => prev.filter(m => m.id !== momentId));
       } else {
+        // IndexedDB：使用软删除
+        await deleteMoment(momentId);
         setMoments(prev => prev.filter(m => m.id !== momentId));
       }
-      showToast('已删除');
+      showToast('已放入回收站');
     } catch (error) {
       showToast('删除失败', 'error');
+    } finally {
+      setDeleteConfirm({ show: false, momentId: null, momentContent: '' });
     }
-  }, [isSystemAccount, showToast, setMoments]);
+  }, [deleteConfirm, hasV2Baby, showToast]);
+  
+  // 执行永久删除
+  const executePermanentDelete = useCallback(async () => {
+    const { momentId } = deleteConfirm;
+    if (!momentId) return;
+    
+    try {
+      if (hasV2Baby) {
+        // v2 账号：永久删除
+        deleteMomentFromCurrentAccount(momentId);
+        setV2Moments(prev => prev.filter(m => m.id !== momentId));
+      } else {
+        // IndexedDB：永久删除
+        await deleteMoment(momentId);
+        setMoments(prev => prev.filter(m => m.id !== momentId));
+      }
+      showToast('已永久删除');
+    } catch (error) {
+      showToast('删除失败', 'error');
+    } finally {
+      setDeleteConfirm({ show: false, momentId: null, momentContent: '' });
+    }
+  }, [deleteConfirm, hasV2Baby]);
 
   // 照片点击
   const handlePhotoClick = useCallback((photos, index) => {
@@ -647,6 +693,54 @@ export function TimelinePage({
         >
           <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
         </button>
+      )}
+      
+      {/* 删除确认弹窗 */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-2">
+              如何处理这条记录？
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-5">
+              "{deleteConfirm.momentContent}..."
+            </p>
+            
+            <div className="space-y-3">
+              {/* 放入回收站 - 默认推荐 */}
+              <button
+                onClick={executeDeleteToBin}
+                className="w-full py-3 px-4 bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-500 rounded-xl flex items-center gap-3 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
+              >
+                <Trash2 className="w-5 h-5" />
+                <div className="text-left">
+                  <div className="font-medium">放入回收站</div>
+                  <div className="text-xs opacity-75">可在回收站恢复，30天后自动清理</div>
+                </div>
+              </button>
+              
+              {/* 永久删除 */}
+              <button
+                onClick={executePermanentDelete}
+                className="w-full py-3 px-4 bg-red-50 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-700 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+              >
+                <AlertTriangle className="w-5 h-5" />
+                <div className="text-left">
+                  <div className="font-medium">永久删除</div>
+                  <div className="text-xs opacity-75">删除后无法恢复，请谨慎操作</div>
+                </div>
+              </button>
+            </div>
+            
+            {/* 取消按钮 */}
+            <button
+              onClick={() => setDeleteConfirm({ show: false, momentId: null, momentContent: '' })}
+              className="w-full mt-4 py-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -20,7 +20,7 @@ import { BabyForm } from './components/BabyForm';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby } from './utils/db';
-import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount } from './utils/dbV2';
+import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount, updateCurrentBabyInfo } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
 
 // 登录保护
@@ -74,6 +74,28 @@ function AppContent() {
   const handleSaveBaby = async (babyData) => {
     let savedBaby;
     try {
+      // 检查是否是 v2 账号系统
+      const v2BabyInfo = getCurrentBabyInfo();
+      
+      if (v2BabyInfo) {
+        // v2 账号系统更新
+        const updated = updateCurrentBabyInfo({
+          name: babyData.name,
+          nickname: babyData.nickname,
+          birthDate: babyData.birthday || babyData.birthDate,
+          gender: babyData.gender,
+          avatar: babyData.avatar
+        });
+        
+        if (updated) {
+          showToast('已更新');
+          setShowBabyForm(false);
+          setEditingBaby(null);
+          return;
+        }
+      }
+      
+      // 原 IndexedDB 逻辑（兼容旧数据）
       if (babyData.id) {
         savedBaby = await updateBaby(babyData.id, babyData);
         setBabies(prev => prev.map(b => b.id === savedBaby.id ? savedBaby : b));
@@ -134,6 +156,9 @@ function AppContent() {
         }
         showToast('记录已保存！🎉');
       }
+      
+      // 通知 TimelinePage 刷新数据
+      window.dispatchEvent(new Event('v2-moment-updated'));
       
       setShowMomentForm(false);
       setEditingMoment(null);
