@@ -25,7 +25,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       const account = getCurrentV2Account();
       const growth = getCurrentGrowth();
       const babyInfo = getCurrentBabyInfo();
-      setV2AccountInfo(account?.accountData || null);
+      setV2AccountInfo(account?.identityData || null);
       setV2Growth(growth);
       setV2BabyInfo(babyInfo);
     };
@@ -246,8 +246,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
           <div className="flex items-center gap-2 mb-4">
             {/* 头像显示在左上角 */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              {v2AccountInfo?.identityAvatar ? (
-                v2AccountInfo.identityAvatar.startsWith('data:') || v2AccountInfo.identityAvatar.startsWith('http') ? (
+              {v2AccountInfo?.accountData?.avatar ? (
+                v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                   <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span>{v2AccountInfo.identityAvatar}</span>

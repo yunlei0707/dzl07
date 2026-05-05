@@ -12,6 +12,7 @@ import { useApp } from '../store/AppContext';
 import {
   getVirtualTimeContents,
   addVirtualTimeContent,
+  deleteVirtualTimeContent,
   getCurrentV2Account,
   getCurrentBabyInfo,
   isSystemAccount as checkIsSystemAccount,
@@ -83,10 +84,15 @@ export function VirtualTimeDetail() {
   // 删除内容
   const handleDeleteContent = useCallback((contentId) => {
     if (!confirm('确定要删除这条内容吗？')) return;
-    // TODO: 添加删除功能
-    showToast('已删除');
-    loadContents();
-  }, [showToast, loadContents]);
+    
+    const success = deleteVirtualTimeContent(topicId, topicId, contentId);
+    if (success) {
+      showToast('已删除');
+      loadContents();
+    } else {
+      showToast('删除失败', 'error');
+    }
+  }, [topicId, showToast, loadContents]);
   
   if (!topic) {
     return (

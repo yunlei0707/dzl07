@@ -115,7 +115,7 @@ export function ProfilePage(
 {
       const account = getCurrentV2Account();
       const babyInfo = getCurrentBabyInfo();
-      setV2AccountInfo(account?.accountData || null);
+      setV2AccountInfo(account?.identityData || null);
       setHasV2Baby(!!babyInfo);
     };
     
@@ -214,7 +214,7 @@ export function ProfilePage(
         
         // 刷新 v2 数据
         const account = getCurrentV2Account();
-        setV2AccountInfo(account?.accountData || null);
+        setV2AccountInfo(account?.identityData || null);
       } else {
         // 非 v2 系统：添加到 IndexedDB
         const date1 = new Date(now);
@@ -537,11 +537,11 @@ export function ProfilePage(
             
             {/* 账号头像显示在左上角（只展示登录身份） */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              {v2AccountInfo?.identityAvatar ? (
-                v2AccountInfo.identityAvatar.startsWith('data:') || v2AccountInfo.identityAvatar.startsWith('http') ? (
-                  <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
+              {v2AccountInfo?.accountData?.avatar ? (
+                v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
+                  <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{v2AccountInfo.identityAvatar}</span>
+                  <span>{v2AccountInfo.accountData.avatar}</span>
                 )
               ) : currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (

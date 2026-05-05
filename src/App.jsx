@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
@@ -33,6 +33,32 @@ function AuthGuard({ children }) {
     return <Navigate to="/login" replace />;
   }
 
+  return children;
+}
+
+// 路由持久化组件
+function RoutePersistence({ children }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // 页面加载时恢复上次路由
+  useEffect(() => {
+    const savedPath = localStorage.getItem('lastRoute');
+    if (savedPath && savedPath !== location.pathname) {
+      // 只有当当前路径是默认页面时才跳转
+      if (location.pathname === '/' || location.pathname === '/timeline') {
+        navigate(savedPath, { replace: true });
+      }
+    }
+  }, []);
+  
+  // 路由变化时保存
+  useEffect(() => {
+    if (location.pathname && location.pathname !== '/login' && location.pathname !== '/register') {
+      localStorage.setItem('lastRoute', location.pathname);
+    }
+  }, [location.pathname]);
+  
   return children;
 }
 

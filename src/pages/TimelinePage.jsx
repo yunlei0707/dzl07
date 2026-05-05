@@ -104,7 +104,7 @@ export function TimelinePage({
       setV2Moments(timeline);
       setIsSystemAccount(isSystem);
       setHasV2Baby(!!babyInfo);
-      setV2AccountInfo(account?.accountData || null);
+      setV2AccountInfo(account || null);
     };
     
     updateV2Info();
@@ -416,11 +416,11 @@ export function TimelinePage({
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-                {v2AccountInfo?.identityAvatar ? (
-                  v2AccountInfo.identityAvatar.startsWith('data:') || v2AccountInfo.identityAvatar.startsWith('http') ? (
-                    <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
+                {v2AccountInfo?.accountData?.avatar ? (
+                  v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
+                    <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span>{v2AccountInfo.identityAvatar}</span>
+                    <span>{v2AccountInfo.accountData.avatar}</span>
                   )
                 ) : currentUser?.avatar ? (
                   currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (

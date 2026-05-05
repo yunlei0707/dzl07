@@ -40,7 +40,7 @@ export function VirtualTimePage() {
     const updateV2Info = () => {
       const account = getCurrentV2Account();
       const virtualTime = getCurrentVirtualTime();
-      setV2AccountInfo(account?.accountData || null);
+      setV2AccountInfo(account?.identityData || null);
       setV2VirtualTime(virtualTime || []);
     };
     
@@ -492,8 +492,8 @@ export function VirtualTimePage() {
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              {v2AccountInfo?.identityAvatar ? (
-                v2AccountInfo.identityAvatar.startsWith('data:') || v2AccountInfo.identityAvatar.startsWith('http') ? (
+              {v2AccountInfo?.accountData?.avatar ? (
+                v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                   <img src={v2AccountInfo.identityAvatar} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span>{v2AccountInfo.identityAvatar}</span>

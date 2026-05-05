@@ -214,7 +214,7 @@ export function RecycleBin({ onClose }) {
           ) : (
             <div className="divide-y divide-cream-100 dark:divide-gray-700">
               {deletedMoments.map(moment => (
-                <div key={moment.id} className="p-4">
+                <div key={moment.id} className="p-4 bg-white dark:bg-gray-800">
                   {/* 内容预览 */}
                   <div className="flex gap-3">
                     {/* 缩略图 */}
@@ -233,7 +233,7 @@ export function RecycleBin({ onClose }) {
                       <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                         {moment.content || '(无文字内容)'}
                       </p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
                         <Clock className="w-3 h-3" />
                         <span>{formatOriginalDate(moment.date)}</span>
                       </div>
@@ -241,15 +241,16 @@ export function RecycleBin({ onClose }) {
                   </div>
 
                   {/* 删除时间和操作 */}
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-400">
+                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <span className="text-xs text-amber-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
                       {formatDeletedDate(moment.deletedAt || moment.updatedAt)}
                     </span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleRestore(moment.id)}
                         disabled={actionLoading === moment.id}
-                        className="px-3 py-1.5 text-xs text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-full flex items-center gap-1 disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 flex items-center gap-1 disabled:opacity-50 transition-colors"
                       >
                         {actionLoading === moment.id ? (
                           <div className="w-3 h-3 border border-primary-400 border-t-transparent rounded-full animate-spin" />
@@ -261,7 +262,7 @@ export function RecycleBin({ onClose }) {
                       <button
                         onClick={() => handlePermanentDelete(moment.id)}
                         disabled={actionLoading === moment.id}
-                        className="px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full flex items-center gap-1 disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 flex items-center gap-1 disabled:opacity-50 transition-colors"
                       >
                         <Trash2 className="w-3 h-3" />
                         永久删除
