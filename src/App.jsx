@@ -327,7 +327,8 @@ function AppRoutes() {
   const { isLoggedIn, login } = useApp();
   
   return (
-    <Routes>
+    <RoutePersistence>
+      <Routes>
       {/* 公开路由 */}
       <Route 
         path="/login" 
@@ -380,6 +381,7 @@ function AppRoutes() {
         }
       />
     </Routes>
+    </RoutePersistence>
   );
 }
 
