@@ -45,13 +45,40 @@
 <style>
   /* ===== 扣子 SDK 样式定制 ===== */
   
-  /* 1. 确保悬浮按钮正常显示 */
+  /* 1. 确保悬浮按钮正常显示并强制显示图标 */
   [class*="coze-chat-float-btn"],
   [class*="float-btn"],
   [class*="asst-btn"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+  }
+  
+  /* 强制显示按钮内的图标 */
+  [class*="coze-chat-float-btn"] img,
+  [class*="coze-chat-float-btn"] svg,
+  [class*="float-btn"] img,
+  [class*="float-btn"] svg,
+  [class*="asst-btn"] img,
+  [class*="asst-btn"] svg {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  /* 如果图标没显示，用CSS背景图作为备用图标 */
+  [class*="coze-chat-float-btn"]:not(:has(img)):not(:has(svg)),
+  [class*="float-btn"]:not(:has(img)):not(:has(svg)) {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>') !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 28px 28px !important;
   }
   
   /* 2. 隐藏聊天窗口内的"美观输出"文字 */
