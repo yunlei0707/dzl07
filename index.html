@@ -42,8 +42,8 @@
       // 轮询初始化，确保 SDK 加载成功
       function initCozeSDK() {
         try {
-          // 检查 CozeWebSDK 是否存在，也检查常见的全局变量名
-          const SDK = window.CozeWebSDK || window.CozeChatSDK || window.CozeWebChat || window.cozeWebSDK;
+          // ✅ 正确的全局变量名是 Coze！（从日志检测到）
+          const SDK = window.Coze;
           
           if (SDK && SDK.WebChatClient) {
             window.cozeChat = new SDK.WebChatClient({
