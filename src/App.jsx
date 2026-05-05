@@ -1,43 +1,28 @@
 /**
  * 宝贝时光 - 主应用组件
  * 记录宝宝成长点滴的移动端单页应用
+ * 极简版：纯内存存储，确保可以正常运行
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
+import { MusicProvider } from './store/MusicContext';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
-// 懒加载页面组件 - 减小首屏体积
-const TimelinePage = lazy(() => import('./pages/TimelinePage'));
-const StatsPage = lazy(() => import('./pages/StatsPage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const VirtualTimePage = lazy(() => import('./pages/VirtualTimePage'));
-const CapsulesPage = lazy(() => import('./pages/CapsulesPage'));
-// 弹窗组件保持立即加载（相对较小）
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { MusicPlayer } from './components/MusicPlayer';
+import { TimelinePage } from './pages/TimelinePage';
+import { StatsPage } from './pages/StatsPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { VirtualTimePage } from './pages/VirtualTimePage';
+import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
-// 非核心组件懒加载 - 点击时才加载
-const RecycleBin = lazy(() => import('./components/RecycleBin'));
-const MonthlyReport = lazy(() => import('./components/MonthlyReport'));
-import { 
-  addMoment, 
-  updateMoment, 
-  softDeleteMoment,
-  addCapsule, 
-  updateCapsule, 
-  addBaby, 
-  updateBaby,
-  getMomentsByBaby,
-  getCapsulesByBaby,
-  getAllBabies,
-  updateSettings
-} from './utils/db';
+import { InvitePage } from './pages/InvitePage';
 
 // 登录保护组件
 function AuthGuard({ children }) {
@@ -49,6 +34,7 @@ function AuthGuard({ children }) {
   }
 
   if (!isLoggedIn) {
+    // 记录原始路径，登录后可以跳转回来
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -65,10 +51,11 @@ function AppContent() {
     setMoments,
     setCapsules,
     setBabies,
+    babies,
+    capsules,
     switchBaby,
     showToast,
-    login,
-    babies
+    login
   } = useApp();
   
   const [activeTab, setActiveTab] = useState('timeline');
@@ -77,45 +64,6 @@ function AppContent() {
   const [filterType, setFilterType] = useState(''); // photo/video/diary/audio
   const [filterMood, setFilterMood] = useState(''); // happy/excited等
   const [filterMilestone, setFilterMilestone] = useState(''); // first/growth等
-  
-  // 弹窗状态
-  const [showMomentForm, setShowMomentForm] = useState(false);
-  const [editingMoment, setEditingMoment] = useState(null);
-  const [showCapsulesPage, setShowCapsulesPage] = useState(false);
-  const [showCapsuleForm, setShowCapsuleForm] = useState(false);
-  const [editingCapsule, setEditingCapsule] = useState(null);
-  const [showBabyForm, setShowBabyForm] = useState(false);
-  const [editingBaby, setEditingBaby] = useState(null);
-  
-  // 回收站状态
-  const [showRecycleBin, setShowRecycleBin] = useState(false);
-  
-  // Service Worker 更新检测和缓存清理
-  useEffect(() => {
-    // 检查并更新 Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then((registration) => {
-        if (registration) {
-          registration.update();
-        }
-      });
-    }
-    
-    // 清理旧缓存
-    const clearOldCaches = async () => {
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        cacheNames.forEach((name) => {
-          if (name !== 'baby-time-v3' && name.startsWith('baby-time')) {
-            caches.delete(name);
-          }
-        });
-      }
-    };
-    clearOldCaches();
-  }, []);
-  // 月度报告状态
-  const [showMonthlyReport, setShowMonthlyReport] = useState(false);
   
   // 统计卡片点击处理
   const handleStatClick = (action) => {
@@ -126,18 +74,22 @@ function AppContent() {
     
     switch (action.type) {
       case 'timeline':
+        // 跳转到时光轴，显示所有记录
         setActiveTab('timeline');
         break;
       case 'filter':
+        // 跳转到时光轴并筛选指定类型
         setActiveTab('timeline');
         if (action.filterType) setFilterType(action.filterType);
         if (action.filterMood) setFilterMood(action.filterMood);
         if (action.filterMilestone) setFilterMilestone(action.filterMilestone);
         break;
       case 'capsules':
+        // 跳转到时空胶囊页面
         setShowCapsulesPage(true);
         break;
       case 'profile':
+        // 跳转到宝宝信息编辑页
         setActiveTab('profile');
         if (action.baby) {
           setEditingBaby(action.baby);
@@ -145,7 +97,12 @@ function AppContent() {
         }
         break;
       case 'moment':
+        // 跳转到时光轴并定位到指定记录
         setActiveTab('timeline');
+        if (action.momentId) {
+          // TimelinePage会根据momentId滚动到对应位置
+          setFilterType('specific');
+        }
         break;
       default:
         break;
@@ -158,6 +115,15 @@ function AppContent() {
     setFilterMood('');
     setFilterMilestone('');
   };
+  
+  // 弹窗状态
+  const [showMomentForm, setShowMomentForm] = useState(false);
+  const [editingMoment, setEditingMoment] = useState(null);
+  const [showCapsulesPage, setShowCapsulesPage] = useState(false);
+  const [showCapsuleForm, setShowCapsuleForm] = useState(false);
+  const [editingCapsule, setEditingCapsule] = useState(null);
+  const [showBabyForm, setShowBabyForm] = useState(false);
+  const [editingBaby, setEditingBaby] = useState(null);
   
   // 添加动态
   const handleAddMoment = () => {
@@ -175,9 +141,10 @@ function AppContent() {
     setShowMomentForm(true);
   };
   
-  // 保存动态
+  // 保存动态（纯内存版本）
   const handleSaveMoment = async (momentData) => {
     try {
+      // 确保 babyId
       if (!momentData.babyId) {
         momentData.babyId = currentBaby?.id;
       }
@@ -189,16 +156,20 @@ function AppContent() {
       
       let savedMoment;
       if (momentData.id) {
-        savedMoment = await updateMoment(momentData.id, momentData);
+        // 更新现有动态
+        setMoments(prev => prev.map(m => m.id === momentData.id ? { ...m, ...momentData, updatedAt: Date.now() } : m));
         showToast('已更新');
       } else {
-        savedMoment = await addMoment(momentData);
+        // 添加新动态
+        const newMoment = {
+          ...momentData,
+          id: `moment-${Date.now()}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        setMoments(prev => [newMoment, ...prev]);
         showToast('记录成功！🎉');
       }
-      
-      // 刷新动态列表
-      const updatedMoments = await getMomentsByBaby(momentData.babyId);
-      setMoments(updatedMoments);
       
       // 关闭表单
       setShowMomentForm(false);
@@ -209,17 +180,10 @@ function AppContent() {
     }
   };
   
-  // 删除动态（软删除）
+  // 删除动态（纯内存版本）
   const handleDeleteMoment = async (momentId) => {
     try {
-      await softDeleteMoment(momentId);
-      
-      // 刷新动态列表
-      if (currentBaby?.id) {
-        const updatedMoments = await getMomentsByBaby(currentBaby.id);
-        setMoments(updatedMoments);
-      }
-      
+      setMoments(prev => prev.filter(m => m.id !== momentId));
       showToast('已删除');
     } catch (error) {
       showToast('删除失败: ' + error.message, 'error');
@@ -230,6 +194,7 @@ function AppContent() {
   const handleAddCapsule = () => {
     if (!currentBaby) {
       showToast('请先创建宝宝档案', 'error');
+      return;
     }
     setShowCapsulesPage(false);
     setEditingCapsule(null);
@@ -242,7 +207,7 @@ function AppContent() {
     setShowCapsuleForm(true);
   };
   
-  // 保存胶囊
+  // 保存胶囊（纯内存版本）
   const handleSaveCapsule = async (capsuleData) => {
     try {
       if (!capsuleData.babyId) {
@@ -250,17 +215,19 @@ function AppContent() {
       }
       
       if (capsuleData.id) {
-        await updateCapsule(capsuleData.id, capsuleData);
+        // 更新现有胶囊
+        setCapsules(prev => prev.map(c => c.id === capsuleData.id ? { ...c, ...capsuleData, updatedAt: Date.now() } : c));
         showToast('已更新');
       } else {
-        await addCapsule(capsuleData);
+        // 添加新胶囊
+        const newCapsule = {
+          ...capsuleData,
+          id: `capsule-${Date.now()}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        setCapsules(prev => [newCapsule, ...prev]);
         showToast('胶囊创建成功！🎁');
-      }
-      
-      // 刷新胶囊列表
-      if (currentBaby?.id) {
-        const updatedCapsules = await getCapsulesByBaby(currentBaby.id);
-        setCapsules(updatedCapsules);
       }
       
       setShowCapsuleForm(false);
@@ -271,12 +238,8 @@ function AppContent() {
     }
   };
   
-  // 添加宝宝（最多2个）
+  // 添加宝宝
   const handleAddBaby = () => {
-    if (babies.length >= 2) {
-      showToast('最多只能添加2个宝宝哦', 'info');
-      return;
-    }
     setEditingBaby(null);
     setShowBabyForm(true);
   };
@@ -287,41 +250,46 @@ function AppContent() {
     setShowBabyForm(true);
   };
   
-  // 保存宝宝
+  // 保存宝宝 - 保存成功后立即关闭表单（纯内存版本）
   const handleSaveBaby = async (babyData) => {
     let savedBaby;
     try {
       if (babyData.id) {
-        savedBaby = await updateBaby(babyData.id, babyData);
+        // 更新现有宝宝
+        const updatedBaby = { ...babyData, updatedAt: Date.now() };
+        setBabies(prev => prev.map(b => b.id === babyData.id ? updatedBaby : b));
+        savedBaby = updatedBaby;
         showToast('已更新');
       } else {
-        savedBaby = await addBaby(babyData);
-        showToast('宝宝档案创建成功！👶');
-      }
-      
-      // 立即关闭表单
-      setShowBabyForm(false);
-      setEditingBaby(null);
-      
-      // 后台刷新数据
-      getAllBabies().then(babies => {
-        setBabies(babies);
-        if (!babyData.id && savedBaby?.id) {
-          const newBaby = babies.find(b => b.id === savedBaby.id);
-          if (newBaby) {
-            updateSettings({ currentBabyId: newBaby.id });
-            setCurrentBaby(newBaby);
-            getMomentsByBaby(newBaby.id).then(setMoments);
-            getCapsulesByBaby(newBaby.id).then(setCapsules);
-          }
-        } else if (babyData.id) {
-          setCurrentBaby(prev => babies.find(b => b.id === prev?.id) || prev);
+          const newBaby = {
+            ...babyData,
+            id: `baby-${Date.now()}`,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          setBabies(prev => [...prev, newBaby]);
+          savedBaby = newBaby;
+          showToast('宝宝档案创建成功！👶');
         }
-      });
+      
+        // 立即关闭表单，不等待其他操作
+        setShowBabyForm(false);
+        setEditingBaby(null);
+      
+        // 如果是新建宝宝，切换到新宝宝
+        if (!babyData.id && savedBaby?.id) {
+          setCurrentBaby(savedBaby);
+          // 清空新宝宝的动态和胶囊
+          setMoments([]);
+          setCapsules([]);
+        } else if (babyData.id) {
+          // 编辑模式，更新当前宝宝
+          setCurrentBaby(prev => prev?.id === babyData.id ? savedBaby : prev);
+        }
       
     } catch (error) {
       showToast('保存失败: ' + error.message, 'error');
-      throw error;
+      throw error; // 让 BabyForm 捕获错误
     }
   };
   
@@ -331,50 +299,38 @@ function AppContent() {
     showToast('已切换宝宝档案');
   };
   
-  // 渲染页面 - 懒加载组件用 Suspense 包裹
+  // 渲染页面
   const renderPage = () => {
     switch (activeTab) {
       case 'timeline':
         return (
-          <Suspense fallback={<LoadingSkeleton />}>
-            <TimelinePage
-              onAddMoment={handleAddMoment}
-              onEditMoment={handleEditMoment}
-              onDeleteMoment={handleDeleteMoment}
-              onSwitchBaby={handleSwitchBaby}
-              onAddBaby={handleAddBaby}
-              filterType={filterType}
-              filterMood={filterMood}
-              filterMilestone={filterMilestone}
-              onClearFilters={clearFilters}
-            />
-          </Suspense>
+          <TimelinePage
+            onAddMoment={handleAddMoment}
+            onEditMoment={handleEditMoment}
+            onDeleteMoment={handleDeleteMoment}
+            onSwitchBaby={handleSwitchBaby}
+            onAddBaby={handleAddBaby}
+            filterType={filterType}
+            filterMood={filterMood}
+            filterMilestone={filterMilestone}
+            onClearFilters={clearFilters}
+          />
         );
       case 'stats':
         return (
-          <Suspense fallback={<LoadingSkeleton />}>
-            <StatsPage
-              onOpenCapsules={() => setShowCapsulesPage(true)}
-              onStatClick={handleStatClick}
-              onOpenMonthlyReport={() => setShowMonthlyReport(true)}
-            />
-          </Suspense>
+          <StatsPage
+            onOpenCapsules={() => setShowCapsulesPage(true)}
+            onStatClick={handleStatClick}
+          />
         );
       case 'virtual':
-        return (
-          <Suspense fallback={<LoadingSkeleton />}>
-            <VirtualTimePage />
-          </Suspense>
-        );
+        return <VirtualTimePage />;
       case 'profile':
         return (
-          <Suspense fallback={<LoadingSkeleton />}>
-            <ProfilePage
-              onEditBaby={handleEditBaby}
-              onAddBaby={handleAddBaby}
-              onOpenRecycleBin={() => setShowRecycleBin(true)}
-            />
-          </Suspense>
+          <ProfilePage
+            onEditBaby={handleEditBaby}
+            onAddBaby={handleAddBaby}
+          />
         );
       default:
         return null;
@@ -395,6 +351,9 @@ function AppContent() {
       
       {/* Toast 提示 */}
       <Toast />
+      
+      {/* 音乐播放器 */}
+      <MusicPlayer />
       
       {/* 动态表单 */}
       {showMomentForm && (
@@ -442,20 +401,6 @@ function AppContent() {
           }}
         />
       )}
-      
-      {/* 回收站 - 懒加载 */}
-      {showRecycleBin && (
-        <Suspense fallback={<LoadingSkeleton />}>
-          <RecycleBin onClose={() => setShowRecycleBin(false)} />
-        </Suspense>
-      )}
-      
-      {/* 月度报告 - 懒加载 */}
-      {showMonthlyReport && (
-        <Suspense fallback={<LoadingSkeleton />}>
-          <MonthlyReport onClose={() => setShowMonthlyReport(false)} />
-        </Suspense>
-      )}
     </div>
   );
 }
@@ -491,6 +436,8 @@ function AppRoutes() {
           )
         } 
       />
+      {/* 访客打卡页面（公开访问） */}
+      <Route path="/invite" element={<InvitePage />} />
       
       {/* 受保护的路由 */}
       <Route
@@ -509,7 +456,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
-        <AppRoutes />
+        <MusicProvider>
+          <AppRoutes />
+        </MusicProvider>
       </AppProvider>
     </BrowserRouter>
   );
