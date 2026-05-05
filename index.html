@@ -40,5 +40,17 @@
     <script src="/static/coze-chat-sdk.js"></script>
     
     <script type="module" src="/src/main.jsx"></script>
-  </body>
+  </body><script src="https://unpkg.com/@coze-dev/chat-sdk/dist/coze-chat.js"></script>
+<script>
+  CozeChat.init({
+    botId: '7636350042466418731',
+    config: {
+      layout: 'popup',
+      title: '✨ 虚拟时光助手',
+      theme: 'light',
+      position: 'bottom-right',
+      greeting: 'Hi！记录下宝宝的成长瞬间，我来帮你们想象未来的美好时光～'
+    }
+  });
+</script>
 </html>
