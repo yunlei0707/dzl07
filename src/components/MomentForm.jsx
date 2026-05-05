@@ -3,8 +3,15 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Image, Video, FileText, Star, AlertCircle, Mic, Square, Play, Pause , MapPin } from 'lucide-react';
-import { useApp  } from '../store/AppContext';
+import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play, Pause, Navigation, Search } from 'lucide-react';
+import { useApp } from '../store/AppContext';
+
+const moodOptions = [
+  { value: 'happy', emoji: '😊', label: '开心' },
+  { value: 'excited', emoji: '🎉', label: '兴奋' },
+  { value: 'touched', emoji: '🥰', label: '感动' },
+  { value: 'sleepy', emoji: '😴', label: '困倦' },
+];
 
 const weatherOptions = [
   { value: 'sunny', emoji: '☀️', label: '晴天' },
@@ -20,17 +27,16 @@ const formatTime2 = (seconds) => {
 };
 
 export function MomentForm({ moment, onSave, onCancel, babyId }) {
-  const { getAllMilestones, getAllMoods } = useApp();
+  const { getAllMilestones } = useApp();
   const [type, setType] = useState(moment?.type || 'photo');
   const [content, setContent] = useState(moment?.content || '');
   const [photos, setPhotos] = useState(moment?.photos || []);
   const [videos, setVideos] = useState(moment?.videos || []); // [{url, cover, name, size}]
   const [audios, setAudios] = useState(moment?.audios || []); // [{url, duration, waveform}]
   const [mood, setMood] = useState(moment?.mood || '');
-  const [location, setLocation] = useState(moment?.location || '');
   const [weather, setWeather] = useState(moment?.weather || '');
-  const [moodEmoji, setMoodEmoji] = useState(moment?.moodEmoji || '');
-  const [moodLabel, setMoodLabel] = useState(moment?.moodLabel || '');
+  const [location, setLocation] = useState(moment?.location || '');
+  const [locationCoords, setLocationCoords] = useState(moment?.locationCoords || null);
   const [milestone, setMilestone] = useState(moment?.milestone || '');
   const [milestoneLabel, setMilestoneLabel] = useState(moment?.milestoneLabel || '');
   const [milestoneEmoji, setMilestoneEmoji] = useState(moment?.milestoneEmoji || '');
@@ -58,19 +64,18 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const [playingIndex, setPlayingIndex] = useState(null);
   const audioRef = useRef(null);
   
+  // 定位状态
+  const [isLocating, setIsLocating] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const geocoderRef = useRef(null);
 
-  // 获取所有里程碑选项（加安全防御）
-  const milestoneOptions = Array.isArray(getAllMilestones()) ? getAllMilestones() : [];
-  
-  // 获取所有心情选项（预设 + 自定义，加安全防御）
-  const moodOptions = Array.isArray(getAllMoods()) 
-    ? getAllMoods().map(mood => ({
-        value: mood.id,
-        label: mood.label,
-        emoji: mood.emoji
-      }))
-    : [];
-
+  // 获取所有里程碑选项
+  const milestoneOptions = getAllMilestones();
 
   // 清理录音资源
   useEffect(() => {
@@ -83,12 +88,366 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     };
   }, []);
   
+  // 初始化高德地图
+  useEffect(() => {
+    if (showLocationModal) {
+      initMap();
+    }
+  }, [showLocationModal]);
 
-  // 照片上传
+  // 初始化高德地图
+  const initMap = useCallback(() => {
+    // 检查高德地图是否已加载
+    if (window.AMap) {
+      setMapLoaded(true);
+      createMap();
+    } else {
+      // 等待高德地图加载
+      const checkAMap = setInterval(() => {
+        if (window.AMap) {
+          clearInterval(checkAMap);
+          setMapLoaded(true);
+          createMap();
+        }
+      }, 100);
+      
+      // 超时处理
+      setTimeout(() => {
+        clearInterval(checkAMap);
+        if (!window.AMap) {
+          setMapLoaded(false);
+        }
+      }, 5000);
+    }
+  }, []);
+
+  // 创建地图实例
+  const createMap = useCallback(() => {
+    if (!window.AMap || mapRef.current) return;
+
+    try {
+      const map = new window.AMap.Map('location-map-container', {
+        zoom: 15,
+        center: locationCoords ? [locationCoords.lng, locationCoords.lat] : [116.397428, 39.90923],
+      });
+
+      mapRef.current = map;
+
+      // 初始化地理编码器
+      geocoderRef.current = new window.AMap.Geocoder();
+
+      // 添加点击事件
+      map.on('click', (e) => {
+        const lngLat = e.lnglat;
+        setLocationCoords({
+          lat: lngLat.lat,
+          lng: lngLat.lng
+        });
+        
+        // 逆地理编码获取地址
+        if (geocoderRef.current) {
+          geocoderRef.current.getAddress(lngLat, (status, result) => {
+            if (status === 'complete') {
+              setLocation(result.regeocode.formattedAddress);
+            }
+          });
+        }
+
+        // 更新标记
+        updateMarker(lngLat);
+      });
+
+      // 如果已有坐标，添加标记
+      if (locationCoords) {
+        updateMarker(new window.AMap.LngLat(locationCoords.lng, locationCoords.lat));
+      }
+    } catch (error) {
+      console.error('初始化地图失败:', error);
+      setMapLoaded(false);
+    }
+  }, [locationCoords]);
+
+  // 更新标记
+  const updateMarker = useCallback((lngLat) => {
+    if (!mapRef.current || !window.AMap) return;
+
+    // 移除旧标记
+    if (markerRef.current) {
+      mapRef.current.remove(markerRef.current);
+    }
+
+    // 添加新标记
+    markerRef.current = new window.AMap.Marker({
+      position: lngLat,
+      icon: new window.AMap.Icon({
+        size: new window.AMap.Size(32, 32),
+        image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+        imageSize: new window.AMap.Size(32, 32),
+      }),
+      offset: new window.AMap.Pixel(-16, -32),
+    });
+
+    mapRef.current.add(markerRef.current);
+  }, []);
+
+  // 搜索地址
+  const searchAddress = useCallback(() => {
+    if (!searchKeyword.trim() || !window.AMap || !geocoderRef.current) return;
+
+    geocoderRef.current.getLocation(searchKeyword, (status, result) => {
+      if (status === 'complete' && result.geocodes.length > 0) {
+        const firstResult = result.geocodes[0];
+        const locationObj = firstResult.location;
+        
+        setLocationCoords({
+          lat: locationObj.lat,
+          lng: locationObj.lng
+        });
+        setLocation(firstResult.formattedAddress);
+
+        // 移动地图
+        if (mapRef.current) {
+          mapRef.current.setCenter(locationObj);
+          updateMarker(locationObj);
+        }
+      } else {
+        alert('未找到相关地址');
+      }
+    });
+  }, [searchKeyword, updateMarker]);
+
+  // 停止录音
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    setIsRecording(false);
+  };
+  
+  // 开始录音
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      // 设置音频分析器
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+      
+      // 开始录音
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = () => {
+          const audioData = {
+            url: reader.result,
+            duration: recordingTime,
+            waveform: [...audioWaveform]
+          };
+          setAudios(prev => [...prev, audioData]);
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      setAudioWaveform([]);
+      
+      // 开始计时
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev >= 599) { // 10分钟限制
+            stopRecording();
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+      
+      // 开始波形采集
+      const captureWaveform = () => {
+        if (!analyserRef.current) return;
+        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(dataArray);
+        // 采样32个点
+        const sampled = [];
+        for (let i = 0; i < 32; i++) {
+          sampled.push(dataArray[Math.floor(i * dataArray.length / 32)]);
+        }
+        setAudioWaveform(prev => [...prev.slice(-200), sampled]); // 保留最近200帧
+        animationRef.current = requestAnimationFrame(captureWaveform);
+      };
+      captureWaveform();
+      
+    } catch (error) {
+      alert('无法访问麦克风，请检查权限设置');
+    }
+  };
+  
+  // 删除音频
+  const removeAudio = (index) => {
+    setAudios(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // 播放/暂停音频
+  const togglePlayAudio = (index) => {
+    if (playingIndex === index) {
+      audioRef.current?.pause();
+      setPlayingIndex(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      audioRef.current = new Audio(audios[index].url);
+      audioRef.current.onended = () => setPlayingIndex(null);
+      audioRef.current.play();
+      setPlayingIndex(index);
+    }
+  };
+
+  // 获取当前位置（高德地图 + 备用浏览器定位）
+  const getCurrentLocation = async () => {
+    setIsLocating(true);
+
+    // 优先使用高德地图定位
+    if (window.AMap) {
+      try {
+        const geolocation = new window.AMap.Geolocation({
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+
+        geolocation.getCurrentPosition((status, result) => {
+          if (status === 'complete') {
+            const { lat, lng } = result.position;
+            setLocationCoords({ lat, lng });
+            
+            // 逆地理编码获取地址
+            if (geocoderRef.current) {
+              geocoderRef.current.getAddress(new window.AMap.LngLat(lng, lat), (geoStatus, geoResult) => {
+                if (geoStatus === 'complete') {
+                  setLocation(geoResult.regeocode.formattedAddress);
+                } else {
+                  setLocation(`位置: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                }
+              });
+            }
+          } else {
+            // 高德定位失败，使用浏览器定位
+            useBrowserGeolocation();
+          }
+          setIsLocating(false);
+        });
+      } catch (error) {
+        console.error('高德定位失败:', error);
+        useBrowserGeolocation();
+      }
+    } else {
+      useBrowserGeolocation();
+    }
+  };
+
+  // 使用浏览器定位（备用方案）
+  const useBrowserGeolocation = () => {
+    if (!navigator.geolocation) {
+      alert('您的浏览器不支持定位功能');
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setLocationCoords({ lat: latitude, lng: longitude });
+        
+        try {
+          // 使用 Nominatim 逆地理编码
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&accept-language=zh`,
+            {
+              mode: 'cors',
+              headers: { 'User-Agent': 'BabyTimeApp/1.0' }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.address) {
+              const addr = data.address;
+              const parts = [];
+              if (addr.province || addr.state) parts.push(addr.province || addr.state);
+              if (addr.city) parts.push(addr.city);
+              if (addr.district || addr.county) parts.push(addr.district || addr.county);
+              if (addr.road) parts.push(addr.road);
+              
+              if (parts.length > 0) {
+                setLocation(parts.slice(0, 4).join(' '));
+              } else {
+                setLocation(data.display_name?.split(',').slice(0, 3).join(',') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+              }
+            } else {
+              setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            }
+          } else {
+            setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+        } catch (error) {
+          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        }
+        
+        setIsLocating(false);
+      },
+      (error) => {
+        setIsLocating(false);
+        let errorMsg = '定位失败';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = '请允许访问位置信息';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = '位置信息不可用';
+            break;
+          case error.TIMEOUT:
+            errorMsg = '定位超时，请重试';
+            break;
+        }
+        alert(errorMsg);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // 照片上传处理
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -96,54 +455,46 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       };
       reader.readAsDataURL(file);
     });
-    
-    // 重置input以便重复选择同一文件
-    e.target.value = '';
   };
 
-  // 视频上传 - 使用base64持久化存储，严格限制大小避免卡顿
+  // 视频上传 - 生成封面图并存储视频数据
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // 严格限制视频大小：最大 10MB，超过会严重卡顿
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      alert('视频文件过大（建议小于10MB），请压缩后再上传');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    // 先将视频文件转为DataURL存储
+    const videoReader = new FileReader();
+    videoReader.onload = (event) => {
       const videoDataURL = event.target.result;
       
-      // 创建视频元素读取封面和时长
+      // 创建视频元素读取封面
       const video = document.createElement('video');
       video.src = videoDataURL;
-      video.currentTime = 0.5;
+      video.currentTime = 0.5; // 取第0.5秒作为封面
       video.muted = true;
-      video.playsInline = true;
       
       video.onloadeddata = () => {
+        // 创建canvas绘制封面
         const canvas = document.createElement('canvas');
-        canvas.width = Math.min(video.videoWidth, 320);
-        canvas.height = Math.min(video.videoHeight, 240);
+        canvas.width = video.videoWidth || 320;
+        canvas.height = video.videoHeight || 240;
         const ctx = canvas.getContext('2d');
         
         try {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const coverImage = canvas.toDataURL('image/jpeg', 0.5);
+          const coverImage = canvas.toDataURL('image/jpeg', 0.8);
           
           const videoData = {
-            url: videoDataURL,
+            url: videoDataURL, // 存储实际视频数据
             cover: coverImage,
             name: file.name,
             size: file.size,
-            duration: Math.round(video.duration)
+            duration: video.duration
           };
           
           setVideos(prev => [...prev, videoData]);
         } catch (err) {
+          // 如果生成失败，使用默认占位
           setVideos(prev => [...prev, {
             url: videoDataURL,
             cover: null,
@@ -154,6 +505,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       };
       
       video.onerror = () => {
+        // 即使封面失败，也保存视频
         setVideos(prev => [...prev, {
           url: videoDataURL,
           cover: null,
@@ -163,123 +515,20 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       };
     };
     
-    reader.onerror = () => {
+    videoReader.onerror = () => {
       alert('读取视频文件失败，请重试');
     };
     
-    reader.readAsDataURL(file);
+    videoReader.readAsDataURL(file);
   };
 
   const removePhoto = (index) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
   
-
-  const togglePlayAudio = (index) => {
-    if (playingIndex === index) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      setPlayingIndex(null);
-    } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      setPlayingIndex(index);
-      // We can't auto-play here without actual audio element, but at least UI won't crash
-    }
-  };
-
   const removeVideo = (index) => {
     setVideos(prev => prev.filter((_, i) => i !== index));
   };
-
-  const removeAudio = (index) => {
-    setAudios(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const audioData = {
-            url: event.target.result,
-            duration: recordingTime,
-            waveform: audioWaveform.length > 0 ? audioWaveform.slice(-40) : []
-          };
-          setAudios(prev => [...prev, audioData]);
-          setRecordingTime(0);
-          setAudioWaveform([]);
-        };
-        reader.readAsDataURL(blob);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingTime(0);
-
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-
-      // 波形分析
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        analyserRef.current = analyser;
-
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const updateWaveform = () => {
-          analyser.getByteFrequencyData(dataArray);
-          const avg = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
-          setAudioWaveform(prev => [...prev, avg]);
-          animationRef.current = requestAnimationFrame(updateWaveform);
-        };
-        updateWaveform();
-      } catch (e) {
-        // 波形分析失败不影响录音
-      }
-    } catch (error) {
-      alert('无法访问麦克风，请检查权限设置');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setIsRecording(false);
-  };
-
 
   const handleSubmit = async () => {
     if (!content.trim() && photos.length === 0 && videos.length === 0 && audios.length === 0) {
@@ -292,23 +541,6 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       return;
     }
     
-    // 获取当前登录用户信息
-    let createdBy = null;
-    try {
-      const currentUserStr = localStorage.getItem('currentUser');
-      if (currentUserStr) {
-        const currentUser = JSON.parse(currentUserStr);
-        createdBy = {
-          id: currentUser.id,
-          name: currentUser.username,
-          avatar: currentUser.avatar,
-          role: currentUser.role
-        };
-      }
-    } catch (e) {
-      console.error('获取用户信息失败', e);
-    }
-    
     const momentData = {
       babyId: babyId,
       type,
@@ -318,15 +550,12 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       videos: type === 'video' ? videos : [],
       audios: type === 'audio' ? audios : [],
       mood,
-      moodLabel: mood ? moodLabel : '',
-      moodEmoji: mood ? moodEmoji : '',
       weather,
       location,
-      locationCoords: null,
+      locationCoords,
       milestone,
       milestoneLabel: milestone ? milestoneLabel : '',
       milestoneEmoji: milestone ? milestoneEmoji : '',
-      createdBy, // 记录人信息
     };
     
     setSaving(true);
@@ -529,7 +758,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                 {videos.map((video, index) => (
                   <div key={index} className="relative aspect-video rounded-xl overflow-hidden bg-gray-800">
                     {video.cover ? (
-                    <img src={video.cover} alt="视频封面" className="w-full h-full object-cover" />
+                      <img src={video.cover} alt="视频封面" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-700">
                         <Video className="w-12 h-12 text-gray-500" />
@@ -592,19 +821,13 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                       </button>
                       <div className="flex-1">
                         <div className="h-8 bg-primary-200 dark:bg-primary-700 rounded-full overflow-hidden flex items-end px-1">
-                          {Array.isArray(audio.waveform) && audio.waveform.length > 0 ? (
-                            audio.waveform.slice(-40).map((frame, i) => {
-                              // 兼容一维数组和二维数组格式
-                              const height = Array.isArray(frame) ? frame[0] : frame;
-                              return (
-                                <div
-                                  key={i}
-                                  className="w-1 bg-primary-500 mx-px rounded-full"
-                                  style={{ height: `${Math.max(4, (Number(height) || 0) / 4)}%` }}
-                                />
-                              );
-                            })
-                          ) : null}
+                          {(audio.waveform || []).slice(-1)[0]?.map((val, i) => (
+                            <div
+                              key={i}
+                              className="w-1 bg-primary-500 mx-px rounded-full"
+                              style={{ height: `${Math.max(4, val / 4)}%` }}
+                            />
+                          )) || <div className="flex-1" />}
                         </div>
                       </div>
                       <span className="text-sm text-gray-500">{formatTime2(audio.duration)}</span>
@@ -662,21 +885,11 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
             心情
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             {moodOptions.map(option => (
               <button
                 key={option.value}
-                onClick={() => {
-                  if (mood === option.value) {
-                    setMood('');
-                    setMoodLabel('');
-                    setMoodEmoji('');
-                  } else {
-                    setMood(option.value);
-                    setMoodLabel(option.label);
-                    setMoodEmoji(option.emoji);
-                  }
-                }}
+                onClick={() => setMood(mood === option.value ? '' : option.value)}
                 className={`px-3 py-2 rounded-xl text-sm transition-colors ${
                   mood === option.value
                     ? 'bg-primary-500 text-white'
@@ -711,21 +924,113 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           </div>
         </div>
         
-        {/* 位置 - 手动输入 */}
+        {/* 位置 - 新版高德地图定位 */}
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
             <MapPin className="w-4 h-4 inline mr-1" />
             位置
           </label>
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="输入位置（可选）"
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-cream-100 dark:bg-gray-700 dark:text-white text-sm"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center bg-cream-100 dark:bg-gray-700 rounded-xl px-3 py-2">
+              <MapPin className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+              <span className={`text-sm flex-1 truncate ${location ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}`}>
+                {location || '添加位置（可选）'}
+              </span>
+            </div>
+            <button
+              onClick={getCurrentLocation}
+              disabled={isLocating}
+              className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white hover:bg-primary-600 disabled:opacity-50"
+            >
+              {isLocating ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Navigation className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+          
+          {/* 手动选择位置按钮 */}
+          <button
+            onClick={() => setShowLocationModal(true)}
+            className="mt-2 w-full text-sm text-primary-500 hover:text-primary-600 flex items-center justify-center gap-1"
+          >
+            <Search className="w-4 h-4" />
+            地图选点 / 搜索地址
+          </button>
         </div>
       </div>
+      
+      {/* 位置选择弹窗 */}
+      {showLocationModal && (
+        <div className="location-modal" onClick={() => setShowLocationModal(false)}>
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg mx-auto max-h-[85vh] overflow-hidden animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 搜索栏 */}
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchAddress()}
+                    placeholder="搜索地址..."
+                    className="w-full pl-10 pr-4 py-2 bg-cream-100 dark:bg-gray-700 rounded-xl"
+                  />
+                </div>
+                <button
+                  onClick={searchAddress}
+                  className="px-4 py-2 bg-primary-500 text-white rounded-xl"
+                >
+                  搜索
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">
+                  {location || '点击地图选择位置'}
+                </span>
+                <button
+                  onClick={() => setShowLocationModal(false)}
+                  className="px-4 py-1.5 bg-primary-500 text-white rounded-lg text-sm"
+                >
+                  确定
+                </button>
+              </div>
+            </div>
+            
+            {/* 地图容器 */}
+            <div className="relative">
+              <div 
+                id="location-map-container" 
+                className="map-container"
+                style={{ height: '350px' }}
+              />
+              
+              {!mapLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-cream-100 dark:bg-gray-700">
+                  <div className="text-center">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-500">正在加载地图...</p>
+                    <button
+                      onClick={() => {
+                        setShowLocationModal(false);
+                        useBrowserGeolocation();
+                      }}
+                      className="mt-2 text-sm text-primary-500"
+                    >
+                      使用浏览器定位
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

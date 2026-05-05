@@ -7,7 +7,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { ErrorBoundary } from './ErrorBoundary';
 
 // 等待 DOM 加载完成
 const rootElement = document.getElementById('root');
@@ -15,9 +14,7 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
+      <App />
     </React.StrictMode>
   );
 } else {
@@ -29,10 +26,10 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('Service Worker 注册成功:', registration.scope);
+        console.log('ServiceWorker 注册成功:', registration.scope);
       })
       .catch((error) => {
-        console.log('Service Worker 注册失败:', error);
+        console.log('ServiceWorker 注册失败:', error);
       });
   });
 }
