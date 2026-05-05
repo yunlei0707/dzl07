@@ -334,7 +334,7 @@ function AppContent() {
       {showMomentForm && (
         <MomentForm
           moment={editingMoment}
-          babyId={currentBaby?.id}
+          babyId={currentBaby?.id || "user"}
           onSave={handleSaveMoment}
           onCancel={() => {
             setShowMomentForm(false);
@@ -359,7 +359,7 @@ function AppContent() {
       {showCapsuleForm && (
         <CapsuleForm
           capsule={editingCapsule}
-          babyId={currentBaby?.id}
+          babyId={currentBaby?.id || "user"}
           onSave={handleSaveCapsule}
           onCancel={() => {
             setShowCapsuleForm(false);

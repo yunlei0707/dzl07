@@ -38,36 +38,6 @@
     <div id="root"></div>
     <!-- 扣子 Chat SDK - 本地静态文件，确保加载成功 -->
     <script src="/static/coze-chat-sdk.js"></script>
-    <script>
-      // 轮询初始化，确保 SDK 加载成功
-      function initCozeSDK() {
-        try {
-          // ✅ 正确的全局变量名是 CozeWebSDK！（从日志检测到）
-          const SDK = window.CozeWebSDK;
-          
-          if (SDK && SDK.WebChatClient) {
-            window.cozeChat = new SDK.WebChatClient({
-              config: {
-                bot_id: '7636350042466418731',
-              },
-              componentProps: {
-                title: '虚拟时光助手',
-              },
-            });
-            console.log('✅ 扣子 SDK 初始化成功，SDK 对象:', SDK);
-          } else {
-            console.log('⏳ 等待 SDK 加载... 已检测到的全局对象:', Object.keys(window).filter(k => k.toLowerCase().includes('coze')));
-            setTimeout(initCozeSDK, 300);
-          }
-        } catch (e) {
-          console.error('❌ 扣子 SDK 初始化失败:', e);
-        }
-      }
-      
-      // 立即尝试 + 延迟确保脚本执行完成
-      initCozeSDK();
-      setTimeout(initCozeSDK, 1000);
-    </script>
     
     <script type="module" src="/src/main.jsx"></script>
   </body>
