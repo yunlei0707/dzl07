@@ -16,6 +16,7 @@ import
 } from 'lucide-react';
 import 
 { exportAllData, importAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
+import { exportV2AccountData, importV2AccountData, isSystemAccount } from '../utils/dbV2';
 import 
 { calculateAge } from '../utils/dateUtils';
 import 
@@ -568,6 +569,23 @@ export function ProfilePage(
       
       {/* 账号切换器 */}
       <BabyHeader />
+      
+      {/* 编辑宝宝信息入口 */}
+      <div className="px-4 mt-2">
+        <button
+          onClick={() => {
+            // 获取当前宝宝信息并调用编辑
+            const babyInfo = v2AccountInfo || currentBaby;
+            if (babyInfo) {
+              onEditBaby(babyInfo);
+            }
+          }}
+          className="w-full py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm flex items-center justify-center gap-2 text-primary-500 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Edit3 className="w-5 h-5" />
+          <span className="font-medium">编辑宝宝信息</span>
+        </button>
+      </div>
       
       {/* 功能菜单 */}
       <div className="px-4 mt-4 space-y-3">

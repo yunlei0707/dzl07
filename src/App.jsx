@@ -16,10 +16,11 @@ import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
-import { isSystemAccount } from './utils/dbV2';
+
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby } from './utils/db';
+import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
 
 // 登录保护
@@ -95,15 +96,42 @@ function AppContent() {
   // 保存动态
   const handleSaveMoment = async (momentData) => {
     try {
+      // 获取当前宝宝信息
+      const babyInfo = getCurrentBabyInfo();
+      
+      // 如果没有 babyId，使用当前账号的宝宝 ID
       if (!momentData.babyId) {
-        momentData.babyId = currentBaby?.id;
+        momentData.babyId = babyInfo?.id || currentBaby?.id;
+      }
+      
+      // 检查是否有有效的宝宝信息
+      if (!momentData.babyId) {
+        showToast('请先选择宝宝档案', 'error');
+        return;
+      }
+      
+      // 根据账号类型使用不同的添加方法
+      if (babyInfo?.isSystem) {
+        // 系统账号不支持添加
+        showToast('系统账号不可添加记录', 'error');
+        return;
       }
       
       if (momentData.id) {
-        await updateMoment(momentData.id, momentData);
+        // 更新操作
+        if (babyInfo) {
+          await updateMomentInCurrentAccount(momentData.id, momentData);
+        } else {
+          await updateMoment(momentData.id, momentData);
+        }
         showToast('已更新');
       } else {
-        await addMoment(momentData);
+        // 新增操作
+        if (babyInfo) {
+          await addMomentToCurrentAccount(momentData);
+        } else {
+          await addMoment(momentData);
+        }
         showToast('记录已保存！🎉');
       }
       

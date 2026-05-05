@@ -588,3 +588,83 @@ export function getUserAccountInfo() {
     hasData: (userAccount.timeline?.length || 0) > 0
   };
 }
+
+// ==================== 数据导出导入 ====================
+
+/**
+ * 导出当前账号的 v2 数据
+ * @returns {Object} 导出的数据
+ */
+export function exportV2AccountData() {
+  const current = getCurrentV2Account();
+  if (!current) return null;
+  
+  return {
+    exportTime: new Date().toISOString(),
+    version: '2.0.0',
+    accountType: current.accountId,
+    accountData: {
+      id: current.accountData?.id,
+      name: current.accountData?.name,
+      nickname: current.accountData?.nickname,
+      avatar: current.accountData?.avatar,
+      birthDate: current.accountData?.birthDate,
+      gender: current.accountData?.gender,
+      isSystem: current.accountData?.isSystem,
+    },
+    timeline: current.accountData?.timeline || [],
+    growth: current.accountData?.growth || { height: null, weight: null, records: [] },
+    virtualTime: current.accountData?.virtualTime || [],
+  };
+}
+
+/**
+ * 导入 v2 数据到当前账号
+ * @param {Object} data - 导出的数据
+ * @param {string} mode - 'merge' 合并或 'replace' 覆盖
+ * @returns {boolean}
+ */
+export function importV2AccountData(data, mode = 'merge') {
+  const current = getCurrentV2Account();
+  if (!current) return false;
+  
+  const { identityName, accountId } = current;
+  
+  if (mode === 'replace') {
+    // 覆盖模式：直接替换整个账号数据
+    updateV2AccountData(identityName, accountId, {
+      name: data.accountData?.name || '我的宝宝',
+      nickname: data.accountData?.nickname || '',
+      avatar: data.accountData?.avatar,
+      birthDate: data.accountData?.birthDate || '',
+      gender: data.accountData?.gender || 'girl',
+      timeline: data.timeline || [],
+      growth: data.growth || { height: null, weight: null, records: [] },
+      virtualTime: data.virtualTime || [],
+    });
+  } else {
+    // 合并模式：只合并 timeline
+    const currentTimeline = current.accountData?.timeline || [];
+    const newTimeline = data.timeline || [];
+    
+    // 合并去重
+    const existingIds = new Set(currentTimeline.map(m => m.id));
+    const mergedTimeline = [
+      ...currentTimeline,
+      ...newTimeline.filter(m => !existingIds.has(m.id))
+    ];
+    
+    updateV2AccountData(identityName, accountId, {
+      timeline: mergedTimeline,
+      // 虚拟时光也合并
+      virtualTime: [
+        ...(current.accountData?.virtualTime || []),
+        ...(data.virtualTime || []).filter(v => 
+          !(current.accountData?.virtualTime || []).some(cv => cv.id === v.id)
+        ),
+      ],
+    });
+  }
+  
+  return true;
+}

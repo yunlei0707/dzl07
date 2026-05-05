@@ -1,18 +1,20 @@
 /**
  * 回收站组件
- * 显示已删除的动态记录，支持还原和永久删除
+ * 双账号支持版本：支持 IndexedDB 和 v2 localStorage 两种存储
  */
 
 import { useState, useEffect } from 'react';
 import { X, RotateCcw, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { getDeletedMomentsByBaby, restoreMoment, deleteMomentPermanently, emptyRecycleBin } from '../utils/db';
+import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount } from '../utils/dbV2';
 
 export function RecycleBin({ onClose }) {
   const { currentBaby, showToast, setMoments } = useApp();
   const [deletedMoments, setDeletedMoments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [isV2System, setIsV2System] = useState(false);
 
   // 加载回收站数据
   useEffect(() => {
@@ -20,13 +22,32 @@ export function RecycleBin({ onClose }) {
   }, [currentBaby]);
 
   const loadDeletedMoments = async () => {
-    if (!currentBaby?.id) return;
-    
     setIsLoading(true);
     try {
-      const moments = await getDeletedMomentsByBaby(currentBaby.id);
-      setDeletedMoments(moments);
+      // 检查是否为 v2 系统账号
+      const isSystem = isSystemAccount();
+      setIsV2System(isSystem);
+      
+      if (isSystem) {
+        // v2 系统账号：从 timeline 中获取已删除的记录
+        const account = getCurrentV2Account();
+        if (account?.accountData?.timeline) {
+          const deleted = account.accountData.timeline.filter(m => m.isDeleted) || [];
+          setDeletedMoments(deleted);
+        } else {
+          setDeletedMoments([]);
+        }
+      } else {
+        // 普通账号：从 IndexedDB 获取
+        if (currentBaby?.id) {
+          const moments = await getDeletedMomentsByBaby(currentBaby.id);
+          setDeletedMoments(moments);
+        } else {
+          setDeletedMoments([]);
+        }
+      }
     } catch (error) {
+      console.error('加载回收站失败:', error);
       showToast('加载回收站失败', 'error');
     } finally {
       setIsLoading(false);
@@ -37,15 +58,31 @@ export function RecycleBin({ onClose }) {
   const handleRestore = async (momentId) => {
     setActionLoading(momentId);
     try {
-      await restoreMoment(momentId);
+      if (isV2System) {
+        // v2 系统账号：恢复 v2 数据
+        const account = getCurrentV2Account();
+        if (account?.accountData?.timeline) {
+          const timeline = account.accountData.timeline.map(m => 
+            m.id === momentId ? { ...m, isDeleted: false } : m
+          );
+          // 需要更新 dbV2 数据
+          const { updateV2AccountData } = await import('../utils/dbV2');
+          updateV2AccountData(account.identityName, account.accountId, { timeline });
+        }
+      } else {
+        // 普通账号：恢复 IndexedDB 数据
+        await restoreMoment(momentId);
+        
+        // 刷新时光轴
+        const { getMomentsByBaby } = await import('../utils/db');
+        const moments = await getMomentsByBaby(currentBaby.id);
+        setMoments(moments);
+      }
+      
       showToast('已还原到时光轴');
       await loadDeletedMoments();
-      
-      // 刷新时光轴
-      const { getMomentsByBaby } = await import('../utils/db');
-      const moments = await getMomentsByBaby(currentBaby.id);
-      setMoments(moments);
     } catch (error) {
+      console.error('还原失败:', error);
       showToast('还原失败', 'error');
     } finally {
       setActionLoading(null);
@@ -55,13 +92,21 @@ export function RecycleBin({ onClose }) {
   // 永久删除
   const handlePermanentDelete = async (momentId) => {
     if (!confirm('确定要永久删除吗？此操作不可恢复！')) return;
-    
+
     setActionLoading(momentId);
     try {
-      await deleteMomentPermanently(momentId);
+      if (isV2System) {
+        // v2 系统账号：永久删除 v2 数据
+        deleteMomentFromCurrentAccount(momentId);
+      } else {
+        // 普通账号：永久删除 IndexedDB 数据
+        await deleteMomentPermanently(momentId);
+      }
+      
       showToast('已永久删除');
       await loadDeletedMoments();
     } catch (error) {
+      console.error('删除失败:', error);
       showToast('删除失败', 'error');
     } finally {
       setActionLoading(null);
@@ -71,12 +116,25 @@ export function RecycleBin({ onClose }) {
   // 清空回收站
   const handleEmptyBin = async () => {
     if (!confirm('确定要清空回收站吗？所有已删除的记录将被永久删除！')) return;
-    
+
     try {
-      await emptyRecycleBin(currentBaby.id);
+      if (isV2System) {
+        // v2 系统账号：清空所有已删除的 v2 记录
+        const account = getCurrentV2Account();
+        if (account?.accountData?.timeline) {
+          const timeline = account.accountData.timeline.filter(m => !m.isDeleted);
+          const { updateV2AccountData } = await import('../utils/dbV2');
+          updateV2AccountData(account.identityName, account.accountId, { timeline });
+        }
+      } else {
+        // 普通账号：清空 IndexedDB 回收站
+        await emptyRecycleBin(currentBaby.id);
+      }
+      
       showToast('回收站已清空');
       await loadDeletedMoments();
     } catch (error) {
+      console.error('清空失败:', error);
       showToast('清空失败', 'error');
     }
   };
@@ -117,6 +175,11 @@ export function RecycleBin({ onClose }) {
             <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 text-xs rounded-full">
               {deletedMoments.length}条
             </span>
+            {isV2System && (
+              <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900 text-amber-600 text-xs rounded-full">
+                系统账号
+              </span>
+            )}
           </div>
           <button 
             onClick={onClose}
@@ -179,7 +242,7 @@ export function RecycleBin({ onClose }) {
                   {/* 删除时间和操作 */}
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-gray-400">
-                      {formatDeletedDate(moment.deletedAt)}
+                      {formatDeletedDate(moment.deletedAt || moment.updatedAt)}
                     </span>
                     <div className="flex items-center gap-2">
                       <button

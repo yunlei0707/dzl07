@@ -9,7 +9,7 @@ import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
 import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react';
-import { getCurrentV2Account, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount } from '../utils/dbV2';
+import { getCurrentV2Account, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast } = useApp();
@@ -17,14 +17,17 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   // v2 账号系统：获取当前账号信息
   const [v2AccountInfo, setV2AccountInfo] = useState(null);
   const [v2Growth, setV2Growth] = useState(null);
+  const [v2BabyInfo, setV2BabyInfo] = useState(null);
   
-  // 监听账号切换
+  // 监听账号切换，刷新 v2 数据
   useEffect(() => {
     const updateV2Info = () => {
       const account = getCurrentV2Account();
       const growth = getCurrentGrowth();
+      const babyInfo = getCurrentBabyInfo();
       setV2AccountInfo(account?.accountData || null);
       setV2Growth(growth);
+      setV2BabyInfo(babyInfo);
     };
     
     updateV2Info();
@@ -38,10 +41,13 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       window.removeEventListener('storage', updateV2Info);
       clearInterval(interval);
     };
-  }, []);
+  }, [currentBaby]);
   
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
+  
+  // 优先使用 v2 账号信息，兼容旧的 currentBaby
+  const displayBaby = v2BabyInfo || currentBaby;
   
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -103,9 +109,9 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   
   // 计算统计数据
   const stats = useMemo(() => {
-    if (!currentBaby) return null;
+    if (!displayBaby) return null;
     
-    const age = calculateAge(currentBaby.birthDate);
+    const age = calculateAge(displayBaby.birthDate);
     
     // 照片数量
     const photoCount = moments.filter(m => m.photos && m.photos.length > 0 && !m.isDeleted)
@@ -160,7 +166,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     return moments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
   }, [moments]);
   
-  if (!currentBaby || !stats) {
+  if (!displayBaby || !stats) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4">
         <div className="w-24 h-24 mx-auto mb-4 bg-cream-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
@@ -309,7 +315,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             {/* 成长天数 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
-              onClick={() => onStatClick({ type: 'profile', baby: currentBaby })}
+              onClick={() => onStatClick({ type: 'profile', baby: displayBaby })}
             >
               <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.age.totalDays}
