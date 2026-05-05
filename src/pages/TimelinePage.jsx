@@ -476,10 +476,15 @@ export function TimelinePage({
               <Calendar className="w-12 h-12 text-gray-300" />
             </div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">
-              {hasActiveFilters ? '暂无符合条件的记录' : '还没有记录哦'}
+              {hasActiveFilters ? '暂无符合条件的记录' : (isSystemAccount ? '系统账号暂无记录' : '还没有记录哦')}
             </p>
             <p className="text-gray-400 dark:text-gray-500 text-sm">
-              {hasActiveFilters ? '试试调整筛选条件' : '点击右下角 + 按钮添加第一条记录'}
+              {hasActiveFilters 
+                ? '试试调整筛选条件' 
+                : (isSystemAccount 
+                  ? '切换到自己的账号开始记录' 
+                  : '点击右下角 + 按钮添加第一条记录')
+              }
             </p>
             {hasActiveFilters && (
               <button
@@ -488,6 +493,14 @@ export function TimelinePage({
               >
                 清除筛选
               </button>
+            )}
+            {isSystemAccount && (
+              <div className="mt-4 px-4 py-3 bg-amber-50 dark:bg-amber-900/30 rounded-xl inline-block">
+                <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  系统账号为示例数据，仅供浏览
+                </p>
+              </div>
             )}
           </div>
         ) : (
