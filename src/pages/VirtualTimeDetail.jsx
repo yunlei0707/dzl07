@@ -3,9 +3,10 @@
  * 展示单个专题的详细内容，支持添加用户内容
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Clock, Plus, Edit3, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Sparkles, Clock, Plus, Trash2, X, Share2, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { BabyHeader } from '../components/BabyHeader';
 import { useApp } from '../store/AppContext';
@@ -29,6 +30,9 @@ export function VirtualTimeDetail() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newContent, setNewContent] = useState({ title: '', content: '', emoji: '📝' });
   const [isSystemAccount, setIsSystemAccount] = useState(false);
+  const [sharingItem, setSharingItem] = useState(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const contentCardRef = useRef(null);
   
   // 获取专题信息
   const topic = virtualTimeTopics.find(t => t.id === topicId);
@@ -93,6 +97,77 @@ export function VirtualTimeDetail() {
       showToast('删除失败', 'error');
     }
   }, [topicId, showToast, loadContents]);
+  
+  // 生成分享图片
+  const handleShareContent = useCallback(async (item) => {
+    setSharingItem(item);
+    setIsSharing(true);
+    
+    try {
+      // 创建分享卡片DOM
+      const shareCard = document.createElement('div');
+      shareCard.style.cssText = `
+        width: 350px;
+        padding: 24px;
+        background: linear-gradient(135deg, #FF7B70 0%, #FF9B8E 100%);
+        border-radius: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: white;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      `;
+      
+      const content = `
+        <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+          <div style="font-size: 48px;">${item.emoji || '📝'}</div>
+          <div>
+            <div style="font-size: 14px; opacity: 0.9;">虚拟时光 · ${topic.title}</div>
+            <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">${item.title}</div>
+          </div>
+        </div>
+        <div style="
+          background: rgba(255,255,255,0.15);
+          border-radius: 12px;
+          padding: 16px;
+          font-size: 14px;
+          line-height: 1.6;
+          margin-bottom: 16px;
+        ">
+          ${item.content || '暂无详细描述'}
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; opacity: 0.9;">
+          <span>📅 ${item.date || new Date().toLocaleDateString('zh-CN')}</span>
+          <span>👶 宝贝时光</span>
+        </div>
+      `;
+      
+      shareCard.innerHTML = content;
+      document.body.appendChild(shareCard);
+      
+      // 使用 html2canvas 生成图片
+      const canvas = await html2canvas(shareCard, {
+        backgroundColor: null,
+        scale: 2,
+        logging: false,
+      });
+      
+      // 移除临时DOM
+      document.body.removeChild(shareCard);
+      
+      // 转换为图片并下载
+      const link = document.createElement('a');
+      link.download = `宝贝时光_${topic.title}_${item.title}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      showToast('图片已保存');
+    } catch (error) {
+      console.error('分享失败:', error);
+      showToast('分享失败', 'error');
+    } finally {
+      setIsSharing(false);
+      setSharingItem(null);
+    }
+  }, [topic, showToast]);
   
   if (!topic) {
     return (
@@ -243,6 +318,17 @@ export function VirtualTimeDetail() {
                         <Clock className="w-4 h-4 text-gray-400" />
                         <span className="text-xs text-gray-400">{item.date || '刚刚'}</span>
                         <div className="flex-1" />
+                        <button
+                          onClick={() => handleShareContent(item)}
+                          disabled={isSharing && sharingItem?.id === item.id}
+                          className="p-1.5 text-gray-400 hover:text-primary-500"
+                        >
+                          {isSharing && sharingItem?.id === item.id ? (
+                            <div className="w-4 h-4 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Share2 className="w-4 h-4" />
+                          )}
+                        </button>
                         <button
                           onClick={() => handleDeleteContent(item.id)}
                           className="p-1.5 text-gray-400 hover:text-red-500"
