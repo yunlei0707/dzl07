@@ -13,14 +13,19 @@ import {
   getV2AccountData,
   updateV2AccountData,
   switchV2Account,
-  getCurrentV2Account as _getCurrentV2Account,
+  getCurrentV2Account,
   getCurrentIdentity,
   isMigrated,
   migrateV1ToV2
 } from './migration';
 
-// 重新导出 getCurrentV2Account
-export { getCurrentV2Account } from './migration';
+// 重新导出，确保可以被其他文件导入
+export {
+  getCurrentV2Account,
+  getCurrentIdentity,
+  isMigrated,
+  switchV2Account
+};
 
 // localStorage 键名
 const CURRENT_IDENTITY_KEY = 'currentIdentity';
