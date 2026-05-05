@@ -176,7 +176,7 @@ export function RecycleBin({ onClose }) {
             <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 text-xs rounded-full">
               {deletedMoments.length}条
             </span>
-            {isV2System && (
+            {hasV2Baby && (
               <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900 text-amber-600 text-xs rounded-full">
                 系统账号
               </span>

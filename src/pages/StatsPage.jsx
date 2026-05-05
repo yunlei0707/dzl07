@@ -113,21 +113,19 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     
     const age = calculateAge(displayBaby.birthDate);
     
+    // 优先使用 v2 账号的动态数据，否则使用 IndexedDB 的 moments
+    const activeMoments = v2AccountInfo?.timeline 
+      ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
+      : moments.filter(m => !m.isDeleted);
+    
     // 照片数量
-    const photoCount = moments.filter(m => m.photos && m.photos.length > 0 && !m.isDeleted)
+    const photoCount = activeMoments.filter(m => m.photos && m.photos.length > 0)
       .reduce((acc, m) => acc + m.photos.length, 0);
     
     // 里程碑数量
-    const milestoneCount = moments.filter(m => m.milestone && !m.isDeleted).length;
-    
-    // 胶囊数量
-    const unlockedCapsules = capsules.filter(c => 
-      new Date(c.unlockDate) <= new Date()
-    ).length;
-    const lockedCapsules = capsules.length - unlockedCapsules;
+    const milestoneCount = activeMoments.filter(m => m.milestone).length;
     
     // 按类型统计
-    const activeMoments = moments.filter(m => !m.isDeleted);
     const photoMoments = activeMoments.filter(m => m.type === 'photo').length;
     const videoMoments = activeMoments.filter(m => m.type === 'video').length;
     const diaryMoments = activeMoments.filter(m => m.type === 'diary').length;
@@ -145,6 +143,12 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     const topMood = Object.entries(moodStats)
       .sort((a, b) => b[1] - a[1])[0]?.[0] || null;
     
+    // 胶囊数量（非 v2 账号）
+    const unlockedCapsules = capsules.filter(c => 
+      new Date(c.unlockDate) <= new Date()
+    ).length;
+    const lockedCapsules = capsules.length - unlockedCapsules;
+    
     return {
       age,
       photoCount,
@@ -159,12 +163,13 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       topMood,
       moodStats,
     };
-  }, [currentBaby, moments, capsules]);
+  }, [currentBaby, moments, capsules, v2AccountInfo]);
   
   // 里程碑列表
   const milestones = useMemo(() => {
-    return moments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
-  }, [moments]);
+    const v2Moments = v2AccountInfo?.timeline || moments;
+    return v2Moments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
+  }, [moments, v2AccountInfo]);
   
   if (!displayBaby || !stats) {
     return (

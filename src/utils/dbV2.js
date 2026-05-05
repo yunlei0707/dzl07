@@ -19,6 +19,9 @@ import {
   migrateV1ToV2
 } from './migration';
 
+// 导入虚拟时光默认数据
+import { virtualTimeTopics } from '../data/virtualTimeData';
+
 // 重新导出，确保可以被其他文件导入
 export {
   getCurrentV2Account,

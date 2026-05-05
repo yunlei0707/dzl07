@@ -22,7 +22,7 @@ import
 import 
 { BabyHeader } from '../components/BabyHeader';
 import 
-{ getCurrentV2Account, getCurrentBabyInfo, isSystemAccount as checkIsSystemAccount } from '../utils/dbV2';
+{ getCurrentV2Account, getCurrentBabyInfo, isSystemAccount as checkIsSystemAccount, addMomentToCurrentAccount } from '../utils/dbV2';
 
 // 主题预设配置
 const THEME_PRESETS = [
@@ -142,107 +142,157 @@ export function ProfilePage(
   }, []);
   
   // 导入示例数据
-  const handleImportSampleData = useCallback(async () => 
-{
+  const handleImportSampleData = useCallback(async () => {
     if (!currentBaby || isImportingSample) return;
     
     setIsImportingSample(true);
-    try 
-{
+    try {
       const now = new Date();
+      const babyInfo = getCurrentBabyInfo();
+      const isV2 = !!babyInfo;
       
-      // 示例动态1：照片 - 三个月前
-      const date1 = new Date(now);
-      date1.setMonth(date1.getMonth() - 3);
-      
-      await addMoment(
-{
-        babyId: currentBaby.id,
-        type: 'photo',
-        date: date1.toISOString(),
-        content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
-        photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
-        mood: 'happy',
-        weather: 'sunny',
-        milestone: 'first',
-        milestoneLabel: '第一次翻身',
-      });
+      if (isV2) {
+        // v2 账号：添加到 v2 系统
+        const date1 = new Date(now);
+        date1.setMonth(date1.getMonth() - 3);
+        addMomentToCurrentAccount({
+          type: 'photo',
+          date: date1.toISOString(),
+          content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
+          photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
+          mood: 'happy',
+          weather: 'sunny',
+          milestone: 'first',
+          milestoneLabel: '第一次翻身',
+        });
 
-      // 示例动态2：视频 - 两个月前
-      const date2 = new Date(now);
-      date2.setMonth(date2.getMonth() - 2);
-      
-      await addMoment(
-{
-        babyId: currentBaby.id,
-        type: 'video',
-        date: date2.toISOString(),
-        content: '今天学会了爬行，追着球球跑得好开心呀！',
-        videos: [
-{
-          url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-          cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
-          duration: 10
-        }],
-        mood: 'excited',
-        weather: 'cloudy',
-        milestone: 'growth',
-        milestoneLabel: '学会爬行',
-      });
+        const date2 = new Date(now);
+        date2.setMonth(date2.getMonth() - 2);
+        addMomentToCurrentAccount({
+          type: 'video',
+          date: date2.toISOString(),
+          content: '今天学会了爬行，追着球球跑得好开心呀！',
+          videos: [{
+            url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+            cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+            duration: 10
+          }],
+          mood: 'excited',
+          weather: 'cloudy',
+          milestone: 'growth',
+          milestoneLabel: '学会爬行',
+        });
 
-      // 示例动态3：语音 - 一个月前
-      const date3 = new Date(now);
-      date3.setMonth(date3.getMonth() - 1);
-      
-      await addMoment(
-{
-        babyId: currentBaby.id,
-        type: 'audio',
-        date: date3.toISOString(),
-        content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
-        audios: [
-{
-          url: 'https://www.w3schools.com/html/horse.ogg',
-          duration: 8,
-          waveform: generateWaveform(),
-        }],
-        mood: 'touched',
-        weather: 'sunny',
-        milestone: 'growth',
-        milestoneLabel: '学会说话',
-      });
+        const date3 = new Date(now);
+        date3.setMonth(date3.getMonth() - 1);
+        addMomentToCurrentAccount({
+          type: 'audio',
+          date: date3.toISOString(),
+          content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
+          audios: [{
+            url: 'https://www.w3schools.com/html/horse.ogg',
+            duration: 8,
+            waveform: generateWaveform(),
+          }],
+          mood: 'touched',
+          weather: 'sunny',
+          milestone: 'growth',
+          milestoneLabel: '学会说话',
+        });
 
-      // 示例动态4：日记 - 两周前
-      const date4 = new Date(now);
-      date4.setDate(date4.getDate() - 14);
-      
-      await addMoment(
-{
-        babyId: currentBaby.id,
-        type: 'diary',
-        date: date4.toISOString(),
-        content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
-        mood: 'happy',
-        weather: 'windy',
-        milestone: 'daily',
-        milestoneLabel: '户外活动',
-      });
+        const date4 = new Date(now);
+        date4.setDate(date4.getDate() - 14);
+        addMomentToCurrentAccount({
+          type: 'diary',
+          date: date4.toISOString(),
+          content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
+          mood: 'happy',
+          weather: 'windy',
+          milestone: 'daily',
+          milestoneLabel: '户外活动',
+        });
+        
+        // 刷新 v2 数据
+        const account = getCurrentV2Account();
+        setV2AccountInfo(account?.accountData || null);
+      } else {
+        // 非 v2 系统：添加到 IndexedDB
+        const date1 = new Date(now);
+        date1.setMonth(date1.getMonth() - 3);
+        await addMoment({
+          babyId: currentBaby.id,
+          type: 'photo',
+          date: date1.toISOString(),
+          content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
+          photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
+          mood: 'happy',
+          weather: 'sunny',
+          milestone: 'first',
+          milestoneLabel: '第一次翻身',
+        });
 
-      // 刷新数据
-      const babyMoments = await getMomentsByBaby(currentBaby.id);
-      setMoments(babyMoments);
+        const date2 = new Date(now);
+        date2.setMonth(date2.getMonth() - 2);
+        await addMoment({
+          babyId: currentBaby.id,
+          type: 'video',
+          date: date2.toISOString(),
+          content: '今天学会了爬行，追着球球跑得好开心呀！',
+          videos: [{
+            url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+            cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
+            duration: 10
+          }],
+          mood: 'excited',
+          weather: 'cloudy',
+          milestone: 'growth',
+          milestoneLabel: '学会爬行',
+        });
+
+        const date3 = new Date(now);
+        date3.setMonth(date3.getMonth() - 1);
+        await addMoment({
+          babyId: currentBaby.id,
+          type: 'audio',
+          date: date3.toISOString(),
+          content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
+          audios: [{
+            url: 'https://www.w3schools.com/html/horse.ogg',
+            duration: 8,
+            waveform: generateWaveform(),
+          }],
+          mood: 'touched',
+          weather: 'sunny',
+          milestone: 'growth',
+          milestoneLabel: '学会说话',
+        });
+
+        const date4 = new Date(now);
+        date4.setDate(date4.getDate() - 14);
+        await addMoment({
+          babyId: currentBaby.id,
+          type: 'diary',
+          date: date4.toISOString(),
+          content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
+          mood: 'happy',
+          weather: 'windy',
+          milestone: 'daily',
+          milestoneLabel: '户外活动',
+        });
+        
+        const babyMoments = await getMomentsByBaby(currentBaby.id);
+        setMoments(babyMoments);
+      }
       
       showToast('已导入4条示例数据', 'success');
-    } catch (error) 
-{
+    } catch (error) {
       console.error('导入示例数据失败:', error);
       showToast('导入失败', 'error');
-    } finally 
-{
+    } finally {
       setIsImportingSample(false);
     }
   }, [currentBaby, isImportingSample, generateWaveform, setMoments, showToast]);
-  
+
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
