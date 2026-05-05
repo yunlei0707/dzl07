@@ -5,7 +5,7 @@
  */
 
 // 当前数据版本号 - 每次修改数据结构时 +1
-export const CURRENT_DATA_VERSION = 1;
+export const CURRENT_DATA_VERSION = 2;  // 升级到 v2：双账号系统
 
 // 版本键名
 const VERSION_KEY = 'baby_time_data_version';
@@ -76,15 +76,68 @@ function migrateV0ToV1() {
 }
 
 /**
- * 迁移 v1 -> v2 模板
- * 下次修改数据结构时，复制这个模板并实现迁移逻辑
- * 记得把 CURRENT_DATA_VERSION 改为 2
+ * 迁移 v1 -> v2：单宝宝 → 双账号系统
+ * - 每个身份下有独立的双账号（default + user）
+ * - 老用户的现有数据迁移到 user 账号下
+ * - 注入系统默认的豆芽示例数据
  */
-// function migrateV1ToV2() {
-//   console.log('[数据迁移] 执行 v1 -> v2 迁移...');
-//   // TODO: 实现具体迁移逻辑
-//   console.log('[数据迁移] v1 -> v2 迁移完成');
-// }
+async function migrateV1ToV2() {
+  console.log('[数据迁移] 执行 v1 -> v2 迁移：双账号系统...');
+  
+  try {
+    // 1. 获取当前登录的身份
+    const userRole = safeGetItem('user_role', { name: '访客参观' });
+    const identityName = userRole.name || '访客参观';
+    
+    // 2. 从旧版 localStorage 读取数据（如果有的话）
+    const oldBabies = safeGetItem('babies', []);
+    const oldMoments = safeGetItem('moments', []);
+    
+    // 3. 初始化双账号结构
+    // 这会自动注入 default（豆芽）+ user（空）账号
+    const { getIdentityData } = await import('./dbV2');
+    const identityData = getIdentityData(identityName);
+    
+    // 4. 迁移老数据到 user 账号
+    if (oldBabies.length > 0 || oldMoments.length > 0) {
+      console.log(`[数据迁移] 找到 ${oldBabies.length} 个宝宝, ${oldMoments.length} 条动态，正在迁移...`);
+      
+      // 迁移宝宝信息到 user 账号
+      if (oldBabies.length > 0) {
+        const firstBaby = oldBabies[0];
+        identityData.accounts.user.name = firstBaby.name || '我的宝宝';
+        identityData.accounts.user.birthday = firstBaby.birthday || '';
+        identityData.accounts.user.avatar = firstBaby.avatar || '👶';
+      }
+      
+      // 迁移动态数据
+      if (oldMoments.length > 0) {
+        identityData.accounts.user.data.timeline = oldMoments;
+      }
+      
+      // 保存迁移后的数据
+      const { saveAllData } = await import('./dbV2');
+      const allData = JSON.parse(localStorage.getItem('baby_time_v2') || '{}');
+      allData[identityName] = identityData;
+      saveAllData(allData);
+      
+      // 清理旧版数据（保留备份 7 天）
+      localStorage.setItem('baby_time_v1_backup', JSON.stringify({
+        babies: oldBabies,
+        moments: oldMoments,
+        migratedAt: new Date().toISOString()
+      }));
+      
+      console.log('[数据迁移] v1 -> v2 迁移完成！');
+    } else {
+      console.log('[数据迁移] 新用户，无需迁移，已初始化双账号结构');
+    }
+    
+  } catch (error) {
+    console.error('[数据迁移] v1 -> v2 迁移失败:', error);
+    // 迁移失败不阻塞，让应用继续运行
+  }
+}
 
 /**
  * 迁移注册表
@@ -92,7 +145,7 @@ function migrateV0ToV1() {
  */
 const MIGRATIONS = [
   { from: 0, to: 1, migrate: migrateV0ToV1 },
-  // 下次添加: { from: 1, to: 2, migrate: migrateV1ToV2 },
+  { from: 1, to: 2, migrate: migrateV1ToV2 },
 ];
 
 /**
