@@ -36,14 +36,17 @@
   </head>
   <body class="bg-cream-50 dark:bg-gray-900">
     <div id="root"></div>
-    <!-- 扣子 Chat SDK -->
-    <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/0.1.0-beta.3/libs/cn/index.js"></script>
+    <!-- 扣子 Chat SDK - 本地静态文件，确保加载成功 -->
+    <script src="/static/coze-chat-sdk.js"></script>
     <script>
-      // 直接初始化，不等待 load 事件
+      // 轮询初始化，确保 SDK 加载成功
       function initCozeSDK() {
         try {
-          if (window.CozeWebSDK) {
-            window.cozeChat = new CozeWebSDK.WebChatClient({
+          // 检查 CozeWebSDK 是否存在，也检查常见的全局变量名
+          const SDK = window.CozeWebSDK || window.CozeChatSDK || window.CozeWebChat || window.cozeWebSDK;
+          
+          if (SDK && SDK.WebChatClient) {
+            window.cozeChat = new SDK.WebChatClient({
               config: {
                 bot_id: '7636350042466418731',
               },
@@ -51,18 +54,19 @@
                 title: '虚拟时光助手',
               },
             });
-            console.log('✅ 扣子 SDK 初始化成功');
+            console.log('✅ 扣子 SDK 初始化成功，SDK 对象:', SDK);
           } else {
-            console.log('⏳ CozeWebSDK 还未加载，稍后重试...');
-            setTimeout(initCozeSDK, 500);
+            console.log('⏳ 等待 SDK 加载... 已检测到的全局对象:', Object.keys(window).filter(k => k.toLowerCase().includes('coze')));
+            setTimeout(initCozeSDK, 300);
           }
         } catch (e) {
           console.error('❌ 扣子 SDK 初始化失败:', e);
         }
       }
       
-      // 立即尝试初始化
+      // 立即尝试 + 延迟确保脚本执行完成
       initCozeSDK();
+      setTimeout(initCozeSDK, 1000);
     </script>
     
     <script type="module" src="/src/main.jsx"></script>
