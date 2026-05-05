@@ -118,15 +118,34 @@ function AppContent() {
   const handleConfirmAICreate = () => {
     setShowAIChoice(false);
     
-    if (!window.cozeChat || !latestContent) return;
+    if (!latestContent) return;
     
     try {
-      // 打开聊天窗
-      window.cozeChat.open();
+      // 优先：点击SDK悬浮按钮打开聊天窗
+      const sdkSelectors = [
+        'button[class*="coze-chat-float-btn"]',
+        '[class*="coze-chat-float-btn"]',
+        'button[class*="float-btn"]',
+        'button[class*="asst-btn"]'
+      ];
       
-      // 延迟一点，让聊天窗完全打开
+      let opened = false;
+      for (const selector of sdkSelectors) {
+        const btn = document.querySelector(selector);
+        if (btn) {
+          btn.click();
+          opened = true;
+          break;
+        }
+      }
+      
+      // 备用：尝试旧接口
+      if (!opened && window.cozeChat) {
+        window.cozeChat.open();
+      }
+      
+      // 延迟一点，让聊天窗完全打开后填入内容
       setTimeout(() => {
-        // 构造提示词
         const babyName = currentBaby?.name || '宝宝';
         const prompt = `请帮我为以下宝宝成长记录创作一段未来时光想象：
 
@@ -141,7 +160,7 @@ function AppContent() {
           inputElement.value = prompt;
           inputElement.dispatchEvent(new Event('input', { bubbles: true }));
         }
-      }, 500);
+      }, 800);
       
     } catch (e) {
       console.error('打开扣子聊天窗失败:', e);
