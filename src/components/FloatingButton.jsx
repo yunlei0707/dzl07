@@ -72,29 +72,46 @@ export function FloatingButton() {
 
     // 直接尝试打开或初始化
     try {
-      // 如果已经有实例，尝试打开（尝试各种可能的方法名）
-      if (window.cozeChat) {
-        console.log('[FloatingButton] 尝试所有可能的打开方法:', Object.keys(window.cozeChat));
+      // ✅ 每次点击都重新创建实例，并且尝试所有可能的打开方式
+      console.log('[FloatingButton] 点击按钮，强制重新创建聊天窗口...');
+      
+      if (window.CozeWebSDK && window.CozeWebSDK.WebChatClient) {
+        // 每次都创建新实例
+        window.cozeChat = new window.CozeWebSDK.WebChatClient({
+          config: { bot_id: '7636350042466418731' },
+          componentProps: {
+            title: '虚拟时光助手',
+            // 尝试所有可能的自动打开参数
+            autoOpen: true,
+            defaultOpen: true,
+            show: true,
+            visible: true,
+          },
+        });
         
-        // 尝试所有可能的方法名
-        if (typeof window.cozeChat.open === 'function') {
-          window.cozeChat.open();
-        } else if (typeof window.cozeChat.show === 'function') {
-          window.cozeChat.show();
-        } else if (typeof window.cozeChat.toggle === 'function') {
-          window.cozeChat.toggle();
-        } else if (typeof window.cozeChat.display === 'function') {
-          window.cozeChat.display();
-        } else {
-          // 兜底：直接创建新实例
-          console.log('[FloatingButton] 没有找到open方法，尝试重新创建实例');
-          if (window.CozeWebSDK && window.CozeWebSDK.WebChatClient) {
-            window.cozeChat = new window.CozeWebSDK.WebChatClient({
-              config: { bot_id: '7636350042466418731' },
-              componentProps: { title: '虚拟时光助手' },
-            });
+        // 打印所有方法
+        console.log('[FloatingButton] ✅ 实例已创建，所有可用方法:', Object.keys(window.cozeChat));
+        console.log('[FloatingButton] 完整实例:', window.cozeChat);
+        
+        // 暴力尝试所有可能的方法名
+        const allMethods = ['open', 'show', 'toggle', 'display', 'openChat', 'showChat', 'launch', 'activate', 'expand'];
+        allMethods.forEach(method => {
+          if (typeof window.cozeChat[method] === 'function') {
+            console.log(`[FloatingButton] 🎯 找到方法 ${method}()，尝试调用...`);
+            try { window.cozeChat[method](); } catch(e) { console.error(e); }
           }
-        }
+        });
+        
+        // 同时尝试点击 SDK 可能生成的浮动按钮
+        setTimeout(() => {
+          const possibleButtons = document.querySelectorAll('button[class*="coze"], button[class*="Coze"], div[class*="coze"], div[class*="Coze"], div[style*="fixed"]');
+          console.log('[FloatingButton] 找到可能的按钮:', possibleButtons.length, '个');
+          possibleButtons.forEach((btn, i) => {
+            console.log(`[FloatingButton] 按钮 ${i}:`, btn.className || btn.id);
+            try { btn.click(); } catch(e) {}
+          });
+        }, 500);
+        
         return;
       }
       
