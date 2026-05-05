@@ -25,6 +25,8 @@ import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby
 import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount, updateCurrentBabyInfo } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
 import { handleRecordLink } from './utils/linkService';
+import { FloatingButton } from './components/FloatingButton';
+import { AIChoiceModal } from './components/AIChoiceModal';
 
 // 登录保护
 function AuthGuard({ children }) {
@@ -75,6 +77,10 @@ function AppContent() {
   const [editingCapsule, setEditingCapsule] = useState(null);
   const [editingBaby, setEditingBaby] = useState(null);
   const [showCapsulesPage, setShowCapsulesPage] = useState(false);
+  
+  // AI 选择弹窗状态
+  const [showAIChoice, setShowAIChoice] = useState(false);
+  const [aiChoiceContent, setAIChoiceContent] = useState('');
 
   // v2 双账号系统初始化
   useEffect(() => {
@@ -152,13 +158,12 @@ function AppContent() {
       
       // 如果没有 babyId，使用当前账号的宝宝 ID
       if (!momentData.babyId) {
-        momentData.babyId = babyInfo?.id || currentBaby?.id;
+        momentData.babyId = babyInfo?.id || currentBaby?.id || 'user';
       }
       
-      // 检查是否有有效的宝宝信息
+      // 确保有 babyId
       if (!momentData.babyId) {
-        showToast('请先选择宝宝档案', 'error');
-        return;
+        momentData.babyId = 'user';
       }
       
       // 根据账号类型使用不同的添加方法
@@ -186,7 +191,12 @@ function AppContent() {
         }
         showToast('记录已保存！🎉');
         
-        // 保存记录成功后，异步触发联动（不阻塞用户操作）
+        // 保存成功后显示 AI 选择弹窗
+        console.log('[App] 保存成功，准备显示 AI 选择弹窗, content:', momentData.content);
+        setAIChoiceContent(momentData.content || '');
+        setShowAIChoice(true);
+        
+        // 异步触发联动（不阻塞用户操作）
         setTimeout(() => {
           try {
             // 构造 record 对象，包含：id、type、title、content、tags等信息
@@ -298,6 +308,27 @@ function AppContent() {
       
       {/* Toast 提示 */}
       <Toast />
+      
+      {/* 悬浮 AI 助手按钮 */}
+      <FloatingButton />
+      
+      {/* AI 创作选择弹窗 */}
+      <AIChoiceModal
+        show={showAIChoice}
+        content={aiChoiceContent}
+        onConfirm={() => {
+          console.log('[App] 用户点击"好的，帮我创作"');
+          setShowAIChoice(false);
+          // 调用全局打开聊天窗口函数
+          if (window.openCozeChat) {
+            window.openCozeChat();
+          }
+        }}
+        onCancel={() => {
+          console.log('[App] 用户点击"不用了，谢谢"');
+          setShowAIChoice(false);
+        }}
+      />
       
       {/* 动态表单 */}
       {showMomentForm && (
