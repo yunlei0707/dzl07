@@ -1,16 +1,47 @@
 /**
  * 成长数据页面
- * 优化版本：左上角显示头像，月度报告入口
+ * 优化版本：左上角显示头像，月度报告入口，双账号支持
  */
 
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
+import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
 import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react';
+import { getCurrentV2Account, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount } from '../utils/dbV2';
 
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast } = useApp();
+  
+  // v2 账号系统：获取当前账号信息
+  const [v2AccountInfo, setV2AccountInfo] = useState(null);
+  const [v2Growth, setV2Growth] = useState(null);
+  
+  // 监听账号切换
+  useEffect(() => {
+    const updateV2Info = () => {
+      const account = getCurrentV2Account();
+      const growth = getCurrentGrowth();
+      setV2AccountInfo(account?.accountData || null);
+      setV2Growth(growth);
+    };
+    
+    updateV2Info();
+    
+    // 监听 localStorage 变化（跨标签页同步）
+    window.addEventListener('storage', updateV2Info);
+    // 轮询更新
+    const interval = setInterval(updateV2Info, 500);
+    
+    return () => {
+      window.removeEventListener('storage', updateV2Info);
+      clearInterval(interval);
+    };
+  }, []);
+  
+  // 检查是否为系统账号
+  const isSystemAccount = v2AccountInfo?.isSystem === true;
   
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -131,8 +162,26 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   
   if (!currentBaby || !stats) {
     return (
-      <div className="min-h-screen pb-20 flex items-center justify-center">
-        <p className="text-gray-500">加载中...</p>
+      <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4">
+        <div className="w-24 h-24 mx-auto mb-4 bg-cream-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+          <BarChart2 className="w-12 h-12 text-gray-300" />
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 mb-2 text-center">
+          {isSystemAccount 
+            ? '系统账号暂无成长数据' 
+            : '还没有成长数据哦'
+          }
+        </p>
+        {!isSystemAccount && (
+          <p className="text-gray-400 dark:text-gray-500 text-sm text-center">
+            在时光轴添加记录，或切换到其他账号查看
+          </p>
+        )}
+        {isSystemAccount && (
+          <p className="text-gray-400 dark:text-gray-500 text-sm text-center">
+            切换到自己的账号开始记录
+          </p>
+        )}
       </div>
     );
   }
@@ -198,6 +247,18 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             </div>
             <h1 className="text-xl font-bold">📊 成长数据</h1>
           </div>
+          
+          {/* 账号切换器 */}
+          <BabyHeader />
+          
+          {/* 系统账号提示 */}
+          {isSystemAccount && (
+            <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                📌 系统示例账号，成长数据仅供参考
+              </p>
+            </div>
+          )}
         </div>
           
       </header>

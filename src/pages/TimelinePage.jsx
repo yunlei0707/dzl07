@@ -1,6 +1,7 @@
 /**
  * 时光轴页面
  * ✅ 性能优化版本：虚拟滚动 + 懒加载 + 分页加载
+ * ✅ 双账号支持：账号切换和数据隔离
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
@@ -11,7 +12,14 @@ import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
-import { Plus, Calendar, Clock, X, ChevronDown } from 'lucide-react';
+import { Plus, Calendar, Clock, X, ChevronDown, Lock } from 'lucide-react';
+import { 
+  getCurrentV2Account, 
+  getCurrentTimeline, 
+  addMomentToCurrentAccount,
+  deleteMomentFromCurrentAccount,
+  isSystemAccount as checkIsSystemAccount 
+} from '../utils/dbV2';
 
 // ==================== 虚拟滚动优化 ====================
 // 虚拟列表项高度估计
@@ -73,6 +81,39 @@ export function TimelinePage({
   onClearFilters 
 }) {
   const { moments, setMoments, currentBaby, currentUser, showToast, getAllMilestones, getAllMoods } = useApp();
+  
+  // v2 账号系统状态
+  const [v2Moments, setV2Moments] = useState([]);
+  const [isSystemAccount, setIsSystemAccount] = useState(false);
+  
+  // 监听账号切换，刷新 v2 数据
+  useEffect(() => {
+    const updateV2Info = () => {
+      const account = getCurrentV2Account();
+      const timeline = getCurrentTimeline();
+      const isSystem = checkIsSystemAccount();
+      
+      setV2Moments(timeline);
+      setIsSystemAccount(isSystem);
+      
+      // 如果是系统账号或没有 currentBaby，使用 v2 数据
+      if (isSystem || !currentBaby) {
+        // v2 数据通过 BabyHeader 显示，不需要额外处理
+      }
+    };
+    
+    updateV2Info();
+    
+    // 监听 localStorage 变化
+    window.addEventListener('storage', updateV2Info);
+    // 轮询更新
+    const interval = setInterval(updateV2Info, 500);
+    
+    return () => {
+      window.removeEventListener('storage', updateV2Info);
+      clearInterval(interval);
+    };
+  }, [currentBaby]);
   
   // 获取所有里程碑选项（包含预设和自定义）
   const milestoneFilters = useMemo(() => {
@@ -569,13 +610,22 @@ export function TimelinePage({
         milestone={sharingMoment?.milestone}
       />
 
-      {/* 添加记录按钮 */}
-      <button
-        onClick={onAddMoment}
-        className="fixed right-4 bottom-32 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-50 active:scale-95 transition-transform hover:shadow-xl"
-      >
-        <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
-      </button>
+      {/* 添加记录按钮 - 系统账号禁用 */}
+      {isSystemAccount ? (
+        <div 
+          className="fixed right-4 bottom-32 w-14 h-14 bg-gray-300 rounded-full shadow-lg flex items-center justify-center z-50 cursor-not-allowed"
+          title="系统账号不可编辑"
+        >
+          <Lock className="w-6 h-6 text-gray-500" />
+        </div>
+      ) : (
+        <button
+          onClick={onAddMoment}
+          className="fixed right-4 bottom-32 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-50 active:scale-95 transition-transform hover:shadow-xl"
+        >
+          <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
+        </button>
+      )}
     </div>
   );
 }

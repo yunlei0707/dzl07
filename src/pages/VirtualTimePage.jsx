@@ -1,13 +1,23 @@
 /**
  * 虚拟时光页面 - AI生成内容专题展示
- * 支持点击内容项全屏展示和分享
+ * 支持点击内容项全屏展示和分享，双账号支持
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check, Share2 } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check, Share2, Plus, Trash2, Lock } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
 import { ShareCard } from '../components/ShareCard';
+import { BabyHeader } from '../components/BabyHeader';
+import { 
+  getCurrentV2Account, 
+  getCurrentBabyInfo, 
+  isSystemAccount as checkIsSystemAccount,
+  getCurrentVirtualTime,
+  addVirtualTimeToCurrentAccount,
+  deleteVirtualTimeFromCurrentAccount,
+  updateCurrentBabyInfo
+} from '../utils/dbV2';
 
 export function VirtualTimePage() {
   const { currentBaby, currentUser, showToast } = useApp();
@@ -15,7 +25,82 @@ export function VirtualTimePage() {
   const [fullscreenItem, setFullscreenItem] = useState(null);
   const [copied, setCopied] = useState(false);
   const [sharingItem, setSharingItem] = useState(null);
-
+  
+  // v2 账号系统状态
+  const [v2AccountInfo, setV2AccountInfo] = useState(null);
+  const [v2VirtualTime, setV2VirtualTime] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newVirtualTime, setNewVirtualTime] = useState({ title: '', content: '' });
+  
+  // 监听账号切换
+  useEffect(() => {
+    const updateV2Info = () => {
+      const account = getCurrentV2Account();
+      const virtualTime = getCurrentVirtualTime();
+      setV2AccountInfo(account?.accountData || null);
+      setV2VirtualTime(virtualTime || []);
+    };
+    
+    updateV2Info();
+    
+    // 监听 localStorage 变化
+    window.addEventListener('storage', updateV2Info);
+    // 轮询更新
+    const interval = setInterval(updateV2Info, 500);
+    
+    return () => {
+      window.removeEventListener('storage', updateV2Info);
+      clearInterval(interval);
+    };
+  }, []);
+  
+  // 检查是否为系统账号
+  const isSystemAccount = v2AccountInfo?.isSystem === true;
+  
+  // 添加虚拟时光
+  const handleAddVirtualTime = useCallback(() => {
+    if (isSystemAccount) {
+      showToast('系统账号不可添加', 'error');
+      return;
+    }
+    if (!newVirtualTime.title.trim() || !newVirtualTime.content.trim()) {
+      showToast('请填写标题和内容', 'error');
+      return;
+    }
+    
+    const item = addVirtualTimeToCurrentAccount({
+      title: newVirtualTime.title.trim(),
+      content: newVirtualTime.content.trim(),
+      createdAt: new Date().toISOString()
+    });
+    
+    if (item) {
+      setV2VirtualTime(prev => [item, ...prev]);
+      setNewVirtualTime({ title: '', content: '' });
+      setShowAddForm(false);
+      showToast('已添加');
+    }
+  }, [isSystemAccount, newVirtualTime, showToast]);
+  
+  // 删除虚拟时光
+  const handleDeleteVirtualTime = useCallback((itemId) => {
+    if (isSystemAccount) {
+      showToast('系统账号不可删除', 'error');
+      return;
+    }
+    
+    if (window.confirm('确定要删除这条记录吗？')) {
+      const success = deleteVirtualTimeFromCurrentAccount(itemId);
+      if (success) {
+        setV2VirtualTime(prev => prev.filter(item => item.id !== itemId));
+        showToast('已删除');
+      }
+    }
+  }, [isSystemAccount, showToast]);
+  
+  // 同步宝宝名称到虚拟时光显示
+  const babyName = v2AccountInfo?.nickname || v2AccountInfo?.name || currentBaby?.nickname || currentBaby?.name || '宝宝';
+  
   const handleTopicClick = (topic) => {
     setSelectedTopic(topic);
   };
@@ -414,9 +499,26 @@ export function VirtualTimePage() {
             </div>
             <h1 className="text-xl font-bold">✨ 虚拟时光</h1>
           </div>
-          <p className="text-white/80 text-sm">
-            {currentBaby ? `想象${currentBaby.nickname || currentBaby.name}未来的美好时光` : 'AI生成的温馨未来场景'}
+          
+          {/* 账号切换器 */}
+          <BabyHeader />
+          
+          <p className="text-white/80 text-sm mt-2">
+            {isSystemAccount 
+              ? `想象${babyName}未来的美好时光` 
+              : `想象${babyName}未来的美好时光`
+            }
           </p>
+          
+          {/* 系统账号提示 */}
+          {isSystemAccount && (
+            <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
+              <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                系统账号仅可查看，添加功能已禁用
+              </p>
+            </div>
+          )}
         </div>
       </header>
 
@@ -428,7 +530,106 @@ export function VirtualTimePage() {
           </p>
         </div>
 
+        {/* 用户自定义虚拟时光区域 */}
+        {v2VirtualTime.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <span className="text-lg">📝</span>
+                我的记录
+              </h3>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {v2VirtualTime.length}条
+              </span>
+            </div>
+            <div className="space-y-3">
+              {v2VirtualTime.map((item) => (
+                <div 
+                  key={item.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800 dark:text-white">{item.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{item.content}</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(item.createdAt).toLocaleDateString('zh-CN')}
+                      </p>
+                    </div>
+                    {!isSystemAccount && (
+                      <button
+                        onClick={() => handleDeleteVirtualTime(item.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* 添加虚拟时光按钮/表单 */}
+        {!isSystemAccount && (
+          <div className="mb-4">
+            {showAddForm ? (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-primary-500" />
+                  添加记录
+                </h4>
+                <input
+                  type="text"
+                  placeholder="标题"
+                  value={newVirtualTime.title}
+                  onChange={(e) => setNewVirtualTime(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg mb-2 text-sm bg-cream-50 dark:bg-gray-900"
+                />
+                <textarea
+                  placeholder="内容"
+                  value={newVirtualTime.content}
+                  onChange={(e) => setNewVirtualTime(prev => ({ ...prev, content: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg mb-2 text-sm bg-cream-50 dark:bg-gray-900 resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAddVirtualTime}
+                    className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-sm font-medium"
+                  >
+                    保存
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewVirtualTime({ title: '', content: '' });
+                    }}
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="w-full py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 border-dashed border-primary-200 dark:border-primary-800 text-primary-500 flex items-center justify-center gap-2 font-medium"
+              >
+                <Plus className="w-5 h-5" />
+                添加我的记录
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* AI 生成内容区域 */}
         <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <h3 className="font-bold text-gray-800 dark:text-white">AI 生成内容</h3>
+          </div>
           {virtualTimeTopics.map((topic) => (
             <TopicCard key={topic.id} topic={topic} />
           ))}

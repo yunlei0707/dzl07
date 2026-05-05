@@ -13,15 +13,26 @@ import {
   getV2AccountData,
   updateV2AccountData,
   switchV2Account,
-  getCurrentV2Account,
+  getCurrentV2Account as _getCurrentV2Account,
   getCurrentIdentity,
   isMigrated,
   migrateV1ToV2
 } from './migration';
 
+// 重新导出 getCurrentV2Account
+export { getCurrentV2Account } from './migration';
+
 // localStorage 键名
 const CURRENT_IDENTITY_KEY = 'currentIdentity';
 const CURRENT_ACCOUNT_KEY = 'currentAccountId';
+
+/**
+ * 获取当前 v2 账号（内部使用）
+ * @returns {Object|null}
+ */
+export function getCurrentV2AccountInternal() {
+  return _getCurrentV2Account();
+}
 
 /**
  * 初始化 v2 数据结构（新用户首次登录）
