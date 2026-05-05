@@ -33,7 +33,7 @@ function AuthGuard({ children }) {
 
 // 主应用内容
 function AppContent() {
-  const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules } = useApp();
+  const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies } = useApp();
   
   const [activeTab, setActiveTab] = useState('timeline');
   const [showMomentForm, setShowMomentForm] = useState(false);
@@ -60,9 +60,11 @@ function AppContent() {
     try {
       if (babyData.id) {
         savedBaby = await updateBaby(babyData.id, babyData);
+        setBabies(prev => prev.map(b => b.id === savedBaby.id ? savedBaby : b));
         showToast('已更新');
       } else {
         savedBaby = await addBaby(babyData);
+        setBabies(prev => [...prev, savedBaby]);
         showToast('宝宝档案创建成功！👶');
       }
       

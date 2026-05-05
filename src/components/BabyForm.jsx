@@ -9,9 +9,9 @@ export function BabyForm({ baby, onSave, onCancel }) {
   const [name, setName] = useState(baby?.name || '');
   const [nickname, setNickname] = useState(baby?.nickname || '');
   const [gender, setGender] = useState(baby?.gender || 'girl');
-  const [birthDate, setBirthDate] = useState(
-    baby?.birthDate 
-      ? new Date(baby.birthDate).toISOString().split('T')[0]
+  const [birthday, setBirthday] = useState(
+    baby?.birthday 
+      ? new Date(baby.birthday).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0]
   );
   const [avatar, setAvatar] = useState(baby?.avatar || '');
