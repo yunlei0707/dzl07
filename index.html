@@ -42,8 +42,201 @@
     <script type="module" src="/src/main.jsx"></script>
   </body><!-- 扣子 Chat SDK -->
 <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.20/libs/cn/index.js"></script>
+<style>
+  /* ===== 隐藏扣子 SDK 不需要的元素 ===== */
+  /* 隐藏底部 footer */
+  [class*="coze-chat-footer"],
+  [class*="footer"] {
+    display: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* 隐藏"美观输出"相关元素 */
+  [class*="aesthetic"],
+  [class*="beautify"],
+  [class*="output"] {
+    display: none !important;
+  }
+  
+  /* 隐藏水印 */
+  [class*="watermark"],
+  [class*="powered-by"] {
+    display: none !important;
+  }
+</style>
+
 <script>
-  // 等待 SDK 加载完成
+  // ===== 扣子 SDK 拖拽功能 =====
+  (function() {
+    let floatBtn = null;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
+    
+    // 从 localStorage 恢复位置
+    function loadPosition() {
+      try {
+        const saved = localStorage.getItem('coze-sdk-float-position');
+        if (saved) return JSON.parse(saved);
+      } catch(e) {}
+      return null;
+    }
+    
+    // 保存位置到 localStorage
+    function savePosition(left, top) {
+      try {
+        localStorage.setItem('coze-sdk-float-position', JSON.stringify({
+          left, top, timestamp: Date.now()
+        }));
+      } catch(e) {}
+    }
+    
+    // 应用位置到悬浮按钮
+    function applyPosition(left, top) {
+      if (!floatBtn) return;
+      floatBtn.style.position = 'fixed';
+      floatBtn.style.left = left + 'px';
+      floatBtn.style.top = top + 'px';
+      floatBtn.style.right = 'auto';
+      floatBtn.style.bottom = 'auto';
+      floatBtn.style.zIndex = '999999';
+    }
+    
+    // 初始化拖拽
+    function initDrag() {
+      // 查找悬浮按钮
+      const selectors = [
+        '[class*="coze-chat-float-btn"]',
+        '[class*="float-btn"]',
+        '[class*="asst-btn"]',
+        'button[aria-label*="chat"]',
+        'button[class*="btn"]'
+      ];
+      
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el && el.getBoundingClientRect().width > 0) {
+          floatBtn = el;
+          break;
+        }
+      }
+      
+      if (!floatBtn) {
+        console.log('🔍 未找到悬浮按钮，稍后重试...');
+        setTimeout(initDrag, 500);
+        return;
+      }
+      
+      console.log('✅ 找到悬浮按钮，启用拖拽功能');
+      
+      // 恢复保存的位置
+      const savedPos = loadPosition();
+      if (savedPos) {
+        applyPosition(savedPos.left, savedPos.top);
+      }
+      
+      // 鼠标按下
+      floatBtn.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = floatBtn.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        floatBtn.style.cursor = 'grabbing';
+        floatBtn.style.userSelect = 'none';
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+      
+      // 鼠标移动
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        let newLeft = initialLeft + deltaX;
+        let newTop = initialTop + deltaY;
+        
+        // 边界限制
+        const rect = floatBtn.getBoundingClientRect();
+        const maxLeft = window.innerWidth - rect.width - 10;
+        const maxTop = window.innerHeight - rect.height - 10;
+        
+        newLeft = Math.max(10, Math.min(maxLeft, newLeft));
+        newTop = Math.max(10, Math.min(maxTop, newTop));
+        
+        applyPosition(newLeft, newTop);
+      }, true);
+      
+      // 鼠标释放
+      document.addEventListener('mouseup', function() {
+        if (isDragging && floatBtn) {
+          const rect = floatBtn.getBoundingClientRect();
+          savePosition(rect.left, rect.top);
+          floatBtn.style.cursor = 'grab';
+        }
+        isDragging = false;
+      }, true);
+      
+      // 触摸事件支持
+      floatBtn.addEventListener('touchstart', function(e) {
+        isDragging = true;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        
+        const rect = floatBtn.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        e.preventDefault();
+      }, { passive: false });
+      
+      document.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        
+        let newLeft = initialLeft + deltaX;
+        let newTop = initialTop + deltaY;
+        
+        const rect = floatBtn.getBoundingClientRect();
+        const maxLeft = window.innerWidth - rect.width - 10;
+        const maxTop = window.innerHeight - rect.height - 10;
+        
+        newLeft = Math.max(10, Math.min(maxLeft, newLeft));
+        newTop = Math.max(10, Math.min(maxTop, newTop));
+        
+        applyPosition(newLeft, newTop);
+        e.preventDefault();
+      }, { passive: false });
+      
+      document.addEventListener('touchend', function() {
+        if (isDragging && floatBtn) {
+          const rect = floatBtn.getBoundingClientRect();
+          savePosition(rect.left, rect.top);
+        }
+        isDragging = false;
+      });
+    }
+    
+    // 页面加载后初始化
+    window.addEventListener('load', function() {
+      setTimeout(initDrag, 1000);
+    });
+  })();
+  
+  // 初始化扣子 SDK
   window.addEventListener('load', function() {
     if (typeof CozeWebSDK !== 'undefined') {
       window.cozeClient = new CozeWebSDK.WebChatClient({
