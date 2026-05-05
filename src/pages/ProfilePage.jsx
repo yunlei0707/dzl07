@@ -554,7 +554,7 @@ export function ProfilePage(
               )}
             </div>
             <h1 className="text-xl font-bold">
-              {v2AccountInfo?.identityName || currentUser?.nickname || "我的"}
+              {v2AccountInfo?.identityName || currentUser?.name || "我的"}
             </h1>
             <div className="flex-1" />
             

@@ -447,7 +447,9 @@ export function TimelinePage({
                   <span>👶</span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">📅 时光轴</h1>
+              <h1 className="text-xl font-bold">
+                {v2AccountInfo?.identityName || currentUser?.name || "📅 时光轴"}
+              </h1>
             </div>
             <div className="flex items-center gap-2">
               {/* 往年今日按钮 */}

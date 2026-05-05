@@ -508,7 +508,9 @@ export function VirtualTimePage() {
                 <span>✨</span>
               )}
             </div>
-            <h1 className="text-xl font-bold">✨ 虚拟时光</h1>
+            <h1 className="text-xl font-bold">
+              {v2AccountInfo?.identityName || currentUser?.name || "✨ 虚拟时光"}
+            </h1>
           </div>
           
           {/* 账号切换器 */}

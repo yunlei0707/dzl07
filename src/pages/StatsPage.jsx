@@ -262,7 +262,9 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
                 <span>👶</span>
               )}
             </div>
-            <h1 className="text-xl font-bold">📊 成长数据</h1>
+            <h1 className="text-xl font-bold">
+              {v2AccountInfo?.identityName || currentUser?.name || "📊 成长数据"}
+            </h1>
           </div>
           
           {/* 账号切换器 */}
