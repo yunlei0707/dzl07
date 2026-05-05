@@ -238,8 +238,8 @@ export function TimelinePage({
   
   // 筛选后的动态 - 根据账号类型选择数据源
   const filteredMoments = useMemo(() => {
-    // 系统账号使用 v2Moments，用户账号使用 moments
-    const sourceMoments = isSystemAccount ? v2Moments : moments;
+    // 有 v2 宝宝信息使用 v2Moments，否则使用 moments
+    const sourceMoments = hasV2Baby ? v2Moments : moments;
     let result = sourceMoments.filter(m => !m.isDeleted); // 排除已删除的记录
     
     if (selectedType) {
@@ -253,7 +253,7 @@ export function TimelinePage({
     }
     
     return result;
-  }, [v2Moments, moments, isSystemAccount, selectedType, selectedMood, selectedMilestone]);
+  }, [v2Moments, moments, hasV2Baby, selectedType, selectedMood, selectedMilestone]);
   
   // 按年月分组
   const groupedMoments = useMemo(() => {

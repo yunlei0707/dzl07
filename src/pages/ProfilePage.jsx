@@ -624,7 +624,7 @@ export function ProfilePage(
             <Tag className="w-5 h-5 text-yellow-500" />
           </div>
           <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">里程碑自定义</span>
+            <span className="font-medium dark:text-white">里程碑自定义（时光轴）</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">管理您的专属成长里程碑</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -647,7 +647,7 @@ export function ProfilePage(
             <Sparkles className="w-5 h-5 text-purple-500" />
           </div>
           <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">心情标签管理</span>
+            <span className="font-medium dark:text-white">心情标签管理（时光轴）</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">添加和管理自定义心情标签</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -666,7 +666,7 @@ export function ProfilePage(
             <Database className="w-5 h-5 text-blue-500" />
           </div>
           <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导入示例数据（时光轴）</span>
+            <span className="font-medium dark:text-white">导入示例数据（虚拟时光）</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               
 {isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
@@ -677,6 +677,21 @@ export function ProfilePage(
         
         
 {/* 退出登录 */}
+        
+        {/* 虚拟时光自定义 */}
+        <button
+          onClick={() => navigate('/virtual-time-categories')}
+          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-green-500" />
+          </div>
+          <div className="flex-1 text-left">
+            <span className="font-medium dark:text-white">虚拟时光自定义</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">管理虚拟时光分类和内容项</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
         <button
           onClick=
 {handleLogout}

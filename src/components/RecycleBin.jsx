@@ -7,14 +7,14 @@ import { useState, useEffect } from 'react';
 import { X, RotateCcw, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { getDeletedMomentsByBaby, restoreMoment, deleteMomentPermanently, emptyRecycleBin } from '../utils/db';
-import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount, updateMomentInCurrentAccount, getCurrentBabyInfo } from '../utils/dbV2';
+import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount, updateMomentInCurrentAccount, getCurrentBabyInfo, updateV2AccountData } from '../utils/dbV2';
 
 export function RecycleBin({ onClose }) {
   const { currentBaby, showToast, setMoments } = useApp();
   const [deletedMoments, setDeletedMoments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
-  const [isV2System, setIsV2System] = useState(false);
+  const [hasV2Baby, setHasV2Baby] = useState(false);
 
   // 加载回收站数据
   useEffect(() => {
@@ -28,7 +28,7 @@ export function RecycleBin({ onClose }) {
       const v2BabyInfo = getCurrentBabyInfo();
       const isV2Account = !!v2BabyInfo;
       
-      setIsV2System(isV2Account);
+      setHasV2Baby(isV2Account);
       
       if (isV2Account) {
         // v2 账号（系统账号或用户账号）：从 timeline 中获取已删除的记录
@@ -60,16 +60,16 @@ export function RecycleBin({ onClose }) {
   const handleRestore = async (momentId) => {
     setActionLoading(momentId);
     try {
-      if (isV2System) {
-        // v2 系统账号：恢复 v2 数据
+      if (hasV2Baby) {
+        // v2 账号：恢复 v2 数据
         const account = getCurrentV2Account();
         if (account?.accountData?.timeline) {
           const timeline = account.accountData.timeline.map(m => 
             m.id === momentId ? { ...m, isDeleted: false } : m
           );
-          // 需要更新 dbV2 数据
-          const { updateV2AccountData } = await import('../utils/dbV2');
           updateV2AccountData(account.identityName, account.accountId, { timeline });
+          // 触发 TimelinePage 刷新
+          window.dispatchEvent(new Event('v2-moment-updated'));
         }
       } else {
         // 普通账号：恢复 IndexedDB 数据
@@ -97,8 +97,8 @@ export function RecycleBin({ onClose }) {
 
     setActionLoading(momentId);
     try {
-      if (isV2System) {
-        // v2 系统账号：永久删除 v2 数据
+      if (hasV2Baby) {
+        // v2 账号：永久删除
         deleteMomentFromCurrentAccount(momentId);
       } else {
         // 普通账号：永久删除 IndexedDB 数据
@@ -120,12 +120,11 @@ export function RecycleBin({ onClose }) {
     if (!confirm('确定要清空回收站吗？所有已删除的记录将被永久删除！')) return;
 
     try {
-      if (isV2System) {
-        // v2 系统账号：清空所有已删除的 v2 记录
+      if (hasV2Baby) {
+        // v2 账号：清空所有已删除的 v2 记录
         const account = getCurrentV2Account();
         if (account?.accountData?.timeline) {
           const timeline = account.accountData.timeline.filter(m => !m.isDeleted);
-          const { updateV2AccountData } = await import('../utils/dbV2');
           updateV2AccountData(account.identityName, account.accountId, { timeline });
         }
       } else {

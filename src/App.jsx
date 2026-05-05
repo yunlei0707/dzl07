@@ -12,6 +12,8 @@ import { TimelinePage } from './pages/TimelinePage';
 import { StatsPage } from './pages/StatsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { VirtualTimePage } from './pages/VirtualTimePage';
+import { VirtualTimeDetail } from './pages/VirtualTimeDetail';
+import { VirtualTimeCategoriesPage } from './pages/VirtualTimeCategoriesPage';
 import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
@@ -328,6 +330,26 @@ function AppRoutes() {
         element={
           <AuthGuard>
             <AppContent />
+          </AuthGuard>
+        }
+      />
+      
+      {/* 虚拟时光详情页 */}
+      <Route
+        path="/virtual/topic/:topicId"
+        element={
+          <AuthGuard>
+            <VirtualTimeDetail />
+          </AuthGuard>
+        }
+      />
+      
+      {/* 虚拟时光目录管理 */}
+      <Route
+        path="/virtual-time-categories"
+        element={
+          <AuthGuard>
+            <VirtualTimeCategoriesPage />
           </AuthGuard>
         }
       />

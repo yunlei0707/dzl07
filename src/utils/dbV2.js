@@ -668,3 +668,271 @@ export function importV2AccountData(data, mode = 'merge') {
   
   return true;
 }
+
+// ==================== 虚拟时光目录管理 ====================
+
+// 预置的一级目录 ID（不可删除）
+const PRESET_CATEGORY_IDS = ['kindergarten', 'middle_school', 'wedding', 'university', 'work'];
+
+// 获取虚拟时光目录（合并预置和用户自定义）
+export function getVirtualTimeCategories() {
+  const current = getCurrentV2Account();
+  if (!current) return [];
+  
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  
+  // 合并预置目录和用户目录
+  const presetCategories = virtualTimeTopics.map(topic => ({
+    id: topic.id,
+    title: topic.title,
+    description: topic.description,
+    coverEmoji: topic.coverEmoji,
+    coverGradient: topic.coverGradient,
+    coverIcon: topic.coverIcon,
+    isPreset: true,
+    items: topic.items?.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      type: item.type,
+      emoji: item.emoji,
+      tags: item.tags,
+      imagePrompt: item.imagePrompt,
+      date: item.date,
+      isPreset: true
+    })) || []
+  }));
+  
+  // 用户自定义一级目录
+  const allCategories = [...presetCategories];
+  userCategories.forEach(cat => {
+    if (!allCategories.find(c => c.id === cat.id)) {
+      allCategories.push({ ...cat, isPreset: false, items: cat.items || [] });
+    }
+  });
+  
+  return allCategories;
+}
+
+// 添加一级目录
+export function addVirtualTimeCategory(categoryData) {
+  const current = getCurrentV2Account();
+  if (!current) return null;
+  
+  const { identityName, accountId } = current;
+  
+  const newCategory = {
+    id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: categoryData.title || '新分类',
+    description: categoryData.description || '',
+    coverEmoji: categoryData.coverEmoji || '📁',
+    coverGradient: categoryData.coverGradient || 'from-gray-400 to-gray-500',
+    coverIcon: categoryData.coverIcon || '📁',
+    isPreset: false,
+    items: [],
+    createdAt: new Date().toISOString()
+  };
+  
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  userCategories.push(newCategory);
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeCategories: userCategories
+  });
+  
+  return newCategory;
+}
+
+// 更新一级目录
+export function updateVirtualTimeCategory(categoryId, updates) {
+  const current = getCurrentV2Account();
+  if (!current) return false;
+  
+  const { identityName, accountId } = current;
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  const index = userCategories.findIndex(c => c.id === categoryId);
+  
+  if (index === -1) return false;
+  
+  userCategories[index] = {
+    ...userCategories[index],
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeCategories: userCategories
+  });
+  
+  return true;
+}
+
+// 删除一级目录
+export function deleteVirtualTimeCategory(categoryId) {
+  const current = getCurrentV2Account();
+  if (!current) return false;
+  
+  if (PRESET_CATEGORY_IDS.includes(categoryId)) {
+    return false;
+  }
+  
+  const { identityName, accountId } = current;
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  const filtered = userCategories.filter(c => c.id !== categoryId);
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeCategories: filtered
+  });
+  
+  return true;
+}
+
+// 添加二级目录项
+export function addVirtualTimeCategoryItem(categoryId, itemData) {
+  const current = getCurrentV2Account();
+  if (!current) return null;
+  
+  if (PRESET_CATEGORY_IDS.includes(categoryId)) {
+    return null;
+  }
+  
+  const { identityName, accountId } = current;
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  const catIndex = userCategories.findIndex(c => c.id === categoryId);
+  
+  if (catIndex === -1) return null;
+  
+  const newItem = {
+    id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: itemData.title || '新内容',
+    description: itemData.description || '',
+    content: itemData.content || '',
+    type: itemData.type || 'text',
+    emoji: itemData.emoji || '📝',
+    tags: itemData.tags || [],
+    isPreset: false,
+    createdAt: new Date().toISOString()
+  };
+  
+  userCategories[catIndex].items = userCategories[catIndex].items || [];
+  userCategories[catIndex].items.push(newItem);
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeCategories: userCategories
+  });
+  
+  return newItem;
+}
+
+// 更新二级目录项
+export function updateVirtualTimeCategoryItem(categoryId, itemId, updates) {
+  const current = getCurrentV2Account();
+  if (!current) return false;
+  
+  const { identityName, accountId } = current;
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  const catIndex = userCategories.findIndex(c => c.id === categoryId);
+  
+  if (catIndex === -1) return false;
+  
+  const itemIndex = userCategories[catIndex].items.findIndex(i => i.id === itemId);
+  if (itemIndex === -1) return false;
+  
+  userCategories[catIndex].items[itemIndex] = {
+    ...userCategories[catIndex].items[itemIndex],
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeCategories: userCategories
+  });
+  
+  return true;
+}
+
+// 删除二级目录项
+export function deleteVirtualTimeCategoryItem(categoryId, itemId) {
+  const current = getCurrentV2Account();
+  if (!current) return false;
+  
+  const { identityName, accountId } = current;
+  const userCategories = current.accountData?.virtualTimeCategories || [];
+  const catIndex = userCategories.findIndex(c => c.id === categoryId);
+  
+  if (catIndex === -1) return false;
+  
+  userCategories[catIndex].items = userCategories[catIndex].items.filter(i => i.id !== itemId);
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeCategories: userCategories
+  });
+  
+  return true;
+}
+
+// 获取虚拟时光内容
+export function getVirtualTimeContents(topicId, itemId) {
+  const current = getCurrentV2Account();
+  if (!current) return [];
+  
+  const contents = current.accountData?.virtualTimeContents || {};
+  return contents[`${topicId}_${itemId}`]?.contents || [];
+}
+
+// 添加虚拟时光内容
+export function addVirtualTimeContent(topicId, itemId, contentData) {
+  const current = getCurrentV2Account();
+  if (!current) return null;
+  
+  const { identityName, accountId } = current;
+  
+  const key = `${topicId}_${itemId}`;
+  const contents = current.accountData?.virtualTimeContents || {};
+  const itemContents = contents[key]?.contents || [];
+  
+  const newContent = {
+    id: `content_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    date: contentData.date || new Date().toISOString().split('T')[0],
+    content: contentData.content,
+    images: contentData.images || [],
+    createdAt: new Date().toISOString()
+  };
+  
+  itemContents.unshift(newContent);
+  
+  contents[key] = {
+    id: key,
+    topicId,
+    itemId,
+    contents: itemContents,
+    updatedAt: new Date().toISOString()
+  };
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeContents: contents
+  });
+  
+  return newContent;
+}
+
+// 删除虚拟时光内容
+export function deleteVirtualTimeContent(topicId, itemId, contentId) {
+  const current = getCurrentV2Account();
+  if (!current) return false;
+  
+  const { identityName, accountId } = current;
+  const contents = current.accountData?.virtualTimeContents || {};
+  
+  if (!contents[`${topicId}_${itemId}`]) return false;
+  
+  contents[`${topicId}_${itemId}`].contents = contents[`${topicId}_${itemId}`].contents.filter(c => c.id !== contentId);
+  
+  updateV2AccountData(identityName, accountId, {
+    virtualTimeContents: contents
+  });
+  
+  return true;
+}
+

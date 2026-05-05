@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check, Share2, Plus, Trash2, Lock } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
@@ -16,10 +17,12 @@ import {
   getCurrentVirtualTime,
   addVirtualTimeToCurrentAccount,
   deleteVirtualTimeFromCurrentAccount,
-  updateCurrentBabyInfo
+  updateCurrentBabyInfo,
+  getVirtualTimeCategories
 } from '../utils/dbV2';
 
 export function VirtualTimePage() {
+  const navigate = useNavigate();
   const { currentBaby, currentUser, showToast } = useApp();
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [fullscreenItem, setFullscreenItem] = useState(null);
@@ -101,8 +104,10 @@ export function VirtualTimePage() {
   // 同步宝宝名称到虚拟时光显示
   const babyName = v2AccountInfo?.nickname || v2AccountInfo?.name || currentBaby?.nickname || currentBaby?.name || '宝宝';
   
+  // 处理专题点击 - 跳转到详情页
   const handleTopicClick = (topic) => {
-    setSelectedTopic(topic);
+    // 跳转到专题详情页
+    navigate(`/virtual/topic/${topic.id}`);
   };
 
   const handleBack = () => {
