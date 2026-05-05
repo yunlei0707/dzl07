@@ -37,6 +37,17 @@ import { zhCN } from 'date-fns/locale';
  * @returns {Object} 年龄对象 { years, months, days, totalDays }
  */
 export function calculateAge(birthDate) {
+  // 空值保护：如果生日为空，返回默认的显示格式
+  if (!birthDate) {
+    return {
+      years: 0,
+      months: 0,
+      days: 0,
+      totalDays: 0,
+      display: '等待设置生日'
+    };
+  }
+  
   const birth = typeof birthDate === 'string' ? parseISO(birthDate) : birthDate;
   const now = new Date();
   
