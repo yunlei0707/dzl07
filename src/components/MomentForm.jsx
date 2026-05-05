@@ -924,40 +924,19 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           </div>
         </div>
         
-        {/* 位置 - 新版高德地图定位 */}
+        {/* 位置 */}
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
             <MapPin className="w-4 h-4 inline mr-1" />
             位置
           </label>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center bg-cream-100 dark:bg-gray-700 rounded-xl px-3 py-2">
-              <MapPin className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-              <span className={`text-sm flex-1 truncate ${location ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}`}>
-                {location || '添加位置（可选）'}
-              </span>
-            </div>
-            <button
-              onClick={getCurrentLocation}
-              disabled={isLocating}
-              className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white hover:bg-primary-600 disabled:opacity-50"
-            >
-              {isLocating ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Navigation className="w-5 h-5" />
-              )}
-            </button>
-          </div>
-          
-          {/* 手动选择位置按钮 */}
-          <button
-            onClick={() => setShowLocationModal(true)}
-            className="mt-2 w-full text-sm text-primary-500 hover:text-primary-600 flex items-center justify-center gap-1"
-          >
-            <Search className="w-4 h-4" />
-            地图选点 / 搜索地址
-          </button>
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="输入地点名称（可选）"
+            className="w-full px-4 py-2.5 bg-cream-100 dark:bg-gray-700 rounded-xl text-sm"
+          />
         </div>
       </div>
       
