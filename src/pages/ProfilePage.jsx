@@ -76,6 +76,7 @@ export function ProfilePage(
   
   const fileInputRef = useRef(null);
   const colorInputRef = useRef(null);
+  const containerRef = useRef(null);
   
   // 状态
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
