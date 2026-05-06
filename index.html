@@ -160,21 +160,6 @@
   });
   </script>
   
-  <!-- PWA Service Worker 注册 -->
-  <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('✅ PWA ServiceWorker 注册成功:', registration.scope);
-        })
-        .catch(error => {
-          console.error('❌ PWA ServiceWorker 注册失败:', error);
-        });
-    });
-  }
-  </script>
-  
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
