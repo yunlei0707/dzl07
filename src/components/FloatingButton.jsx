@@ -1,11 +1,10 @@
 /**
  * SDK 初始化组件 v2.5.0
  * 
- * 功能：初始化扣子SDK，并在SDK按钮下方渲染"AI助手"文字标签
+ * 功能：只初始化扣子SDK，不渲染任何内容
  */
 
 import { useEffect } from 'react';
-import './FloatingButton.css';
 
 export function FloatingButton() {
   // 初始化扣子 SDK - 只执行一次
@@ -52,12 +51,8 @@ export function FloatingButton() {
     return () => clearTimeout(timer);
   }, []);
 
-  // 渲染"AI助手"文字标签在SDK按钮下方
-  return (
-    <div className="ai-assistant-label">
-      AI助手
-    </div>
-  );
+  // 不渲染任何内容
+  return null;
 }
 
 export default FloatingButton;

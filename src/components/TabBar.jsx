@@ -1,7 +1,7 @@
 /**
- * 底部导航栏组件 v2.1.0
+ * 底部导航栏组件 v2.2.0
  * 
- * 修改：图标拉长，顶到最上端，不变形
+ * 修改：1. 图标拉长顶到最上端 2. 最右边空位加"AI助手"文字
  */
 
 import { memo } from 'react';
@@ -50,8 +50,12 @@ export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
             onTabChange={onTabChange} 
           />
         ))}
-        {/* 最右边留空位给SDK按钮 */}
-        <div className="flex-1" />
+        {/* 最右边空位：显示AI助手文字 */}
+        <div className="flex-1 flex flex-col items-center justify-start pt-2">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            AI助手
+          </span>
+        </div>
       </div>
     </nav>
   );
