@@ -219,6 +219,7 @@ export function VirtualTimePage() {
         </div>
       </header>
 
+      <main className="px-4 -mt-4 max-w-lg mx-auto">
 
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 mb-4 border border-amber-100 dark:border-amber-800">
           <p className="text-amber-800 dark:text-amber-200 text-sm flex items-start gap-2">
