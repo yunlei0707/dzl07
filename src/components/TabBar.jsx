@@ -25,11 +25,11 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
         </span>
       ) : (
         <tab.icon 
-          className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : ''}`} 
+          className={`w-7 h-7 transition-transform ${isActive ? 'scale-110' : ''}`} 
           strokeWidth={isActive ? 2.5 : 2} 
         />
       )}
-      <span className={`text-xs mt-1 font-medium ${isActive ? '' : 'font-normal'}`}>
+      <span className={`text-sm mt-1.5 font-medium ${isActive ? '' : 'font-normal'}`}>
         {tab.label}
       </span>
     </button>
@@ -39,7 +39,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
 export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-cream-200 dark:border-gray-700 safe-bottom z-30">
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
+      <div className="flex items-center h-20 max-w-lg mx-auto">
         {tabs.map(tab => (
           <TabButton 
             key={tab.id} 
@@ -48,6 +48,8 @@ export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
             onTabChange={onTabChange} 
           />
         ))}
+        {/* 最右边留空位给SDK按钮 */}
+        <div className="flex-1" />
       </div>
     </nav>
   );
