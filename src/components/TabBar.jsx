@@ -1,5 +1,7 @@
 /**
- * 底部导航栏组件
+ * 底部导航栏组件 v2.1.0
+ * 
+ * 修改：图标拉长，顶到最上端，不变形
  */
 
 import { memo } from 'react';
@@ -17,7 +19,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
   return (
     <button
       onClick={() => onTabChange(tab.id)}
-      className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
+      className={`flex flex-col items-center justify-start pt-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
       {isEmoji ? (
         <span className={`text-2xl transition-transform ${isActive ? 'scale-110' : ''}`}>
@@ -25,11 +27,11 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
         </span>
       ) : (
         <tab.icon 
-          className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : ''}`} 
+          className={`w-7 h-7 transition-transform ${isActive ? 'scale-110' : ''}`} 
           strokeWidth={isActive ? 2.5 : 2} 
         />
       )}
-      <span className={`text-xs mt-1 font-medium ${isActive ? '' : 'font-normal'}`}>
+      <span className={`text-xs mt-0.5 font-medium ${isActive ? '' : 'font-normal'}`}>
         {tab.label}
       </span>
     </button>
@@ -39,7 +41,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
 export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-cream-200 dark:border-gray-700 z-40">
-      <div className="flex items-center h-16 max-w-lg mx-auto">
+      <div className="flex items-start h-16 max-w-lg mx-auto">
         {tabs.map(tab => (
           <TabButton 
             key={tab.id} 
