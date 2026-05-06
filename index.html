@@ -43,6 +43,170 @@
   </body>
   <!-- 扣子 Chat SDK -->
   <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.20/libs/cn/index.js"></script>
+  <!-- ===== SDK 修复脚本 v2.6.0 ===== -->
+  <script>
+  console.log('[SDK Fix v2.6.0] 开始加载');
+  
+  let sdkButton = null;
+  let isDragging = false;
+  let startX = 0, startY = 0;
+  let startLeft = 0, startTop = 0;
+  
+  // 定时查找SDK按钮
+  const findSDKButton = setInterval(() => {
+    const selectors = [
+      '[class*="coze-chat-float-btn"]',
+      '[class*="float-btn"]',
+      '[class*="asst-btn"]',
+      'div[style*="position: fixed"] button',
+      'div[style*="position: fixed"] > div',
+    ];
+    
+    for (const selector of selectors) {
+      const elements = document.querySelectorAll(selector);
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        const rect = el.getBoundingClientRect();
+        // 必须是可见的且在右下角区域
+        if (rect.width > 30 && rect.height > 30 && rect.right > window.innerWidth - 100) {
+          sdkButton = el;
+          console.log('[SDK Fix] ✅ 找到SDK按钮:', selector);
+          enhanceSDKButton(sdkButton);
+          clearInterval(findSDKButton);
+          return;
+        }
+      }
+    }
+  }, 200);
+  
+  // 增强SDK按钮
+  function enhanceSDKButton(btn) {
+    // 1. 放大按钮
+    btn.style.minWidth = '64px';
+    btn.style.minHeight = '64px';
+    btn.style.width = '64px';
+    btn.style.height = '64px';
+    btn.style.borderRadius = '50%';
+    
+    // 2. 确保图标显示 - 用背景图兜底
+    btn.style.backgroundImage = 'url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23fff\"><path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z\"/></svg>")';
+    btn.style.backgroundRepeat = 'no-repeat';
+    btn.style.backgroundPosition = 'center';
+    btn.style.backgroundSize = '32px 32px';
+    
+    // 3. 添加阴影
+    btn.style.boxShadow = '0 4px 20px rgba(255, 123, 112, 0.5)';
+    
+    // 4. 从localStorage恢复位置
+    const savedPos = localStorage.getItem('sdk-button-position');
+    if (savedPos) {
+      try {
+        const pos = JSON.parse(savedPos);
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+        btn.style.left = pos.x + 'px';
+        btn.style.top = pos.y + 'px';
+      } catch (e) {}
+    }
+    
+    // 5. 添加拖拽支持
+    btn.addEventListener('mousedown', startDrag);
+    btn.addEventListener('touchstart', startDrag, { passive: false });
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+    
+    console.log('[SDK Fix] ✅ SDK按钮已增强');
+  }
+  
+  // 拖拽开始
+  function startDrag(e) {
+    if (!sdkButton) return;
+    isDragging = true;
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    startX = clientX;
+    startY = clientY;
+    
+    const rect = sdkButton.getBoundingClientRect();
+    startLeft = rect.left;
+    startTop = rect.top;
+    
+    sdkButton.style.transition = 'none';
+    sdkButton.style.zIndex = '999999';
+    
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
+  }
+  
+  // 拖拽中
+  function onDrag(e) {
+    if (!isDragging || !sdkButton) return;
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
+    
+    // 边界限制
+    const maxX = window.innerWidth - 64;
+    const maxY = window.innerHeight - 64;
+    const newX = Math.max(0, Math.min(maxX, startLeft + deltaX));
+    const newY = Math.max(0, Math.min(maxY, startTop + deltaY));
+    
+    sdkButton.style.right = 'auto';
+    sdkButton.style.bottom = 'auto';
+    sdkButton.style.left = newX + 'px';
+    sdkButton.style.top = newY + 'px';
+    
+    if (e.type === 'touchmove') {
+      e.preventDefault();
+    }
+  }
+  
+  // 拖拽结束
+  function endDrag() {
+    if (!isDragging || !sdkButton) return;
+    isDragging = false;
+    
+    // 保存位置到localStorage
+    const rect = sdkButton.getBoundingClientRect();
+    localStorage.setItem('sdk-button-position', JSON.stringify({
+      x: rect.left,
+      y: rect.top
+    }));
+  }
+  
+  // 定时清理聊天窗口的美化按钮
+  setInterval(() => {
+    // 查找所有可能包含"美化"文字的元素
+    document.querySelectorAll('[class*="coze-chat"] *').forEach(el => {
+      const text = el.textContent || '';
+      const className = el.className || '';
+      
+      // 如果包含美化/美观/format相关文字，直接隐藏
+      if (text.includes('美化') || text.includes('美观') || text.includes('美 ') || 
+          className.includes('beaut') || className.includes('aesth') || 
+          className.includes('format') || className.includes('toolbar')) {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.opacity = '0';
+      }
+    });
+    
+    // 清理底部空白区域
+    document.querySelectorAll('[class*="coze-chat"] > div:last-child').forEach(el => {
+      if (el.children.length === 0 || el.textContent.trim().length < 5) {
+        el.style.display = 'none';
+      }
+    });
+  }, 500);
+  </script>
   <style>
   /* ===== 扣子 SDK 样式定制 - 强制隐藏美观输出 ===== */
   
