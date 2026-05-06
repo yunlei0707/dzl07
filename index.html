@@ -133,6 +133,25 @@
 
 
   
+  <script>
+  // 页面加载完成后初始化SDK
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      if (typeof CozeWebSDK !== 'undefined' && !window.cozeClient) {
+        window.cozeClient = new CozeWebSDK.WebChatClient({
+          config: {
+            bot_id: '7636350042466418731'
+          },
+          componentProps: {
+            title: '虚拟时光助手'
+          }
+        });
+        console.log('✅ SDK initialized');
+      }
+    }, 500);
+  });
+  </script>
+  
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
