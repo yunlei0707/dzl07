@@ -131,33 +131,7 @@
   }
   </style>
 
-  <script>
-  // 初始化扣子 SDK - 确保脚本加载完成后立即执行
-  function initCozeSDK() {
-    if (typeof CozeWebSDK !== 'undefined') {
-      window.cozeClient = new CozeWebSDK.WebChatClient({
-        config: {
-          bot_id: '7636350042466418731'
-        },
-        componentProps: {
-          title: '虚拟时光助手'
-        }
-      });
-      console.log('✅ 扣子虚拟时光助手已启动');
-    } else {
-      console.error('❌ CozeWebSDK 加载失败');
-    }
-  }
-  
-  // 立即尝试初始化，如果SDK已加载
-  if (typeof CozeWebSDK !== 'undefined') {
-    initCozeSDK();
-  } else {
-    // 否则等待SDK脚本加载
-    document.addEventListener('DOMContentLoaded', initCozeSDK);
-    window.addEventListener('load', initCozeSDK);
-  }
-  </script>
+
   
   <script type="module" src="/src/main.jsx"></script>
 </body>
