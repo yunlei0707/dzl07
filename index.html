@@ -40,18 +40,16 @@
     <script src="/static/coze-chat-sdk.js"></script>
     
     <script type="module" src="/src/main.jsx"></script>
-  <!-- ===== SDK 简化修复 v3.1.0 ===== -->
+  <!-- ===== SDK Logo精准修复 v3.2.0 ===== -->
   <script>
   (function() {
-    console.log('[SDK Simple Fix v3.1.0] 开始运行');
+    console.log('[SDK Logo Fix v3.2.0] 开始运行');
     
     let sdkButton = null;
     let isDragging = false;
     let startX = 0, startY = 0;
     let startLeft = 0, startTop = 0;
     
-    // 页面上只有右下角有一个可点击元素（SDK按钮）
-    // 加号按钮已经移到左下角了！
     setInterval(() => {
       if (sdkButton && document.body.contains(sdkButton)) {
         applyEnhancements(sdkButton);
@@ -65,17 +63,24 @@
         try {
           const rect = el.getBoundingClientRect();
           const style = window.getComputedStyle(el);
+          const className = (el.className || '').toString().toLowerCase();
+          const innerText = (el.textContent || '').toString().toLowerCase();
           
-          // 加号按钮已经在左边了，所以直接抓右边的
+          // 双重判断：
+          // 1. 在右边区域
+          // 2. 包含logo关键字（类名或文本）
+          const hasLogoKeyword = className.includes('logo') || className.includes('icon') ||
+                                innerText.includes('logo') || innerText.includes('icon');
+          
           if (style.position === 'fixed' && 
               rect.width > 20 && 
               rect.height > 20 && 
-              rect.left > window.innerWidth - 150) {  // ✅ 只要在右边区域
+              rect.left > window.innerWidth - 150 &&
+              hasLogoKeyword) {  // ✅ 必须包含logo/
             
-            console.log('[SDK Fix] 🎯 抓到SDK按钮:', {
+            console.log('[SDK Fix] 🎯 抓到带logo的SDK按钮:', {
               tag: el.tagName,
-              class: el.className,
-              size: `${rect.width}x${rect.height}`
+              class: el.className
             });
             
             sdkButton = el;
@@ -209,30 +214,9 @@
       });
     }, 500);
     
-    console.log('[SDK Simple Fix v3.1.0] ✅ 已加载');
+    console.log('[SDK Logo Fix v3.2.0] ✅ 已加载');
   })();
   </script>
-    }, 500);
-    
-    console.log('[SDK Final Fix v3.0.0] ✅ 已加载');
-  })();
-  </script>
-    min-width: 56px !important;
-    min-height: 56px !important;
-  }
-  
-  /* 强制显示按钮内的图标 */
-  [class*="coze-chat-float-btn"] img,
-  [class*="coze-chat-float-btn"] svg,
-  [class*="float-btn"] img,
-  [class*="float-btn"] svg,
-  [class*="asst-btn"] img,
-  [class*="asst-btn"] svg {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 28px !important;
-    height: 28px !important;
   }
   
   /* 如果图标没显示，用CSS背景图作为备用图标 */
