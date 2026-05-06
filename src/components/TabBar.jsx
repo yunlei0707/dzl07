@@ -1,7 +1,7 @@
 /**
- * 底部导航栏组件 v2.4.0
+ * 底部导航栏组件 v2.5.0
  * 
- * 修改：所有文字在同一高度，图标在上方，确保SDK按钮在最上方
+ * 修改：4个图标都改成圆形样式，和SDK图标保持一致
  */
 
 import { memo } from 'react';
@@ -21,17 +21,21 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
       onClick={() => onTabChange(tab.id)}
       className={`flex flex-col items-center justify-between pt-0 pb-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
-      {/* 图标在最顶部 */}
-      {isEmoji ? (
-        <span className={`text-2xl transition-transform ${isActive ? 'scale-110' : ''}`}>
-          {tab.icon}
-        </span>
-      ) : (
-        <tab.icon 
-          className={`w-7 h-7 transition-transform ${isActive ? 'scale-110' : ''}`} 
-          strokeWidth={isActive ? 2.5 : 2} 
-        />
-      )}
+      {/* 圆形图标容器，和SDK图标样式保持一致 */}
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+        isActive ? 'bg-primary-500 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700'
+      }`}>
+        {isEmoji ? (
+          <span className={`text-lg transition-transform ${isActive ? 'scale-110' : ''}`}>
+            {tab.icon}
+          </span>
+        ) : (
+          <tab.icon 
+            className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : ''}`} 
+            strokeWidth={isActive ? 2.5 : 2} 
+          />
+        )}
+      </div>
       {/* 文字在最底部，和AI助手文字对齐 */}
       <span className={`text-xs font-medium ${isActive ? '' : 'font-normal'}`}>
         {tab.label}
