@@ -38,7 +38,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
 
 export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-cream-200 dark:border-gray-700 safe-bottom z-30">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-cream-200 dark:border-gray-700 safe-bottom z-[99999]">
       <div className="flex items-center h-20 max-w-lg mx-auto">
         {tabs.map(tab => (
           <TabButton 
