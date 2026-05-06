@@ -1,7 +1,7 @@
 /**
- * 底部导航栏组件 v2.2.0
+ * 底部导航栏组件 v2.3.0
  * 
- * 修改：1. 图标拉长顶到最上端 2. 最右边空位加"AI助手"文字
+ * 修改：1. 图标直接顶到最顶部 2. 文字保持原大小 3. AI助手文字调整位置
  */
 
 import { memo } from 'react';
@@ -19,7 +19,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
   return (
     <button
       onClick={() => onTabChange(tab.id)}
-      className={`flex flex-col items-center justify-start pt-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
+      className={`flex flex-col items-center justify-start pt-0 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
       {isEmoji ? (
         <span className={`text-2xl transition-transform ${isActive ? 'scale-110' : ''}`}>
@@ -50,8 +50,8 @@ export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
             onTabChange={onTabChange} 
           />
         ))}
-        {/* 最右边空位：显示AI助手文字 */}
-        <div className="flex-1 flex flex-col items-center justify-start pt-2">
+        {/* 最右边空位：显示AI助手文字，位置靠下，确保SDK按钮在上方 */}
+        <div className="flex-1 flex flex-col items-center justify-end pb-1">
           <span className="text-xs text-gray-400 dark:text-gray-500">
             AI助手
           </span>
