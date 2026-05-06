@@ -6,14 +6,6 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#FF7B70",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "/pwa-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ],
-  "categories": ["life", "family", "photo"]
+  "scope": "/",
+  "lang": "zh-CN"
 }
