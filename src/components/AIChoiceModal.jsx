@@ -1,5 +1,5 @@
 /**
- * AI 创作提示弹窗组件 v2.3.0
+ * AI 创作提示弹窗组件 v2.4.0
  * 
  * 功能：保存记录后，提示用户点击"宝宝内容创作"直接打开AI聊天窗口
  * 与SDK悬浮按钮合二为一
@@ -9,27 +9,28 @@ import { useEffect } from 'react';
 import { Sparkles, MessageCircle, X } from 'lucide-react';
 
 export function AIChoiceModal({ show, onCancel }) {
-  // 调试日志
   useEffect(() => {
-    console.log('[AIChoiceModal v2.3.0] 状态变化:', { show });
+    console.log('[AIChoiceModal v2.4.0] 状态变化:', { show });
+    console.log('[AIChoiceModal] window.cozeChat:', window.cozeChat);
   }, [show]);
 
   // 点击打开聊天窗口
   const handleOpenChat = () => {
-    console.log('[AIChoiceModal] 点击打开聊天窗口');
+    console.log('[AIChoiceModal] 点击"宝宝内容创作"');
     onCancel();
     
-    // 尝试直接调用 SDK 的 open 方法
+    // 方案1: 直接调用 SDK 的 open 方法
     if (window.cozeChat && typeof window.cozeChat.open === 'function') {
       try {
         window.cozeChat.open();
+        console.log('[AIChoiceModal] ✅ window.cozeChat.open() 调用成功');
         return;
       } catch (e) {
-        console.error('[AIChoiceModal] 直接调用失败:', e);
+        console.error('[AIChoiceModal] ❌ window.cozeChat.open() 失败:', e);
       }
     }
     
-    // 备用方案：查找并点击 SDK 渲染的按钮
+    // 方案2: 查找并点击 SDK 渲染的按钮（备用）
     setTimeout(() => {
       const selectors = [
         'button[class*="coze"]',
@@ -43,6 +44,7 @@ export function AIChoiceModal({ show, onCancel }) {
         if (elements.length > 0) {
           try {
             elements[0].click();
+            console.log('[AIChoiceModal] 点击 SDK 按钮成功');
             return;
           } catch (e) {
             console.error('[AIChoiceModal] 点击失败:', e);
@@ -52,7 +54,6 @@ export function AIChoiceModal({ show, onCancel }) {
     }, 100);
   };
 
-  // 如果不显示，返回 null
   if (!show) {
     return null;
   }
@@ -70,7 +71,6 @@ export function AIChoiceModal({ show, onCancel }) {
         className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[85%] max-w-xs overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        {/* 顶部：图标 + 标题 */}
         <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-primary-50 to-orange-50 dark:from-gray-700 dark:to-gray-700">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
@@ -78,15 +78,11 @@ export function AIChoiceModal({ show, onCancel }) {
             </div>
             <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">AI 智能创作</span>
           </div>
-          <button 
-            onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* 提示内容 */}
         <div className="px-4 py-4 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
             记录已保存！
@@ -94,7 +90,6 @@ export function AIChoiceModal({ show, onCancel }) {
             点击下方按钮开始 AI 创作
           </p>
 
-          {/* 按钮 - 与SDK悬浮按钮合二为一 */}
           <button
             onClick={handleOpenChat}
             className="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg"

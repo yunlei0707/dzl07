@@ -25,7 +25,7 @@ import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby
 import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount, updateCurrentBabyInfo } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
 import { handleRecordLink } from './utils/linkService';
-// 改用 SDK 自带悬浮按钮: import { FloatingButton } from './components/FloatingButton';
+import { FloatingButton } from './components/FloatingButton';
 import { AIChoiceModal } from './components/AIChoiceModal';
 
 // 登录保护
@@ -309,7 +309,8 @@ function AppContent() {
       {/* Toast 提示 */}
       <Toast />
       
-      {/* 改用 SDK 自带悬浮按钮: <FloatingButton /> */}
+      {/* SDK 初始化组件（只初始化，用SDK自带按钮） */}
+      <FloatingButton />
       
       {/* AI 创作提示弹窗 */}
       <AIChoiceModal
