@@ -219,28 +219,6 @@ export function VirtualTimePage() {
         </div>
       </header>
 
-      <main className="px-4 -mt-4 max-w-lg mx-auto">
-        {/* AI 未来时光 iframe 区域 */}
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-            <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
-              ✨ AI 未来时光
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              和 AI 聊聊宝宝的成长，生成专属的未来想象~
-            </p>
-          </div>
-          <iframe
-            src="https://www.coze.cn/s/7636350042466418731"
-            width="100%"
-            height="500"
-            frameBorder="0"
-            allow="microphone; camera"
-            title="AI 虚拟时光助手"
-            className="w-full"
-          />
-        </div>
 
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 mb-4 border border-amber-100 dark:border-amber-800">
           <p className="text-amber-800 dark:text-amber-200 text-sm flex items-start gap-2">
