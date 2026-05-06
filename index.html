@@ -43,211 +43,6 @@
   </body>
   <!-- 扣子 Chat SDK -->
   <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.20/libs/cn/index.js"></script>
-  <style>
-  /* ===== 扣子 SDK 样式定制 - 强制隐藏美观输出 ===== */
-  
-  /* 1. 确保悬浮按钮正常显示并强制显示图标 */
-  [class*="coze-chat-float-btn"],
-  [class*="float-btn"],
-  [class*="asst-btn"] {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-width: 56px !important;
-    min-height: 56px !important;
-  }
-  
-  /* 强制显示按钮内的图标 */
-  [class*="coze-chat-float-btn"] img,
-  [class*="coze-chat-float-btn"] svg,
-  [class*="float-btn"] img,
-  [class*="float-btn"] svg,
-  [class*="asst-btn"] img,
-  [class*="asst-btn"] svg {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 28px !important;
-    height: 28px !important;
-  }
-  
-  /* 如果图标没显示，用CSS背景图作为备用图标 */
-  [class*="coze-chat-float-btn"]:not(:has(img)):not(:has(svg)),
-  [class*="float-btn"]:not(:has(img)):not(:has(svg)) {
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>') !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: 28px 28px !important;
-  }
-  
-  /* 2. 【强制】隐藏聊天窗口内的"美观输出"文字 - 增强版选择器 */
-  /* 使用多种选择器组合确保彻底隐藏 */
-  [class*="coze-chat"] [class*="aesthetic"],
-  [class*="coze-chat"] [class*="beautify"],
-  [class*="coze-chat"] [class*="beauty"],
-  [class*="coze-chat"] [class*="output"],
-  [class*="coze-chat"] [class*="美化"],
-  [class*="coze-chat"] [class*="美观"],
-  [class*="coze-chat"] [class*="format"],
-  [class*="coze-chat"] [class*="formatting"],
-  [class*="coze-chat"] [class*="rich-text"],
-  [class*="coze-chat"] [class*="richText"],
-  /* 通配符匹配更广泛的类名 */
-  [class*="coze-chat"] [class*="format"],
-  [class*="coze-chat"] [class*="beaut"],
-  [class*="coze-chat"] [class*="aesth"],
-  [class*="coze-chat"] [class*="style"],
-  /* 隐藏包含特定文字的span/div/button */
-  [class*="coze-chat"] span:has-text("美观"),
-  [class*="coze-chat"] div:has-text("美观输出"),
-  [class*="coze-chat"] button:has-text("美化"),
-  [class*="coze-chat"] *:contains("美观输出"),
-  [class*="coze-chat"] *:contains("美化输出"),
-  [class*="coze-chat"] *:contains("beautify"),
-  [class*="coze-chat"] *:contains("aesthetic"),
-  [class*="coze-chat"] *:contains("美化") {
-    display: none !important;
-    height: 0 !important;
-    width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    overflow: hidden !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    font-size: 0 !important;
-    line-height: 0 !important;
-    position: absolute !important;
-    pointer-events: none !important;
-  }
-  
-  /* 3. 隐藏聊天窗口底部空白区域和footer - 增强版 */
-  [class*="coze-chat"] [class*="footer"],
-  [class*="coze-chat-footer"],
-  [class*="coze-chat"] > div:last-child:empty,
-  [class*="coze-chat"] > div:last-child > div:empty,
-  [class*="coze-chat"] [class*="bottom-space"],
-  [class*="coze-chat"] [class*="bottom-padding"],
-  [class*="coze-chat"] [class*="footer-space"],
-  [class*="coze-chat"] [class*="bottom-area"],
-  [class*="coze-chat"] [class*="toolbar"],
-  [class*="coze-chat"] [class*="action-bar"],
-  [class*="coze-chat"] [class*="format-bar"],
-  [class*="coze-chat"] [class*="beautify-bar"],
-  [class*="coze-chat"] [class*="aesthetic-bar"] {
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    border: none !important;
-    position: absolute !important;
-    pointer-events: none !important;
-  }
-  
-  /* 4. 隐藏水印和Powered by */
-  [class*="coze-chat"] [class*="watermark"],
-  [class*="coze-chat"] [class*="powered-by"],
-  [class*="coze-chat"] [class*="powered"],
-  [class*="coze-chat"] [class*="branding"],
-  [class*="coze-chat"] [class*="coze-brand"],
-  [class*="coze-chat"] [class*="by-coze"] {
-    display: none !important;
-    visibility: hidden !important;
-  }
-  
-  /* 5. 保持聊天窗口原有布局样式 */
-  [class*="coze-chat"] {
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-  
-  /* 6. 调整聊天窗口顶部标题栏样式，使其更协调 */
-  [class*="coze-chat"] [class*="header"],
-  [class*="coze-chat"] [class*="title-bar"],
-  [class*="coze-chat"] [class*="chat-header"] {
-    padding: 8px 16px !important;
-    min-height: 40px !important;
-    height: auto !important;
-    background: linear-gradient(135deg, #f5f0e6 0%, #fff 100%) !important;
-    border-bottom: 1px solid #e8e0d0 !important;
-  }
-  
-  /* 调整标题文字样式 */
-  [class*="coze-chat"] [class*="header"] [class*="title"],
-  [class*="coze-chat"] [class*="title-bar"] [class*="title"],
-  [class*="coze-chat"] [class*="chat-header"] [class*="title"] {
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    color: #6b5c4a !important;
-  }
-  
-  /* 调整logo/头像大小 */
-  [class*="coze-chat"] [class*="header"] [class*="avatar"],
-  [class*="coze-chat"] [class*="title-bar"] [class*="avatar"],
-  [class*="coze-chat"] [class*="chat-header"] [class*="avatar"] {
-    width: 28px !important;
-    height: 28px !important;
-  }
-  
-  /* 7. 【新增】强制隐藏聊天输入框上方的美化按钮区域 */
-  [class*="coze-chat"] [class*="input-toolbar"],
-  [class*="coze-chat"] [class*="input-action"],
-  [class*="coze-chat"] [class*="input-bar"],
-  [class*="coze-chat"] [class*="rich-editor"],
-  [class*="coze-chat"] [class*="editor-toolbar"],
-  [class*="coze-chat"] [class*="format-toolbar"],
-  [class*="coze-chat"] [class*="beautify-toolbar"] {
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-  }
-  </style>
-
-  <script>
-  // ===== 扣子 SDK 定制功能 - 优化版 =====
-  // 版本标识: v2.1.0 - 强制隐藏美化输出
-  (function() {
-    let floatBtn = null;
-    let chatWindow = null;
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let initialLeft = 0, initialTop = 0;
-    
-    // 版本日志
-    console.log('[Coze SDK Customizer] v2.1.0 加载中...');
-    
-    // 从 localStorage 恢复位置
-    function loadPosition() {
-      try {
-        const saved = localStorage.getItem('coze-sdk-float-position');
-        if (saved) return JSON.parse(saved);
-      } catch(e) {}
-      return null;
-    }
-    
-    // 保存位置到 localStorage
-    function savePosition(left, top) {
-      try {
-        localStorage.setItem('coze-sdk-float-position', JSON.stringify({
-          left, top, timestamp: Date.now()
-        }));
-      } catch(e) {}
-    }
-    
-    // 应用位置到悬浮按钮
-    function applyPosition(left, top) {
-      if (!floatBtn) return;
-      floatBtn.style.position = 'fixed';
-      floatBtn.style.left = left + 'px';
       floatBtn.style.top = top + 'px';
       floatBtn.style.right = 'auto';
       floatBtn.style.bottom = 'auto';
@@ -599,3 +394,144 @@
   });
   </script>
 </html>
+  <!-- ===== SDK 样式定制 v2.5.0 ===== -->
+  <style>
+  /* === 1. 确保 SDK 悬浮按钮正常显示 === */
+  [class*="coze-chat-float-btn"],
+  [class*="float-btn"],
+  [class*="asst-btn"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 15px rgba(255, 123, 112, 0.4) !important;
+  }
+  
+  /* 强制显示按钮内的图标 */
+  [class*="coze-chat-float-btn"] img,
+  [class*="coze-chat-float-btn"] svg,
+  [class*="float-btn"] img,
+  [class*="float-btn"] svg,
+  [class*="asst-btn"] img,
+  [class*="asst-btn"] svg {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  /* === 2. 【重点】彻底隐藏聊天窗口内所有美化相关元素 === */
+  /* 隐藏所有包含"美观"、"美化"、"format"文字的元素 */
+  [class*="coze-chat"] [class*="aesthetic"],
+  [class*="coze-chat"] [class*="beautify"],
+  [class*="coze-chat"] [class*="beauty"],
+  [class*="coze-chat"] [class*="美化"],
+  [class*="coze-chat"] [class*="美观"],
+  [class*="coze-chat"] [class*="format"],
+  [class*="coze-chat"] [class*="formatting"],
+  [class*="coze-chat"] [class*="beaut"],
+  [class*="coze-chat"] [class*="aesth"],
+  /* 隐藏工具栏 */
+  [class*="coze-chat"] [class*="toolbar"],
+  [class*="coze-chat"] [class*="action-bar"],
+  [class*="coze-chat"] [class*="format-bar"],
+  [class*="coze-chat"] [class*="beautify-bar"],
+  [class*="coze-chat"] [class*="aesthetic-bar"],
+  [class*="coze-chat"] [class*="input-toolbar"],
+  [class*="coze-chat"] [class*="rich-editor"],
+  [class*="coze-chat"] [class*="editor-toolbar"],
+  /* 隐藏底部空白区域 */
+  [class*="coze-chat"] [class*="footer-space"],
+  [class*="coze-chat"] [class*="bottom-space"],
+  [class*="coze-chat"] [class*="empty-space"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    pointer-events: none !important;
+  }
+  
+  /* === 3. 隐藏聊天窗口底部footer === */
+  [class*="coze-chat"] [class*="footer"],
+  [class*="coze-chat-footer"],
+  [class*="coze-chat"] > div:last-child:empty,
+  [class*="coze-chat"] > div:last-child > div:empty {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+  }
+  
+  /* === 4. 隐藏水印和Powered by === */
+  [class*="coze-chat"] [class*="watermark"],
+  [class*="coze-chat"] [class*="powered-by"],
+  [class*="coze-chat"] [class*="powered"],
+  [class*="coze-chat"] [class*="branding"],
+  [class*="coze-chat"] [class*="coze-brand"],
+  [class*="coze-chat"] [class*="by-coze"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* === 5. 调整聊天窗口顶部标题栏样式 === */
+  [class*="coze-chat"] [class*="header"],
+  [class*="coze-chat"] [class*="title-bar"],
+  [class*="coze-chat"] [class*="chat-header"] {
+    padding: 8px 16px !important;
+    min-height: 44px !important;
+    height: auto !important;
+    background: linear-gradient(135deg, #f5f0e6 0%, #fff 100%) !important;
+    border-bottom: 1px solid #e8e0d0 !important;
+  }
+  
+  /* 调整标题文字样式 */
+  [class*="coze-chat"] [class*="header"] [class*="title"],
+  [class*="coze-chat"] [class*="title-bar"] [class*="title"],
+  [class*="coze-chat"] [class*="chat-header"] [class*="title"] {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #6b5c4a !important;
+  }
+  
+  /* 调整logo/头像大小 */
+  [class*="coze-chat"] [class*="header"] [class*="avatar"],
+  [class*="coze-chat"] [class*="title-bar"] [class*="avatar"],
+  [class*="coze-chat"] [class*="chat-header"] [class*="avatar"] {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  /* === 6. 保持聊天窗口整洁，消除底部空白 === */
+  [class*="coze-chat"] {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* === 7. 聊天窗口内的消息间距调整 === */
+  [class*="coze-chat"] [class*="message-list"],
+  [class*="coze-chat"] [class*="messages"] {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  </style>
+
