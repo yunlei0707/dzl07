@@ -1,7 +1,7 @@
 /**
- * 底部导航栏组件 v2.3.0
+ * 底部导航栏组件 v2.4.0
  * 
- * 修改：1. 图标直接顶到最顶部 2. 文字保持原大小 3. AI助手文字调整位置
+ * 修改：所有文字在同一高度，图标在上方，确保SDK按钮在最上方
  */
 
 import { memo } from 'react';
@@ -19,8 +19,9 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
   return (
     <button
       onClick={() => onTabChange(tab.id)}
-      className={`flex flex-col items-center justify-start pt-0 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
+      className={`flex flex-col items-center justify-between pt-0 pb-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
+      {/* 图标在最顶部 */}
       {isEmoji ? (
         <span className={`text-2xl transition-transform ${isActive ? 'scale-110' : ''}`}>
           {tab.icon}
@@ -31,7 +32,8 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
           strokeWidth={isActive ? 2.5 : 2} 
         />
       )}
-      <span className={`text-xs mt-0.5 font-medium ${isActive ? '' : 'font-normal'}`}>
+      {/* 文字在最底部，和AI助手文字对齐 */}
+      <span className={`text-xs font-medium ${isActive ? '' : 'font-normal'}`}>
         {tab.label}
       </span>
     </button>
@@ -41,7 +43,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
 export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-cream-200 dark:border-gray-700 z-40">
-      <div className="flex items-start h-16 max-w-lg mx-auto">
+      <div className="flex items-stretch h-16 max-w-lg mx-auto">
         {tabs.map(tab => (
           <TabButton 
             key={tab.id} 
@@ -50,7 +52,7 @@ export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
             onTabChange={onTabChange} 
           />
         ))}
-        {/* 最右边空位：显示AI助手文字，位置靠下，确保SDK按钮在上方 */}
+        {/* 最右边空位：AI助手文字，和其他文字在同一高度 */}
         <div className="flex-1 flex flex-col items-center justify-end pb-1">
           <span className="text-xs text-gray-400 dark:text-gray-500">
             AI助手
