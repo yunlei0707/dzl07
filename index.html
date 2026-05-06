@@ -40,28 +40,19 @@
     <script src="/static/coze-chat-sdk.js"></script>
     
     <script type="module" src="/src/main.jsx"></script>
-  <!-- ===== SDK 最终修复 v3.0.0 ===== -->
+  <!-- ===== SDK 简化修复 v3.1.0 ===== -->
   <script>
   (function() {
-    console.log('[SDK Final Fix v3.0.0] 开始运行');
+    console.log('[SDK Simple Fix v3.1.0] 开始运行');
     
     let sdkButton = null;
     let isDragging = false;
     let startX = 0, startY = 0;
     let startLeft = 0, startTop = 0;
     
-    const observer = new MutationObserver(() => {
-      findSDKButton();
-    });
-    
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    
-    setInterval(findSDKButton, 300);
-    
-    function findSDKButton() {
+    // 页面上只有右下角有一个可点击元素（SDK按钮）
+    // 加号按钮已经移到左下角了！
+    setInterval(() => {
       if (sdkButton && document.body.contains(sdkButton)) {
         applyEnhancements(sdkButton);
         return;
@@ -74,34 +65,17 @@
         try {
           const rect = el.getBoundingClientRect();
           const style = window.getComputedStyle(el);
-          const className = (el.className || '').toString();
-          const parentClass = (el.parentElement?.className || '').toString();
-          const grandParentClass = (el.parentElement?.parentElement?.className || '').toString();
           
-          // 双重保护：排除底部导航
-          const isBottomNav = className.includes('nav') || className.includes('tabbar') || 
-                             className.includes('footer') || className.includes('navigation') ||
-                             parentClass.includes('nav') || parentClass.includes('tabbar') ||
-                             parentClass.includes('footer') || grandParentClass.includes('nav') ||
-                             grandParentClass.includes('tabbar') || grandParentClass.includes('footer');
-          
-          // SDK按钮在底部导航上方（不在最底部80px区域）
-          const aboveBottomNav = rect.bottom < window.innerHeight - 80;
-          
+          // 加号按钮已经在左边了，所以直接抓右边的
           if (style.position === 'fixed' && 
               rect.width > 20 && 
               rect.height > 20 && 
-              rect.right > window.innerWidth - 150 &&
-              rect.bottom > window.innerHeight - 300 &&
-              aboveBottomNav &&  // ✅ 必须在底部导航上方
-              !isBottomNav) {    // ✅ 不能是底部导航本身
+              rect.left > window.innerWidth - 150) {  // ✅ 只要在右边区域
             
-            console.log('[SDK Debug] 🎯 找到SDK按钮:', {
+            console.log('[SDK Fix] 🎯 抓到SDK按钮:', {
               tag: el.tagName,
-              class: className,
-              parentClass: parentClass,
-              size: `${rect.width}x${rect.height}`,
-              position: `bottom:${rect.bottom}`
+              class: el.className,
+              size: `${rect.width}x${rect.height}`
             });
             
             sdkButton = el;
@@ -111,7 +85,7 @@
           }
         } catch (e) {}
       }
-    }
+    }, 300);
     
     function applyEnhancements(btn) {
       btn.style.minWidth = '64px';
@@ -233,6 +207,11 @@
           } catch (e) {}
         });
       });
+    }, 500);
+    
+    console.log('[SDK Simple Fix v3.1.0] ✅ 已加载');
+  })();
+  </script>
     }, 500);
     
     console.log('[SDK Final Fix v3.0.0] ✅ 已加载');
