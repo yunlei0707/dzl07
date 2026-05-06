@@ -40,10 +40,11 @@
     <script src="/static/coze-chat-sdk.js"></script>
     
     <script type="module" src="/src/main.jsx"></script>
-  <!-- ===== SDK 精准修复 v2.8.0 ===== -->
+  <!-- ===== SDK 调试修复 v2.9.0 ===== -->
   <script>
   (function() {
-    console.log('[SDK Precise Fix v2.8.0] 开始运行');
+    console.log('[SDK Debug Fix v2.9.0] 开始运行');
+    console.log('[SDK Debug] 开始扫描所有右下角固定定位元素...');
     
     let sdkButton = null;
     let isDragging = false;
@@ -52,7 +53,7 @@
     
     // 用 MutationObserver 监听DOM变化
     const observer = new MutationObserver(() => {
-      findAndEnhanceButton();
+      findSDKButton();
     });
     
     observer.observe(document.body, {
@@ -61,45 +62,45 @@
     });
     
     // 同时定时查找
-    setInterval(findAndEnhanceButton, 500);
+    setInterval(findSDKButton, 300);
     
-    // 精准查找并增强SDK按钮
-    function findAndEnhanceButton() {
+    // 极端方式查找SDK按钮 - 不做任何类名预判
+    function findSDKButton() {
       if (sdkButton && document.body.contains(sdkButton)) {
         applyEnhancements(sdkButton);
         return;
       }
       
-      // 查找所有按钮
-      const buttons = document.querySelectorAll('button, div[role="button"]');
-      for (let i = 0; i < buttons.length; i++) {
-        const btn = buttons[i];
+      // 遍历所有元素
+      const allElements = document.querySelectorAll('*');
+      console.log(`[SDK Debug] 遍历 ${allElements.length} 个元素...`);
+      
+      for (let i = 0; i < allElements.length; i++) {
+        const el = allElements[i];
         try {
-          const rect = btn.getBoundingClientRect();
-          const style = window.getComputedStyle(btn);
-          const className = btn.className || '';
-          const parentClassName = btn.parentElement?.className || '';
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
           
-          // 【关键】精准判断SDK按钮的条件：
-          // 1. 固定定位
-          // 2. 在右下角区域
-          // 3. 有一定尺寸
-          // 4. className或父元素包含coze/float/chat关键字（排除我们自己的加号按钮）
-          const hasSDKKeyword = className.includes('coze') || className.includes('Coze') || 
-                               className.includes('float') || className.includes('chat') ||
-                               className.includes('Float') || className.includes('Chat') ||
-                               parentClassName.includes('coze') || parentClassName.includes('Coze') ||
-                               parentClassName.includes('float') || parentClassName.includes('chat');
-          
+          // 只检查右下角固定定位的元素
           if (style.position === 'fixed' && 
-              rect.width > 30 && 
-              rect.height > 30 && 
+              rect.width > 20 && 
+              rect.height > 20 && 
               rect.right > window.innerWidth - 150 &&
-              rect.bottom > window.innerHeight - 150 &&
-              hasSDKKeyword) {  // 必须包含SDK相关关键字！
+              rect.bottom > window.innerHeight - 150) {
             
-            sdkButton = btn;
-            console.log('[SDK Fix] ✅ 精准找到SDK按钮:', className);
+            // 找到就打印出来看看是什么东西
+            console.log('[SDK Debug] 🎯 找到右下角元素:', {
+              tag: el.tagName,
+              class: el.className,
+              parentClass: el.parentElement?.className,
+              size: `${rect.width}x${rect.height}`,
+              position: `left:${rect.left}, top:${rect.top}`
+            });
+            
+            // 直接用这个元素！不做任何预判了
+            sdkButton = el;
+            console.log('[SDK Debug] ✅ 已选中为SDK按钮');
+            
             applyEnhancements(sdkButton);
             addDragSupport(sdkButton);
             return;
@@ -110,24 +111,18 @@
     
     // 应用增强样式
     function applyEnhancements(btn) {
-      // 1. 放大按钮
+      // 强制设置样式（用!important）
       btn.style.minWidth = '64px';
       btn.style.minHeight = '64px';
       btn.style.width = '64px';
       btn.style.height = '64px';
       btn.style.borderRadius = '50%';
-      
-      // 2. 强制设置背景图标
       btn.style.backgroundColor = '#FF7B70';
       btn.style.backgroundImage = 'url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23fff\"><path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z\"/></svg>")';
       btn.style.backgroundRepeat = 'no-repeat';
       btn.style.backgroundPosition = 'center';
       btn.style.backgroundSize = '32px 32px';
-      
-      // 3. 添加阴影
       btn.style.boxShadow = '0 4px 20px rgba(255, 123, 112, 0.5)';
-      
-      // 4. 确保按钮可见
       btn.style.display = 'flex';
       btn.style.alignItems = 'center';
       btn.style.justifyContent = 'center';
@@ -219,7 +214,7 @@
       }));
     }
     
-    // 隐藏美化按钮 - 只针对聊天窗口内部
+    // 隐藏美化按钮
     setInterval(() => {
       const chatWindows = document.querySelectorAll('[class*="coze-chat"], [class*="CozeChat"], [class*="chat-window"]');
       
@@ -233,6 +228,16 @@
               el.style.visibility = 'hidden';
               el.style.opacity = '0';
               el.style.height = '0';
+              el.style.overflow = 'hidden';
+            }
+          } catch (e) {}
+        });
+      });
+    }, 500);
+    
+    console.log('[SDK Debug Fix v2.9.0] ✅ 已加载');
+  })();
+  </script>
               el.style.overflow = 'hidden';
             }
           } catch (e) {}
