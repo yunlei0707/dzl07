@@ -1,53 +1,13 @@
 /**
- * AI 创作提示弹窗组件 v2.5.0
+ * AI 创作提示弹窗组件 v2.5.1
  * 
- * 方案：弹窗里不显示我们自己的按钮，而是把SDK自带按钮放大移动到弹窗位置
- * 用户直接点击SDK按钮，100%有效
+ * 最简单可靠的方案：只做提示，不做任何JS点击
+ * 用户直接点击右下角的SDK按钮，100%有效
  */
 
-import { useEffect } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles, MessageCircle, X } from 'lucide-react';
 
 export function AIChoiceModal({ show, onCancel }) {
-  // 弹窗显示时，把SDK按钮放大移动到弹窗位置
-  useEffect(() => {
-    if (show) {
-      console.log('[AIChoiceModal v2.5.0] 弹窗显示，放大SDK按钮');
-      
-      // 给 body 加一个 class，CSS会定位SDK按钮
-      document.body.classList.add('ai-modal-shown');
-      
-      // 尝试查找并放大SDK按钮
-      setTimeout(() => {
-        const selectors = [
-          '[class*="coze-chat-float-btn"]',
-          '[class*="float-btn"]',
-          '[class*="asst-btn"]',
-        ];
-        
-        for (const selector of selectors) {
-          const elements = document.querySelectorAll(selector);
-          elements.forEach(el => {
-            el.classList.add('sdk-btn-enlarged');
-          });
-        }
-      }, 100);
-    } else {
-      // 弹窗关闭时恢复
-      document.body.classList.remove('ai-modal-shown');
-      document.querySelectorAll('.sdk-btn-enlarged').forEach(el => {
-        el.classList.remove('sdk-btn-enlarged');
-      });
-    }
-    
-    return () => {
-      document.body.classList.remove('ai-modal-shown');
-      document.querySelectorAll('.sdk-btn-enlarged').forEach(el => {
-        el.classList.remove('sdk-btn-enlarged');
-      });
-    };
-  }, [show]);
-
   if (!show) {
     return null;
   }
@@ -78,17 +38,22 @@ export function AIChoiceModal({ show, onCancel }) {
         </div>
 
         <div className="px-4 py-4 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-3">
             记录已保存！
-            <br />
-            点击下方按钮开始 AI 创作
           </p>
-          
-          {/* 这里不渲染我们自己的按钮，SDK按钮会被CSS移到这个位置 */}
-          <div className="w-full h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-30 flex items-center justify-center text-white text-sm font-medium">
-            宝宝内容创作
-          </div>
-          <p className="text-xs text-gray-400 mt-2">点击右下角悬浮按钮打开聊天</p>
+          <p className="text-sm text-primary-500 font-medium mb-4">
+            👉 点击右下角的
+            <br />
+            <MessageCircle className="w-5 h-5 inline mx-1" />
+            AI 助手按钮开始创作
+          </p>
+
+          <button
+            onClick={onCancel}
+            className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg font-medium text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            我知道了
+          </button>
         </div>
       </div>
     </div>
