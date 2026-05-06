@@ -40,10 +40,10 @@
     <script src="/static/coze-chat-sdk.js"></script>
     
     <script type="module" src="/src/main.jsx"></script>
-  <!-- ===== SDK 安全修复 v2.7.0 ===== -->
+  <!-- ===== SDK 精准修复 v2.8.0 ===== -->
   <script>
   (function() {
-    console.log('[SDK Safe Fix v2.7.0] 开始运行');
+    console.log('[SDK Precise Fix v2.8.0] 开始运行');
     
     let sdkButton = null;
     let isDragging = false;
@@ -63,30 +63,43 @@
     // 同时定时查找
     setInterval(findAndEnhanceButton, 500);
     
-    // 查找并增强按钮
+    // 精准查找并增强SDK按钮
     function findAndEnhanceButton() {
       if (sdkButton && document.body.contains(sdkButton)) {
-        // 已经找到，持续应用样式（防止被SDK重置）
         applyEnhancements(sdkButton);
         return;
       }
       
-      // 查找固定定位、右下角的按钮
+      // 查找所有按钮
       const buttons = document.querySelectorAll('button, div[role="button"]');
       for (let i = 0; i < buttons.length; i++) {
         const btn = buttons[i];
         try {
           const rect = btn.getBoundingClientRect();
           const style = window.getComputedStyle(btn);
+          const className = btn.className || '';
+          const parentClassName = btn.parentElement?.className || '';
+          
+          // 【关键】精准判断SDK按钮的条件：
+          // 1. 固定定位
+          // 2. 在右下角区域
+          // 3. 有一定尺寸
+          // 4. className或父元素包含coze/float/chat关键字（排除我们自己的加号按钮）
+          const hasSDKKeyword = className.includes('coze') || className.includes('Coze') || 
+                               className.includes('float') || className.includes('chat') ||
+                               className.includes('Float') || className.includes('Chat') ||
+                               parentClassName.includes('coze') || parentClassName.includes('Coze') ||
+                               parentClassName.includes('float') || parentClassName.includes('chat');
           
           if (style.position === 'fixed' && 
               rect.width > 30 && 
               rect.height > 30 && 
               rect.right > window.innerWidth - 150 &&
-              rect.bottom > window.innerHeight - 150) {
+              rect.bottom > window.innerHeight - 150 &&
+              hasSDKKeyword) {  // 必须包含SDK相关关键字！
             
             sdkButton = btn;
-            console.log('[SDK Fix] ✅ 找到SDK按钮');
+            console.log('[SDK Fix] ✅ 精准找到SDK按钮:', className);
             applyEnhancements(sdkButton);
             addDragSupport(sdkButton);
             return;
@@ -104,7 +117,7 @@
       btn.style.height = '64px';
       btn.style.borderRadius = '50%';
       
-      // 2. 强制设置背景图标（用纯色背景+图标确保一定能看到）
+      // 2. 强制设置背景图标
       btn.style.backgroundColor = '#FF7B70';
       btn.style.backgroundImage = 'url("data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23fff\"><path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z\"/></svg>")';
       btn.style.backgroundRepeat = 'no-repeat';
@@ -208,11 +221,9 @@
     
     // 隐藏美化按钮 - 只针对聊天窗口内部
     setInterval(() => {
-      // 先找到聊天窗口容器
       const chatWindows = document.querySelectorAll('[class*="coze-chat"], [class*="CozeChat"], [class*="chat-window"]');
       
       chatWindows.forEach(chatWindow => {
-        // 在聊天窗口内部查找
         chatWindow.querySelectorAll('*').forEach(el => {
           try {
             const text = el.textContent || '';
@@ -229,10 +240,9 @@
       });
     }, 500);
     
-    console.log('[SDK Safe Fix v2.7.0] ✅ 已加载');
+    console.log('[SDK Precise Fix v2.8.0] ✅ 已加载');
   })();
   </script>
-  </body>
   <!-- 扣子 Chat SDK -->
   <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.20/libs/cn/index.js"></script>
   <!-- ===== SDK 修复脚本 v2.6.0 ===== -->
