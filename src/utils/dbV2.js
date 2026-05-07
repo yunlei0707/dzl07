@@ -607,6 +607,10 @@ export function exportV2AccountData() {
   const current = getCurrentV2Account();
   if (!current) return null;
   
+  // 过滤系统预置内容：timeline中ID以"sys-"开头的是系统示例数据
+  const allTimeline = current.accountData?.timeline || [];
+  const userTimeline = allTimeline.filter(m => !m.id?.startsWith('sys-'));
+  
   return {
     exportTime: new Date().toISOString(),
     version: '2.0.0',
@@ -620,9 +624,10 @@ export function exportV2AccountData() {
       gender: current.accountData?.gender,
       isSystem: current.accountData?.isSystem,
     },
-    timeline: current.accountData?.timeline || [],
+    timeline: userTimeline,
     growth: current.accountData?.growth || { height: null, weight: null, records: [] },
     virtualTime: current.accountData?.virtualTime || [],
+    virtualTimeContents: current.accountData?.virtualTimeContents || {},
   };
 }
 
@@ -649,6 +654,7 @@ export function importV2AccountData(data, mode = 'merge') {
       timeline: data.timeline || [],
       growth: data.growth || { height: null, weight: null, records: [] },
       virtualTime: data.virtualTime || [],
+      virtualTimeContents: data.virtualTimeContents || {},
     });
   } else {
     // 合并模式：只合并 timeline
@@ -662,6 +668,26 @@ export function importV2AccountData(data, mode = 'merge') {
       ...newTimeline.filter(m => !existingIds.has(m.id))
     ];
     
+    // 合并虚拟时光内容
+    const currentVTContents = current.accountData?.virtualTimeContents || {};
+    const importVTContents = data.virtualTimeContents || {};
+    const mergedVTContents = { ...currentVTContents };
+    
+    for (const key of Object.keys(importVTContents)) {
+      if (!mergedVTContents[key]) {
+        // 本地没有这个key，直接加入
+        mergedVTContents[key] = importVTContents[key];
+      } else {
+        // 本地有这个key，合并内容去重
+        const existingContentIds = new Set((mergedVTContents[key].contents || []).map(c => c.id));
+        const newContents = (importVTContents[key].contents || []).filter(c => !existingContentIds.has(c.id));
+        mergedVTContents[key] = {
+          ...mergedVTContents[key],
+          contents: [...(mergedVTContents[key].contents || []), ...newContents],
+        };
+      }
+    }
+    
     updateV2AccountData(identityName, accountId, {
       timeline: mergedTimeline,
       // 虚拟时光也合并
@@ -671,6 +697,7 @@ export function importV2AccountData(data, mode = 'merge') {
           !(current.accountData?.virtualTime || []).some(cv => cv.id === v.id)
         ),
       ],
+      virtualTimeContents: mergedVTContents,
     });
   }
   
