@@ -135,6 +135,24 @@ export function VirtualTimeDetail() {
     setIsSharing(true);
     
     try {
+      // 构建图片区域HTML
+      let imagesHtml = '';
+      const images = item.images || [];
+      if (images.length > 0) {
+        const gridStyle = images.length === 1
+          ? 'display: flex; gap: 6px; margin-bottom: 16px;'
+          : 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 16px;';
+        
+        const imgItems = images.map(img => {
+          const imgStyle = images.length === 1
+            ? 'width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px;'
+            : 'width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;';
+          return `<img src="${img}" style="${imgStyle}" crossorigin="anonymous" />`;
+        }).join('');
+        
+        imagesHtml = `<div style="${gridStyle}">${imgItems}</div>`;
+      }
+
       // 创建分享卡片DOM
       const shareCard = document.createElement('div');
       shareCard.style.cssText = `
@@ -155,6 +173,8 @@ export function VirtualTimeDetail() {
             <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">${item.title}</div>
           </div>
         </div>
+        ${imagesHtml}
+        ${item.content ? `
         <div style="
           background: rgba(255,255,255,0.15);
           border-radius: 12px;
@@ -163,8 +183,9 @@ export function VirtualTimeDetail() {
           line-height: 1.6;
           margin-bottom: 16px;
         ">
-          ${item.content || '暂无详细描述'}
+          ${item.content}
         </div>
+        ` : ''}
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; opacity: 0.9;">
           <span>📅 ${item.date || new Date().toLocaleDateString('zh-CN')}</span>
           <span>👶 宝贝时光</span>
@@ -179,6 +200,8 @@ export function VirtualTimeDetail() {
         backgroundColor: null,
         scale: 2,
         logging: false,
+        useCORS: true,
+        allowTaint: true,
       });
       
       // 移除临时DOM
