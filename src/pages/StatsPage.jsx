@@ -25,7 +25,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       const account = getCurrentV2Account();
       const growth = getCurrentGrowth();
       const babyInfo = getCurrentBabyInfo();
-      setV2AccountInfo(account?.identityData || null);
+      setV2AccountInfo(account?.accountData || null);
       setV2Growth(growth);
       setV2BabyInfo(babyInfo);
     };
