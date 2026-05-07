@@ -7,8 +7,7 @@ import { useState, useEffect } from 'react';
 import { X, RotateCcw, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { getDeletedMomentsByBaby, restoreMoment, deleteMomentPermanently, emptyRecycleBin } from '../utils/db';
-import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount, updateMomentInCurrentAccount, getCurrentBabyInfo } from '../utils/dbV2';
-import { updateV2AccountData } from '../utils/migration';
+import { getCurrentV2Account, getCurrentTimeline, isSystemAccount, deleteMomentFromCurrentAccount, updateMomentInCurrentAccount, getCurrentBabyInfo, updateV2AccountData } from '../utils/dbV2';
 
 export function RecycleBin({ onClose }) {
   const { currentBaby, showToast, setMoments } = useApp();

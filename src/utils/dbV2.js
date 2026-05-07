@@ -27,7 +27,8 @@ export {
   getCurrentV2Account,
   getCurrentIdentity,
   isMigrated,
-  switchV2Account
+  switchV2Account,
+  updateV2AccountData
 };
 
 // localStorage 键名
