@@ -60,8 +60,8 @@ export const TabBar = memo(function TabBar({ activeTab, onTabChange }) {
         <div className="flex-1"></div>
       </div>
       {/* AI助手文字，用绝对定位放到SDK按钮正下方 */}
-      <div className="absolute bottom-1 right-4 transform -translate-x-1/2">
-        <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+      <div className="absolute bottom-0.5 right-5">
+        <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
           AI助手
         </span>
       </div>
