@@ -18,6 +18,7 @@ import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
+import { RecycleBin } from './components/RecycleBin';
 
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
@@ -73,6 +74,7 @@ function AppContent() {
   const [showMomentForm, setShowMomentForm] = useState(false);
   const [showCapsuleForm, setShowCapsuleForm] = useState(false);
   const [showBabyForm, setShowBabyForm] = useState(false);
+  const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [editingMoment, setEditingMoment] = useState(null);
   const [editingCapsule, setEditingCapsule] = useState(null);
   const [editingBaby, setEditingBaby] = useState(null);
@@ -291,6 +293,7 @@ function AppContent() {
               setShowBabyForm(true);
             }}
             onAddBaby={handleAddBaby}
+            onOpenRecycleBin={() => setShowRecycleBin(true)}
           />
         );
       default:
@@ -370,6 +373,11 @@ function AppContent() {
             setEditingBaby(null);
           }}
         />
+      )}
+      
+      {/* 回收站 */}
+      {showRecycleBin && (
+        <RecycleBin onClose={() => setShowRecycleBin(false)} />
       )}
     </div>
   );
