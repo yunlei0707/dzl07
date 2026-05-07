@@ -72,6 +72,8 @@ export function ProfilePage(
     addMood,
     updateMood,
     deleteMood,
+    refreshMoments,
+    refreshCapsules,
   } = useApp();
   
   const fileInputRef = useRef(null);
@@ -280,8 +282,7 @@ export function ProfilePage(
           milestoneLabel: '户外活动',
         });
         
-        const babyMoments = await getMomentsByBaby(currentBaby.id);
-        setMoments(babyMoments);
+        await refreshMoments(currentBaby.id);
       }
       
       showToast('已导入4条示例数据', 'success');
@@ -291,7 +292,7 @@ export function ProfilePage(
     } finally {
       setIsImportingSample(false);
     }
-  }, [currentBaby, isImportingSample, generateWaveform, setMoments, showToast]);
+  }, [currentBaby, isImportingSample, generateWaveform, refreshMoments, showToast]);
 
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -307,18 +308,15 @@ export function ProfilePage(
     setIsRefreshing(true);
     try 
 {
-      // 直接使用import的函数，不要动态import
-      const allBabies = await getAllBabies();
-      setBabies(allBabies);
+      // 调用全局store的刷新方法，这样所有页面都能看到更新
+      await refreshBabies();
       
       if (currentBaby?.id) 
 {
-        const [moments, capsules] = await Promise.all([
-          getMomentsByBaby(currentBaby.id),
-          getCapsulesByBaby(currentBaby.id)
+        await Promise.all([
+          refreshMoments(currentBaby.id),
+          refreshCapsules(currentBaby.id)
         ]);
-        setMoments(moments);
-        setCapsules(capsules);
       }
       
       showToast('刷新成功', 'success');
@@ -330,7 +328,7 @@ export function ProfilePage(
 {
       setIsRefreshing(false);
     }
-  }, [currentBaby, isRefreshing, setBabies, setMoments, setCapsules, showToast]);
+  }, [currentBaby, isRefreshing, refreshBabies, refreshMoments, refreshCapsules, showToast]);
   
   // 下拉刷新处理
   const handleTouchStart = useCallback((e) => 
