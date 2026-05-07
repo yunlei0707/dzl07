@@ -9,7 +9,54 @@ import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
-// 等待 DOM 加载完成
+// ===== 版本自动检测机制 =====
+// 每次 Vercel 部署后，version.json 会更新
+// 网页定时检查，发现新版本自动刷新
+const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5分钟检查一次
+const VERSION_KEY = 'app_version';
+
+async function checkForUpdate() {
+  try {
+    // 加时间戳避免缓存
+    const response = await fetch(`/version.json?t=${Date.now()}`);
+    if (!response.ok) return;
+    const data = await response.json();
+    const serverVersion = data.version;
+    
+    if (!serverVersion) return;
+    
+    const localVersion = localStorage.getItem(VERSION_KEY);
+    
+    if (!localVersion) {
+      // 首次访问，记录版本号
+      localStorage.setItem(VERSION_KEY, serverVersion);
+      return;
+    }
+    
+    if (localVersion !== serverVersion) {
+      // 发现新版本，自动刷新
+      console.log(`[版本更新] ${localVersion} → ${serverVersion}，正在刷新...`);
+      localStorage.setItem(VERSION_KEY, serverVersion);
+      // 清除旧缓存后刷新
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(name => caches.delete(name)));
+      }
+      window.location.reload();
+    }
+  } catch (error) {
+    // 检查失败静默忽略，不影响使用
+    console.log('[版本检查] 跳过:', error.message);
+  }
+}
+
+// 启动定时检查
+setInterval(checkForUpdate, VERSION_CHECK_INTERVAL);
+
+// 首次加载也检查一次（延迟30秒，避免影响首次加载速度）
+setTimeout(checkForUpdate, 30 * 1000);
+
+// ===== 应用渲染 =====
 const rootElement = document.getElementById('root');
 
 if (rootElement) {
