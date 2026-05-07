@@ -695,7 +695,7 @@ export function TimelinePage({
         data={sharingMoment}
         title={sharingMoment?.milestoneLabel}
         content={sharingMoment?.content}
-        babyName={currentBaby?.name}
+        babyName={currentBaby?.name || v2AccountInfo?.accountData?.name || '宝宝'}
         date={sharingMoment?.date}
         type={sharingMoment?.type}
         thumbnail={sharingMoment?.photos?.[0] || sharingMoment?.videos?.[0]?.cover}

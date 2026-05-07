@@ -929,6 +929,8 @@ export function addVirtualTimeContent(topicId, itemId, contentData) {
   
   const newContent = {
     id: `content_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: contentData.title || '',
+    emoji: contentData.emoji || '📝',
     date: contentData.date || new Date().toISOString().split('T')[0],
     content: contentData.content,
     images: contentData.images || [],
