@@ -1,7 +1,7 @@
 /**
- * 底部导航栏组件 v2.5.3
+ * 底部导航栏组件 v2.5.4
  * 
- * 修改：1. AI助手文字用绝对定位放到SDK按钮正下方 2. 图标缩小，圆形容器保持大小一致
+ * 修改：图标恢复原来大小，只保持圆形容器和SDK一致
  */
 
 import { memo } from 'react';
@@ -21,17 +21,17 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
       onClick={() => onTabChange(tab.id)}
       className={`flex flex-col items-center justify-between pt-0 pb-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
-      {/* 圆形图标容器保持大小不变，内部图标缩小 */}
+      {/* 圆形图标容器和SDK按钮大小保持一致 */}
       <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
         isActive ? 'bg-primary-500 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700'
       }`}>
         {isEmoji ? (
-          <span className={`text-lg transition-transform ${isActive ? 'scale-110' : ''}`}>
+          <span className={`text-xl transition-transform ${isActive ? 'scale-110' : ''}`}>
             {tab.icon}
           </span>
         ) : (
           <tab.icon 
-            className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : ''}`} 
+            className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : ''}`} 
             strokeWidth={isActive ? 2.5 : 2} 
           />
         )}
