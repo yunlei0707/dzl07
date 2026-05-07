@@ -101,6 +101,7 @@ export function ProfilePage(
   // 导入模式
   const [importMode, setImportMode] = useState('merge');
   const [importFile, setImportFile] = useState(null);
+  const [importText, setImportText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   
   // 导入示例数据
@@ -372,16 +373,25 @@ export function ProfilePage(
     try 
 {
       const data = await exportAllData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], 
+      const jsonStr = JSON.stringify(data, null, 2);
+      
+      // 优先使用剪贴板（兼容APP和浏览器）
+      try {
+        await navigator.clipboard.writeText(jsonStr);
+        showToast('导出成功！数据已复制到剪贴板，可粘贴到备忘录保存', 'success');
+      } catch (clipError) {
+        // 剪贴板失败时，尝试下载文件
+        const blob = new Blob([jsonStr], 
 { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `宝贝时光备份_$
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `宝贝时光备份_$
 {new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('导出成功', 'success');
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('导出成功！文件已下载', 'success');
+      }
     } catch (error) 
 {
       console.error('导出失败:', error);
@@ -392,21 +402,40 @@ export function ProfilePage(
   // 导入数据
   const handleImport = useCallback(async () => 
 {
-    if (!importFile) {
-      showToast('请先选择备份文件', 'warning');
+    // 支持两种方式：文件选择 或 剪贴板粘贴
+    let data;
+    if (importText.trim()) {
+      // 方式1：从剪贴板粘贴的文本
+      try {
+        data = JSON.parse(importText.trim());
+      } catch (e) {
+        showToast('粘贴的数据格式错误，请检查', 'error');
+        return;
+      }
+    } else if (importFile) {
+      // 方式2：从文件选择
+      try {
+        const text = await importFile.text();
+        data = JSON.parse(text);
+      } catch (e) {
+        showToast('文件格式错误', 'error');
+        return;
+      }
+    } else {
+      showToast('请先选择备份文件或粘贴备份数据', 'warning');
       return;
     }
     
     setIsImporting(true);
     try 
 {
-      const text = await importFile.text();
-      const data = JSON.parse(text);
       await importAllData(data, importMode);
       // 通过修改 localStorage 触发所有页面的刷新（storage事件）
       localStorage.setItem('lastDataUpdate', Date.now().toString());
       showToast('导入成功', 'success');
       setShowImportModal(false);
+      setImportText('');
+      setImportFile(null);
       refreshData();
     } catch (error) 
 {
@@ -417,7 +446,7 @@ export function ProfilePage(
 {
       setIsImporting(false);
     }
-  }, [importFile, importMode, showToast, refreshData]);
+  }, [importFile, importText, importMode, showToast, refreshData]);
   
   
   // 退出登录
@@ -782,7 +811,7 @@ export function ProfilePage(
                 type="file"
                 accept=".json"
                 onChange=
-{(e) => setImportFile(e.target.files?.[0] || null)}
+{(e) => { setImportFile(e.target.files?.[0] || null); setImportText(''); }}
                 className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-100 file:text-primary-700 hover:file:bg-primary-200 file:cursor-pointer dark:file:bg-primary-900/30 dark:file:text-primary-400"
               />
               
@@ -790,12 +819,37 @@ export function ProfilePage(
                 <p className="text-sm text-green-600 mt-2">已选择: 
 {importFile.name}</p>
               )}
+              
+              <div className="flex items-center gap-2 my-3">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
+                <span className="text-xs text-gray-400">或者</span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
+              </div>
+              
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">从剪贴板粘贴</label>
+              <div className="flex gap-2 mb-2">
+                <button
+                  onClick=
+{async () => { try { const text = await navigator.clipboard.readText(); setImportText(text); setImportFile(null); } catch(e) { showToast('无法读取剪贴板，请手动粘贴', 'warning'); } }}
+                  className="px-3 py-1.5 text-xs bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400"
+                >
+                  读取剪贴板
+                </button>
+              </div>
+              <textarea
+                value=
+{importText}
+                onChange=
+{(e) => { setImportText(e.target.value); if (e.target.value) setImportFile(null); }}
+                placeholder="粘贴备份数据（JSON格式）..."
+                className="w-full h-24 text-xs p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+              />
             </div>
             
             <div className="flex gap-3">
               <button
                 onClick=
-{() => setShowImportModal(false)}
+{() => { setShowImportModal(false); setImportText(''); }}
                 className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
               >
                 取消
@@ -804,7 +858,7 @@ export function ProfilePage(
                 onClick=
 {handleImport}
                 disabled=
-{!importFile || isImporting}
+{(!importFile && !importText.trim()) || isImporting}
                 className="flex-1 py-2 bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
               >
                 
