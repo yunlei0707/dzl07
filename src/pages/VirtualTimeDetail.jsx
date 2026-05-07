@@ -28,10 +28,14 @@ export function VirtualTimeDetail() {
   const [userContents, setUserContents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newContent, setNewContent] = useState({ title: '', content: '', emoji: '📝' });
+  const [newContent, setNewContent] = useState({ title: '', content: '', emoji: '📝', images: [] });
+  const [newImages, setNewImages] = useState([]);
   const [isSystemAccount, setIsSystemAccount] = useState(false);
   const [sharingItem, setSharingItem] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [viewingImages, setViewingImages] = useState(null);
+  const [viewingIndex, setViewingIndex] = useState(0);
+  const fileInputRef = useRef(null);
   const contentCardRef = useRef(null);
   
   // 获取专题信息
@@ -61,6 +65,31 @@ export function VirtualTimeDetail() {
     return () => clearInterval(interval);
   }, [loadContents]);
   
+  // 处理图片上传
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (newImages.length + files.length > 9) {
+      showToast('最多支持9张图片', 'error');
+      return;
+    }
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setNewImages(prev => [...prev, event.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // 清空input，允许重复选择同一张图片
+    e.target.value = '';
+  };
+  
+  // 删除已选择的图片
+  const handleRemoveNewImage = (index) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
+  };
+  
   // 添加内容
   const handleAddContent = useCallback(() => {
     if (!newContent.title.trim()) {
@@ -76,14 +105,16 @@ export function VirtualTimeDetail() {
       title: newContent.title.trim(),
       content: newContent.content.trim(),
       emoji: newContent.emoji,
+      images: newImages,
       date: new Date().toLocaleDateString('zh-CN')
     });
     
     showToast('已添加内容');
-    setNewContent({ title: '', content: '', emoji: '📝' });
+    setNewContent({ title: '', content: '', emoji: '📝', images: [] });
+    setNewImages([]);
     setShowAddForm(false);
     loadContents();
-  }, [topicId, newContent, isSystemAccount, showToast, loadContents]);
+  }, [topicId, newContent, newImages, isSystemAccount, showToast, loadContents]);
   
   // 删除内容
   const handleDeleteContent = useCallback((contentId) => {
@@ -233,7 +264,14 @@ export function VirtualTimeDetail() {
           <div className="w-full bg-white dark:bg-gray-800 rounded-t-3xl p-4 animate-slide-up">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">添加{topic.title}记录</h3>
-              <button onClick={() => setShowAddForm(false)} className="p-2">
+              <button 
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewImages([]);
+                  setNewContent({ title: '', content: '', emoji: '📝', images: [] });
+                }} 
+                className="p-2"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -259,6 +297,43 @@ export function VirtualTimeDetail() {
                   rows={4}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 resize-none"
                 />
+              </div>
+              
+              {/* 图片上传 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">图片（可选）</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                {newImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {newImages.map((img, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => handleRemoveNewImage(index)}
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center text-white text-xs hover:bg-black/70"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {newImages.length < 9 && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:border-primary-400 hover:text-primary-500 transition-colors"
+                  >
+                    <span>📷</span>
+                    <span>添加图片</span>
+                  </button>
+                )}
               </div>
               
               <div>
@@ -334,6 +409,48 @@ export function VirtualTimeDetail() {
                       <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm leading-relaxed">
                         {item.content || '暂无详细描述'}
                       </p>
+                      {/* 图片展示 */}
+                      {item.images && item.images.length > 0 && (
+                        <div 
+                          className={`mt-3 grid gap-2 ${
+                            item.images.length === 1 
+                              ? 'grid-cols-1' 
+                              : item.images.length === 2 
+                                ? 'grid-cols-2' 
+                                : 'grid-cols-3'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const target = e.target;
+                            if (target.tagName === 'IMG') {
+                              const imgIndex = parseInt(target.dataset.index);
+                              setViewingImages(item.images);
+                              setViewingIndex(imgIndex || 0);
+                            }
+                          }}
+                        >
+                          {item.images.slice(0, 9).map((img, imgIndex) => (
+                            <div 
+                              key={imgIndex} 
+                              className={`relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 ${
+                                item.images.length === 1 ? 'aspect-video' : 'aspect-square'
+                              } ${item.images.length === 3 && imgIndex === 0 ? 'row-span-2 aspect-auto' : ''}`}
+                            >
+                              <img 
+                                src={img} 
+                                alt="" 
+                                data-index={imgIndex}
+                                className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                              />
+                              {imgIndex === 8 && item.images.length > 9 && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xl font-bold">
+                                  +{item.images.length - 9}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mt-3">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <span className="text-xs text-gray-400">{item.date || '刚刚'}</span>
@@ -420,6 +537,57 @@ export function VirtualTimeDetail() {
           </div>
         )}
       </main>
+      
+      {/* 图片查看器 */}
+      {viewingImages && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+          onClick={() => setViewingImages(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full"
+            onClick={() => setViewingImages(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          {viewingImages.length > 1 && (
+            <>
+              <button 
+                className="absolute left-4 p-2 text-white hover:bg-white/20 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewingIndex(prev => prev > 0 ? prev - 1 : viewingImages.length - 1);
+                }}
+              >
+                <span className="text-2xl">‹</span>
+              </button>
+              <button 
+                className="absolute right-4 p-2 text-white hover:bg-white/20 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewingIndex(prev => prev < viewingImages.length - 1 ? prev + 1 : 0);
+                }}
+              >
+                <span className="text-2xl">›</span>
+              </button>
+            </>
+          )}
+          
+          <img 
+            src={viewingImages[viewingIndex]} 
+            alt=""
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          {viewingImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
+              {viewingIndex + 1} / {viewingImages.length}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
