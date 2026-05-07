@@ -84,6 +84,19 @@ function AppContent() {
   const [showAIChoice, setShowAIChoice] = useState(false);
   const [aiChoiceContent, setAIChoiceContent] = useState('');
 
+  // 一门APP环境检测
+  useEffect(() => {
+    const checkAppEnvironment = () => {
+      const isInAppEnv = typeof window !== 'undefined' && typeof window.jsBridge !== 'undefined';
+      if (isInAppEnv) {
+        console.log('[App] 检测到一门APP环境，已启用文件系统功能');
+      }
+      // 可以将这个状态存到全局，供其他组件使用
+      window.__IS_IN_APP__ = isInAppEnv;
+    };
+    checkAppEnvironment();
+  }, []);
+
   // v2 双账号系统初始化
   useEffect(() => {
     if (currentUser && currentUser.name) {

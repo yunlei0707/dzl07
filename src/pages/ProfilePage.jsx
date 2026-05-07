@@ -24,6 +24,7 @@ import
 { BabyHeader } from '../components/BabyHeader';
 import 
 { getCurrentV2Account, getCurrentBabyInfo, isSystemAccount as checkIsSystemAccount, addMomentToCurrentAccount } from '../utils/dbV2';
+import { isInApp, exportToFile, importFromFile } from '../utils/jsBridge';
 
 // 主题预设配置
 const THEME_PRESETS = [
@@ -385,6 +386,16 @@ export function ProfilePage(
       const jsonStr = JSON.stringify(mergedData, null, 2);
       setExportData(jsonStr);
       setShowExportModal(true);
+      
+      // APP环境下自动保存并分享
+      if (isInApp()) {
+        try {
+          await exportToFile(jsonStr);
+        } catch (e) {
+          // 静默失败，不影响原有导出流程
+          console.log('APP文件分享失败，将使用传统方式');
+        }
+      }
     } catch (error) 
 {
       console.error('导出失败:', error);
@@ -434,6 +445,14 @@ export function ProfilePage(
   // 导入数据
   const handleImport = useCallback(async () => 
 {
+    // APP环境下从本地文件导入
+    if (isInApp()) {
+      // 这里用户需要通过APP的文件选择器选择文件
+      // 暂时不支持自动读取，提示用户使用传统方式
+      showToast('请使用下方的文件选择功能', 'info');
+      return;
+    }
+    
     // 支持两种方式：文件选择 或 剪贴板粘贴
     let data;
     if (importText.trim()) {
