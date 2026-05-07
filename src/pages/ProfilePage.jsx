@@ -374,8 +374,14 @@ export function ProfilePage(
 {
     try 
 {
-      const data = await exportAllData();
-      const jsonStr = JSON.stringify(data, null, 2);
+      const idbData = await exportAllData();
+      const v2Data = exportV2AccountData();
+      // 合并两份数据
+      const mergedData = {
+        ...idbData,
+        v2AccountData: v2Data,
+      };
+      const jsonStr = JSON.stringify(mergedData, null, 2);
       setExportData(jsonStr);
       setShowExportModal(true);
     } catch (error) 
@@ -454,7 +460,14 @@ export function ProfilePage(
     setIsImporting(true);
     try 
 {
+      // 导入 IndexedDB 数据
       await importAllData(data, importMode);
+      
+      // 如果包含 v2 账号数据，也导入
+      if (data.v2AccountData) {
+        importV2AccountData(data.v2AccountData, importMode);
+      }
+      
       showToast('导入成功，正在刷新...', 'success');
       setShowImportModal(false);
       setImportText('');
