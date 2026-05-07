@@ -85,6 +85,8 @@ export function ProfilePage(
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportData, setExportData] = useState('');
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
@@ -375,30 +377,53 @@ export function ProfilePage(
 {
       const data = await exportAllData();
       const jsonStr = JSON.stringify(data, null, 2);
-      
-      // 优先使用剪贴板（兼容APP和浏览器）
-      try {
-        await navigator.clipboard.writeText(jsonStr);
-        showToast('导出成功！数据已复制到剪贴板，可粘贴到备忘录保存', 'success');
-      } catch (clipError) {
-        // 剪贴板失败时，尝试下载文件
-        const blob = new Blob([jsonStr], 
-{ type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `宝贝时光备份_$
-{new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('导出成功！文件已下载', 'success');
-      }
+      setExportData(jsonStr);
+      setShowExportModal(true);
     } catch (error) 
 {
       console.error('导出失败:', error);
       showToast('导出失败', 'error');
     }
-  }, [showToast]);
+  }, []);
+  
+  // 复制到剪贴板
+  const handleCopyToClipboard = useCallback(async () => 
+{
+    try {
+      await navigator.clipboard.writeText(exportData);
+      showToast('已复制到剪贴板！可粘贴到备忘录保存', 'success');
+    } catch (e) {
+      // 备用方案：创建临时textarea
+      const textarea = document.createElement('textarea');
+      textarea.value = exportData;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('已复制到剪贴板！可粘贴到备忘录保存', 'success');
+      } catch (e2) {
+        showToast('复制失败，请手动选中下方文本复制', 'warning');
+      }
+      document.body.removeChild(textarea);
+    }
+  }, [exportData, showToast]);
+  
+  // 下载文件
+  const handleDownloadFile = useCallback(() => 
+{
+    const blob = new Blob([exportData], 
+{ type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `宝贝时光备份_$
+{new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('文件已下载', 'success');
+  }, [exportData, showToast]);
   
   // 导入数据
   const handleImport = useCallback(async () => 
@@ -911,6 +936,53 @@ export function ProfilePage(
                 确认清除
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      
+      
+{/* 导出数据弹窗 */}
+      
+{showExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[80vh] flex flex-col">
+            <h3 className="text-lg font-bold mb-3 dark:text-white">📦 导出数据</h3>
+            
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick=
+{handleCopyToClipboard}
+                className="flex-1 py-2.5 bg-primary-500 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-1"
+              >
+                <Copy className="w-4 h-4" />
+                复制到剪贴板
+              </button>
+              <button
+                onClick=
+{handleDownloadFile}
+                className="flex-1 py-2.5 bg-blue-500 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                下载文件
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-400 mb-2">APP用户建议用「复制到剪贴板」，然后粘贴到备忘录保存</p>
+            
+            <textarea
+              value=
+{exportData}
+              readOnly
+              className="flex-1 min-h-[120px] text-xs p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none font-mono"
+            />
+            
+            <button
+              onClick=
+{() => { setShowExportModal(false); setExportData(''); }}
+              className="mt-3 w-full py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
+            >
+              关闭
+            </button>
           </div>
         </div>
       )}
