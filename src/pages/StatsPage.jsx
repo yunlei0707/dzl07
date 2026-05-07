@@ -32,34 +32,16 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     
     updateV2Info();
     
-    // 数据更新时的处理函数
-    const handleDataUpdate = () => {
-      updateV2Info();
-      // 同时刷新真实宝宝的数据（直接调用API，不依赖handleRefresh）
-      if (currentBaby) {
-        Promise.all([
-          getMomentsByBaby(currentBaby.id),
-          getCapsulesByBaby(currentBaby.id)
-        ]).then(([babyMoments, babyCapsules]) => {
-          setMoments(babyMoments);
-          setCapsules(babyCapsules);
-        });
-      }
-    };
-    
     // 监听 localStorage 变化（跨标签页同步）
     window.addEventListener('storage', updateV2Info);
-    // 监听数据更新事件（导入数据后触发）
-    window.addEventListener('v2-moment-updated', handleDataUpdate);
     // 轮询更新
     const interval = setInterval(updateV2Info, 500);
     
     return () => {
       window.removeEventListener('storage', updateV2Info);
-      window.removeEventListener('v2-moment-updated', handleDataUpdate);
       clearInterval(interval);
     };
-  }, [currentBaby, setMoments, setCapsules]);
+  }, [currentBaby]);
   
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
