@@ -287,11 +287,10 @@ export function ProfilePage(
         });
         
         await refreshMoments(currentBaby.id);
-        // 通过修改 localStorage 触发所有页面的刷新（storage事件）
-        localStorage.setItem('lastDataUpdate', Date.now().toString());
       }
       
-      showToast('已导入4条示例数据', 'success');
+      showToast('已导入4条示例数据，正在刷新...', 'success');
+      setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('导入示例数据失败:', error);
       showToast('导入失败', 'error');
@@ -456,13 +455,12 @@ export function ProfilePage(
     try 
 {
       await importAllData(data, importMode);
-      // 通过修改 localStorage 触发所有页面的刷新（storage事件）
-      localStorage.setItem('lastDataUpdate', Date.now().toString());
-      showToast('导入成功', 'success');
+      showToast('导入成功，正在刷新...', 'success');
       setShowImportModal(false);
       setImportText('');
       setImportFile(null);
-      refreshData();
+      // 延迟刷新页面，确保toast提示能显示
+      setTimeout(() => window.location.reload(), 500);
     } catch (error) 
 {
       console.error('导入失败:', error);
