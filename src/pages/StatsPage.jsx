@@ -113,10 +113,12 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     
     const age = calculateAge(displayBaby.birthDate);
     
-    // 优先使用 v2 账号的动态数据，否则使用 IndexedDB 的 moments
-    const activeMoments = v2AccountInfo?.timeline 
-      ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
-      : moments.filter(m => !m.isDeleted);
+    // 使用全局 moments（最新数据），如果没有则回退到 v2 账号的 timeline
+    const activeMoments = (moments && moments.length > 0)
+      ? moments.filter(m => !m.isDeleted)
+      : (v2AccountInfo?.timeline 
+        ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
+        : []);
     
     // 照片数量
     const photoCount = activeMoments.filter(m => m.photos && m.photos.length > 0)
@@ -167,8 +169,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   
   // 里程碑列表
   const milestones = useMemo(() => {
-    const v2Moments = v2AccountInfo?.timeline || moments;
-    return v2Moments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
+    const sourceMoments = (moments && moments.length > 0) ? moments : (v2AccountInfo?.timeline || []);
+    return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
   }, [moments, v2AccountInfo]);
   
   if (!displayBaby || !stats) {
