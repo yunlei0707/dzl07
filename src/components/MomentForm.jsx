@@ -236,6 +236,18 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   // 开始录音
   const startRecording = async () => {
     try {
+      // 先检查是否支持录音
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('当前浏览器不支持录音功能，请使用Chrome或Safari浏览器');
+        return;
+      }
+      
+      // 检查是否在安全上下文（HTTPS）
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        alert('录音功能需要HTTPS安全连接，请使用HTTPS访问');
+        return;
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
@@ -304,7 +316,14 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       captureWaveform();
       
     } catch (error) {
-      alert('无法访问麦克风，请检查权限设置');
+      console.error('录音权限错误:', error);
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        alert('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风后重试');
+      } else if (error.name === 'NotFoundError') {
+        alert('未找到麦克风设备，请确认设备已连接');
+      } else {
+        alert('无法访问麦克风，请检查权限设置');
+      }
     }
   };
   
@@ -462,6 +481,17 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     const file = e.target.files[0];
     if (!file) return;
     
+    // 限制视频大小：50MB
+    const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_VIDEO_SIZE) {
+      alert('视频文件不能超过50MB，请压缩后重试');
+      e.target.value = '';
+      return;
+    }
+    
+    // 显示加载提示
+    setSaving(true);
+    
     // 先将视频文件转为DataURL存储
     const videoReader = new FileReader();
     videoReader.onload = (event) => {
@@ -472,8 +502,21 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       video.src = videoDataURL;
       video.currentTime = 0.5; // 取第0.5秒作为封面
       video.muted = true;
+      video.playsInline = true;
+      
+      // 超时保护：5秒内如果视频无法加载封面，直接存储
+      const coverTimeout = setTimeout(() => {
+        setVideos(prev => [...prev, {
+          url: videoDataURL,
+          cover: null,
+          name: file.name,
+          size: file.size
+        }]);
+        setSaving(false);
+      }, 5000);
       
       video.onloadeddata = () => {
+        clearTimeout(coverTimeout);
         // 创建canvas绘制封面
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 320;
@@ -482,7 +525,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         
         try {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const coverImage = canvas.toDataURL('image/jpeg', 0.8);
+          const coverImage = canvas.toDataURL('image/jpeg', 0.6);
           
           const videoData = {
             url: videoDataURL, // 存储实际视频数据
@@ -502,9 +545,14 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
             size: file.size
           }]);
         }
+        setSaving(false);
+        // 释放视频元素
+        video.src = '';
+        video.remove();
       };
       
       video.onerror = () => {
+        clearTimeout(coverTimeout);
         // 即使封面失败，也保存视频
         setVideos(prev => [...prev, {
           url: videoDataURL,
@@ -512,14 +560,17 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           name: file.name,
           size: file.size
         }]);
+        setSaving(false);
       };
     };
     
     videoReader.onerror = () => {
       alert('读取视频文件失败，请重试');
+      setSaving(false);
     };
     
     videoReader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const removePhoto = (index) => {
@@ -561,11 +612,34 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setSaving(true);
     
     try {
+      // 检查数据大小，避免 localStorage 溢出
+      const dataSize = JSON.stringify(momentData).length;
+      const MAX_SIZE = 4 * 1024 * 1024; // 4MB 安全上限
+      if (dataSize > MAX_SIZE) {
+        // 尝试压缩：移除视频的 cover 图片
+        const compressedData = {
+          ...momentData,
+          videos: momentData.videos.map(v => ({ ...v, cover: null }))
+        };
+        const compressedSize = JSON.stringify(compressedData).length;
+        if (compressedSize > MAX_SIZE) {
+          alert('数据量过大（含视频/音频），请减少附件后重试');
+          setSaving(false);
+          return;
+        }
+        Object.assign(momentData, compressedData);
+      }
+      
       if (typeof onSave === 'function') {
         await onSave(momentData);
       }
     } catch (error) {
-      alert('保存失败: ' + error.message);
+      console.error('保存失败:', error);
+      if (error.name === 'QuotaExceededError' || error.message?.includes('quota') || error.message?.includes('storage')) {
+        alert('存储空间不足，请减少视频/音频附件后重试');
+      } else {
+        alert('保存失败: ' + (error.message || '未知错误'));
+      }
     } finally {
       setSaving(false);
     }
