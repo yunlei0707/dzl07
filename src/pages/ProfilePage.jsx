@@ -445,15 +445,8 @@ export function ProfilePage(
   // 导入数据
   const handleImport = useCallback(async () => 
 {
-    // APP环境下从本地文件导入
-    if (isInApp()) {
-      // 这里用户需要通过APP的文件选择器选择文件
-      // 暂时不支持自动读取，提示用户使用传统方式
-      showToast('请使用下方的文件选择功能', 'info');
-      return;
-    }
-    
     // 支持两种方式：文件选择 或 剪贴板粘贴
+    // APP环境下同样支持，不做阻断
     let data;
     if (importText.trim()) {
       // 方式1：从剪贴板粘贴的文本
