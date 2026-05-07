@@ -35,9 +35,15 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     // 数据更新时的处理函数
     const handleDataUpdate = () => {
       updateV2Info();
-      // 同时刷新真实宝宝的数据
+      // 同时刷新真实宝宝的数据（直接调用API，不依赖handleRefresh）
       if (currentBaby) {
-        handleRefresh();
+        Promise.all([
+          getMomentsByBaby(currentBaby.id),
+          getCapsulesByBaby(currentBaby.id)
+        ]).then(([babyMoments, babyCapsules]) => {
+          setMoments(babyMoments);
+          setCapsules(babyCapsules);
+        });
       }
     };
     
@@ -53,7 +59,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       window.removeEventListener('v2-moment-updated', handleDataUpdate);
       clearInterval(interval);
     };
-  }, [currentBaby, handleRefresh]);
+  }, [currentBaby, setMoments, setCapsules]);
   
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
