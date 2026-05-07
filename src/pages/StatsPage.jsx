@@ -9,22 +9,31 @@ import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
 import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react';
-import { getCurrentV2Account, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
+import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast } = useApp();
   
   // v2 账号系统：获取当前账号信息
-  const [v2AccountInfo, setV2AccountInfo] = useState(null);
+  const [v2Moments, setV2Moments] = useState([]);
   const [v2Growth, setV2Growth] = useState(null);
   const [v2BabyInfo, setV2BabyInfo] = useState(null);
+  const [isSystemAccount, setIsSystemAccount] = useState(false);
+  const [hasV2Baby, setHasV2Baby] = useState(false);
+  const [v2AccountInfo, setV2AccountInfo] = useState(null);
   
-  // 监听账号切换，刷新 v2 数据
+  // 监听账号切换，刷新 v2 数据（和 TimelinePage 完全一致）
   useEffect(() => {
     const updateV2Info = () => {
       const account = getCurrentV2Account();
+      const timeline = getCurrentTimeline();
+      const isSystem = checkIsSystemAccount();
       const growth = getCurrentGrowth();
       const babyInfo = getCurrentBabyInfo();
+      
+      setV2Moments(timeline);
+      setIsSystemAccount(isSystem);
+      setHasV2Baby(!!babyInfo);
       setV2AccountInfo(account?.accountData || null);
       setV2Growth(growth);
       setV2BabyInfo(babyInfo);
@@ -50,8 +59,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     window.addEventListener('storage', updateV2Info);
     // 监听数据更新事件（添加/导入动态后触发）
     window.addEventListener('v2-moment-updated', handleDataUpdate);
-    // 轮询更新
-    const interval = setInterval(updateV2Info, 500);
+    // 轮询更新（和 TimelinePage 一致，300ms）
+    const interval = setInterval(updateV2Info, 300);
     
     return () => {
       window.removeEventListener('storage', updateV2Info);
@@ -59,11 +68,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       clearInterval(interval);
     };
   }, [currentBaby, setMoments, setCapsules]);
-  
-  // 检查是否为系统账号
-  const isSystemAccount = v2AccountInfo?.isSystem === true;
-  // 是否有 v2 宝宝（豆芽或我的宝宝）
-  const hasV2Baby = !!v2BabyInfo;
   
   // 优先使用 v2 账号信息，兼容旧的 currentBaby
   const displayBaby = v2BabyInfo || currentBaby;
@@ -132,13 +136,9 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     
     const age = calculateAge(displayBaby.birthDate);
     
-    // 根据账号类型选择数据源：
-    // 有 v2 宝宝（豆芽/我的宝宝）→ 用 v2AccountInfo.timeline（localStorage）
-    // 没有 v2 宝宝 → 用全局 moments（IndexedDB）
+    // 和 TimelinePage 一致：有 v2 宝宝用 v2Moments，否则用 moments
     const activeMoments = hasV2Baby
-      ? (v2AccountInfo?.timeline 
-        ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
-        : [])
+      ? v2Moments.filter(m => !m.isDeleted)
       : (moments && moments.length > 0
         ? moments.filter(m => !m.isDeleted)
         : []);
@@ -188,15 +188,15 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       topMood,
       moodStats,
     };
-  }, [currentBaby, moments, capsules, v2AccountInfo, hasV2Baby]);
+  }, [currentBaby, moments, capsules, v2Moments, hasV2Baby]);
   
   // 里程碑列表
   const milestones = useMemo(() => {
     const sourceMoments = hasV2Baby
-      ? (v2AccountInfo?.timeline || [])
+      ? v2Moments
       : (moments && moments.length > 0 ? moments : []);
     return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
-  }, [moments, v2AccountInfo, hasV2Baby]);
+  }, [moments, v2Moments, hasV2Baby]);
   
   if (!displayBaby || !stats) {
     return (
@@ -273,11 +273,11 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
           <div className="flex items-center gap-2 mb-4">
             {/* 头像显示在左上角 - 修复：统一使用 v2AccountInfo.accountData?.avatar */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              {v2AccountInfo?.accountData?.avatar ? (
-                v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
-                  <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
+              {v2AccountInfo?.avatar ? (
+                v2AccountInfo.avatar.startsWith('data:') || v2AccountInfo.avatar.startsWith('http') ? (
+                  <img src={v2AccountInfo.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{v2AccountInfo.accountData.avatar}</span>
+                  <span>{v2AccountInfo.avatar}</span>
                 )
               ) : currentUser?.avatar ? (
                 currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
@@ -290,7 +290,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               )}
             </div>
             <h1 className="text-xl font-bold">
-              {v2AccountInfo?.identityName || currentUser?.name || "📊 成长数据"}
+              {v2BabyInfo?.nickname || v2BabyInfo?.name || currentUser?.name || "📊 成长数据"}
             </h1>
           </div>
           
