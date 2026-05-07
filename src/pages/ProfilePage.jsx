@@ -392,7 +392,10 @@ export function ProfilePage(
   // 导入数据
   const handleImport = useCallback(async () => 
 {
-    if (!importFile) return;
+    if (!importFile) {
+      showToast('请先选择备份文件', 'warning');
+      return;
+    }
     
     setIsImporting(true);
     try 
@@ -408,7 +411,8 @@ export function ProfilePage(
     } catch (error) 
 {
       console.error('导入失败:', error);
-      showToast('导入失败: ' + error.message, 'error');
+      const errorMsg = error?.message || error?.toString() || '未知错误';
+      showToast('导入失败: ' + errorMsg, 'error');
     } finally 
 {
       setIsImporting(false);
