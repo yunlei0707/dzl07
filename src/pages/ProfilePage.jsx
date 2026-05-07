@@ -15,7 +15,7 @@ import
   Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
 } from 'lucide-react';
 import 
-{ exportAllData, importAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
+{ exportAllData, importAllData, clearAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
 import { exportV2AccountData, importV2AccountData, isSystemAccount } from '../utils/dbV2';
 import 
 { calculateAge } from '../utils/dateUtils';
@@ -84,6 +84,7 @@ export function ProfilePage(
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
@@ -455,6 +456,22 @@ export function ProfilePage(
     logout();
     navigate('/login');
   }, [logout, navigate]);
+  
+  // 清除缓存
+  const handleClearCache = useCallback(async () => 
+{
+    try {
+      await clearAllData();
+      localStorage.setItem('lastDataUpdate', Date.now().toString());
+      showToast('缓存已清除', 'success');
+      setShowClearConfirm(false);
+      // 刷新页面，回到登录页
+      window.location.reload();
+    } catch (error) {
+      console.error('清除缓存失败:', error);
+      showToast('清除失败', 'error');
+    }
+  }, [showToast]);
   
   // 保存里程碑
   const handleSaveMilestone = useCallback(async () => 
@@ -869,6 +886,35 @@ export function ProfilePage(
         </div>
       )}
       
+{/* 清除缓存确认弹窗 */}
+      
+{showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6">
+            <h3 className="text-lg font-bold mb-2 dark:text-white">⚠️ 清除缓存</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              此操作将清除所有本地数据，包括宝宝信息、时光记录等。清除后无法恢复，建议先导出备份！
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick=
+{() => setShowClearConfirm(false)}
+                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium"
+              >
+                取消
+              </button>
+              <button
+                onClick=
+{handleClearCache}
+                className="flex-1 py-2 bg-red-500 text-white rounded-lg font-medium"
+              >
+                确认清除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       
 {/* 个人资料编辑弹窗 */}
       
@@ -1263,6 +1309,17 @@ export function ProfilePage(
                 >
                   <Upload className="w-5 h-5 text-orange-500" />
                   <span className="font-medium dark:text-white">导入数据</span>
+                </button>
+
+                
+{/* 清除缓存 */}
+                <button
+                  onClick=
+{() => setShowClearConfirm(true)}
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
+                >
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                  <span className="font-medium text-red-500">清除缓存</span>
                 </button>
                 
                 

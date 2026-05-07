@@ -1438,3 +1438,22 @@ export async function createSampleBaby(userId) {
   
   return defaultBaby;
 }
+
+/**
+ * 清空所有数据（清除缓存）
+ */
+export async function clearAllData() {
+  const db = await initDB();
+  const tx = db.transaction(['babies', 'moments', 'capsules', 'settings', 'users'], 'readwrite');
+  await tx.objectStore('babies').clear();
+  await tx.objectStore('moments').clear();
+  await tx.objectStore('capsules').clear();
+  await tx.objectStore('settings').clear();
+  await tx.objectStore('users').clear();
+  await tx.done;
+  // 同时清除 localStorage 中的 v2 数据
+  localStorage.removeItem('v2Data');
+  localStorage.removeItem('currentAccountId');
+  localStorage.removeItem('lastDataUpdate');
+  return true;
+}
