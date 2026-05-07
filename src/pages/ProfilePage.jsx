@@ -12,7 +12,8 @@ import
 import 
 { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
-  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database
+  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database,
+  HelpCircle, Shield, FileText, Info
 } from 'lucide-react';
 import 
 { exportAllData, importAllData, clearAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
@@ -1410,14 +1411,52 @@ export function ProfilePage(
                 </button>
                 
                 
-{/* 关于 */}
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    宝贝时光 v1.0
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">
-                    用心记录每一个成长瞬间
-                  </p>
+{/* 底部功能列表 */}
+                <div className="space-y-2 mt-2">
+                  {/* 帮助与反馈 */}
+                  <button
+                    onClick={() => window.open('https://support.coze.cn', '_blank')}
+                    className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <HelpCircle className="w-5 h-5 text-blue-500" />
+                      <span className="font-medium dark:text-white">帮助与反馈</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
+
+                  {/* 隐私政策 */}
+                  <button
+                    onClick={() => window.open('https://www.coze.cn/privacy', '_blank')}
+                    className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-green-500" />
+                      <span className="font-medium dark:text-white">隐私政策</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
+
+                  {/* 用户协议 */}
+                  <button
+                    onClick={() => window.open('https://www.coze.cn/terms', '_blank')}
+                    className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-purple-500" />
+                      <span className="font-medium dark:text-white">用户协议</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
+
+                  {/* 版本 */}
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Info className="w-5 h-5 text-gray-400" />
+                      <span className="font-medium dark:text-white">版本</span>
+                    </div>
+                    <span className="text-sm text-gray-400">v2.42.0</span>
+                  </div>
                 </div>
               </div>
             </div>
