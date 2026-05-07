@@ -5,6 +5,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play, Pause, Navigation, Search } from 'lucide-react';
 import { useApp } from '../store/AppContext';
+import { getCurrentBabyInfo } from '../utils/dbV2';
 
 const moodOptions = [
   { value: 'happy', emoji: '😊', label: '开心' },
@@ -612,9 +613,14 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setSaving(true);
     
     try {
-      // 检查数据大小，避免 localStorage 溢出
+      // 根据存储类型设置不同的大小限制
+      // v2 账号（localStorage）：5MB 限制，安全上限 4MB
+      // 普通宝宝（IndexedDB）：空间充裕，放宽到 30MB
+      const babyInfo = getCurrentBabyInfo();
+      const isV2Account = !!babyInfo;
+      const MAX_SIZE = isV2Account ? 4 * 1024 * 1024 : 30 * 1024 * 1024;
       const dataSize = JSON.stringify(momentData).length;
-      const MAX_SIZE = 4 * 1024 * 1024; // 4MB 安全上限
+      
       if (dataSize > MAX_SIZE) {
         // 尝试压缩：移除视频的 cover 图片
         const compressedData = {
@@ -623,7 +629,10 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         };
         const compressedSize = JSON.stringify(compressedData).length;
         if (compressedSize > MAX_SIZE) {
-          alert('数据量过大（含视频/音频），请减少附件后重试');
+          const sizeHint = isV2Account 
+            ? '当前账号存储空间有限（localStorage），建议减少视频/音频附件' 
+            : '附件过多，请减少后重试';
+          alert(`数据量过大，${sizeHint}`);
           setSaving(false);
           return;
         }
