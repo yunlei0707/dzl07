@@ -30,11 +30,11 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       setV2BabyInfo(babyInfo);
     };
     
-    // 数据更新时：同时刷新 v2 数据和 IndexedDB 的 moments
+    // 数据更新时：刷新 v2 数据
     const handleDataUpdate = () => {
       updateV2Info();
-      // 从 IndexedDB 重新加载 moments 数据
-      if (currentBaby) {
+      // 如果没有 v2 宝宝，则从 IndexedDB 重新加载
+      if (currentBaby && !getCurrentBabyInfo()) {
         getMomentsByBaby(currentBaby.id).then(babyMoments => {
           setMoments(babyMoments);
         });
@@ -62,6 +62,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
+  // 是否有 v2 宝宝（豆芽或我的宝宝）
+  const hasV2Baby = !!v2BabyInfo;
   
   // 优先使用 v2 账号信息，兼容旧的 currentBaby
   const displayBaby = v2BabyInfo || currentBaby;
@@ -131,17 +133,15 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     const age = calculateAge(displayBaby.birthDate);
     
     // 根据账号类型选择数据源：
-    // v2账号（如豆芽）→ 用 v2AccountInfo.timeline（localStorage）
-    // 普通账号 → 用全局 moments（IndexedDB）
-    const activeMoments = isSystemAccount
+    // 有 v2 宝宝（豆芽/我的宝宝）→ 用 v2AccountInfo.timeline（localStorage）
+    // 没有 v2 宝宝 → 用全局 moments（IndexedDB）
+    const activeMoments = hasV2Baby
       ? (v2AccountInfo?.timeline 
         ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
         : [])
       : (moments && moments.length > 0
         ? moments.filter(m => !m.isDeleted)
-        : (v2AccountInfo?.timeline 
-          ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
-          : []));
+        : []);
     
     // 照片数量
     const photoCount = activeMoments.filter(m => m.photos && m.photos.length > 0)
@@ -188,15 +188,15 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       topMood,
       moodStats,
     };
-  }, [currentBaby, moments, capsules, v2AccountInfo, isSystemAccount]);
+  }, [currentBaby, moments, capsules, v2AccountInfo, hasV2Baby]);
   
   // 里程碑列表
   const milestones = useMemo(() => {
-    const sourceMoments = isSystemAccount
+    const sourceMoments = hasV2Baby
       ? (v2AccountInfo?.timeline || [])
-      : ((moments && moments.length > 0) ? moments : (v2AccountInfo?.timeline || []));
+      : (moments && moments.length > 0 ? moments : []);
     return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
-  }, [moments, v2AccountInfo, isSystemAccount]);
+  }, [moments, v2AccountInfo, hasV2Baby]);
   
   if (!displayBaby || !stats) {
     return (
