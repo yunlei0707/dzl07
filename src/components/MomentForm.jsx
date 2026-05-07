@@ -628,15 +628,27 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           videos: momentData.videos.map(v => ({ ...v, cover: null }))
         };
         const compressedSize = JSON.stringify(compressedData).length;
-        if (compressedSize > MAX_SIZE) {
-          const sizeHint = isV2Account 
-            ? '当前账号存储空间有限（localStorage），建议减少视频/音频附件' 
-            : '附件过多，请减少后重试';
-          alert(`数据量过大，${sizeHint}`);
-          setSaving(false);
-          return;
+        
+        if (isV2Account) {
+          // v2 账号（localStorage）：硬限制，无法绕过
+          if (compressedSize > MAX_SIZE) {
+            alert('存储空间不足，当前账号存储空间有限，请减少视频/音频附件后重试');
+            setSaving(false);
+            return;
+          }
+          Object.assign(momentData, compressedData);
+        } else {
+          // 普通宝宝（IndexedDB）：空间充裕，压缩后仍超限只警告不阻止
+          if (compressedSize > MAX_SIZE) {
+            const proceed = confirm('附件数据较大，保存可能需要较长时间，是否继续？');
+            if (!proceed) {
+              setSaving(false);
+              return;
+            }
+          } else {
+            Object.assign(momentData, compressedData);
+          }
         }
-        Object.assign(momentData, compressedData);
       }
       
       if (typeof onSave === 'function') {
