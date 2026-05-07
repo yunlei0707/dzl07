@@ -30,18 +30,35 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       setV2BabyInfo(babyInfo);
     };
     
+    // 数据更新时：同时刷新 v2 数据和 IndexedDB 的 moments
+    const handleDataUpdate = () => {
+      updateV2Info();
+      // 从 IndexedDB 重新加载 moments 数据
+      if (currentBaby) {
+        getMomentsByBaby(currentBaby.id).then(babyMoments => {
+          setMoments(babyMoments);
+        });
+        getCapsulesByBaby(currentBaby.id).then(babyCapsules => {
+          setCapsules(babyCapsules);
+        });
+      }
+    };
+    
     updateV2Info();
     
     // 监听 localStorage 变化（跨标签页同步）
     window.addEventListener('storage', updateV2Info);
+    // 监听数据更新事件（添加/导入动态后触发）
+    window.addEventListener('v2-moment-updated', handleDataUpdate);
     // 轮询更新
     const interval = setInterval(updateV2Info, 500);
     
     return () => {
       window.removeEventListener('storage', updateV2Info);
+      window.removeEventListener('v2-moment-updated', handleDataUpdate);
       clearInterval(interval);
     };
-  }, [currentBaby]);
+  }, [currentBaby, setMoments, setCapsules]);
   
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
@@ -113,12 +130,18 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     
     const age = calculateAge(displayBaby.birthDate);
     
-    // 使用全局 moments（最新数据），如果没有则回退到 v2 账号的 timeline
-    const activeMoments = (moments && moments.length > 0)
-      ? moments.filter(m => !m.isDeleted)
-      : (v2AccountInfo?.timeline 
+    // 根据账号类型选择数据源：
+    // v2账号（如豆芽）→ 用 v2AccountInfo.timeline（localStorage）
+    // 普通账号 → 用全局 moments（IndexedDB）
+    const activeMoments = isSystemAccount
+      ? (v2AccountInfo?.timeline 
         ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
-        : []);
+        : [])
+      : (moments && moments.length > 0
+        ? moments.filter(m => !m.isDeleted)
+        : (v2AccountInfo?.timeline 
+          ? v2AccountInfo.timeline.filter(m => !m.isDeleted)
+          : []));
     
     // 照片数量
     const photoCount = activeMoments.filter(m => m.photos && m.photos.length > 0)
@@ -165,13 +188,15 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       topMood,
       moodStats,
     };
-  }, [currentBaby, moments, capsules, v2AccountInfo]);
+  }, [currentBaby, moments, capsules, v2AccountInfo, isSystemAccount]);
   
   // 里程碑列表
   const milestones = useMemo(() => {
-    const sourceMoments = (moments && moments.length > 0) ? moments : (v2AccountInfo?.timeline || []);
+    const sourceMoments = isSystemAccount
+      ? (v2AccountInfo?.timeline || [])
+      : ((moments && moments.length > 0) ? moments : (v2AccountInfo?.timeline || []));
     return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
-  }, [moments, v2AccountInfo]);
+  }, [moments, v2AccountInfo, isSystemAccount]);
   
   if (!displayBaby || !stats) {
     return (
