@@ -1,7 +1,7 @@
 /**
- * SDK 初始化组件 v2.5.0
+ * SDK 初始化组件 v2.6.0
  * 
- * 功能：只初始化扣子SDK，不渲染任何内容
+ * 修改：添加ui.footer配置，自定义底部文案
  */
 
 import { useEffect } from 'react';
@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 export function FloatingButton() {
   // 初始化扣子 SDK - 只执行一次
   useEffect(() => {
-    console.log('[FloatingButton v2.5.0] 开始初始化 SDK...');
+    console.log('[FloatingButton v2.6.0] 开始初始化 SDK...');
 
     const initSDK = () => {
       // 避免重复初始化
@@ -26,8 +26,16 @@ export function FloatingButton() {
               bot_id: '7636350042466418731',
             },
             componentProps: {
-              title: '虚拟时光助手',
+              title: '虚拟时光AI助手',
             },
+            // UI配置 - 自定义底部文案
+            ui: {
+              footer: {
+                isShow: true,
+                expressionText: '虚拟时光AI助手-由Coze提供技术支持',
+                linkvars: {}
+              }
+            }
           });
           window.cozeChatInitialized = true;
           console.log('[FloatingButton] ✅ CozeWebSDK 初始化成功');
