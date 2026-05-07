@@ -283,8 +283,8 @@ export function ProfilePage(
         });
         
         await refreshMoments(currentBaby.id);
-        // 触发自定义事件，通知时光轴等页面数据已更新
-        window.dispatchEvent(new CustomEvent('v2-moment-updated'));
+        // 通过修改 localStorage 触发所有页面的刷新（storage事件）
+        localStorage.setItem('lastDataUpdate', Date.now().toString());
       }
       
       showToast('已导入4条示例数据', 'success');
@@ -403,8 +403,8 @@ export function ProfilePage(
       const text = await importFile.text();
       const data = JSON.parse(text);
       await importAllData(data, importMode);
-      // 触发自定义事件，通知时光轴等页面数据已更新
-      window.dispatchEvent(new CustomEvent('v2-moment-updated'));
+      // 通过修改 localStorage 触发所有页面的刷新（storage事件）
+      localStorage.setItem('lastDataUpdate', Date.now().toString());
       showToast('导入成功', 'success');
       setShowImportModal(false);
       refreshData();

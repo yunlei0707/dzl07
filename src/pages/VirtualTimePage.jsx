@@ -46,16 +46,13 @@ export function VirtualTimePage() {
     
     updateV2Info();
     
-    // 监听 localStorage 变化
+    // 监听 localStorage 变化（跨标签页同步、导入数据刷新）
     window.addEventListener('storage', updateV2Info);
-    // 监听数据更新事件（导入数据后触发）
-    window.addEventListener('v2-moment-updated', updateV2Info);
     // 轮询更新
     const interval = setInterval(updateV2Info, 500);
     
     return () => {
       window.removeEventListener('storage', updateV2Info);
-      window.removeEventListener('v2-moment-updated', updateV2Info);
       clearInterval(interval);
     };
   }, []);

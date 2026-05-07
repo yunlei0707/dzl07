@@ -57,13 +57,8 @@ export function VirtualTimeDetail() {
     };
     
     updateInfo();
-    // 监听数据更新事件（导入数据后触发）
-    window.addEventListener('v2-moment-updated', updateInfo);
     const interval = setInterval(updateInfo, 500);
-    return () => {
-      window.removeEventListener('v2-moment-updated', updateInfo);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [loadContents]);
   
   // 添加内容
