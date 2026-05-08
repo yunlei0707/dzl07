@@ -12,7 +12,7 @@ import
 import 
 { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
-  Palette, Tag, Tags, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database,
+  Palette, Tag, Tags, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, ChevronDown, Database,
   HelpCircle, Shield, FileText, Info
 } from 'lucide-react';
 import 
@@ -101,8 +101,7 @@ export function ProfilePage(
   const [moodForm, setMoodForm] = useState(
 { label: '', emoji: '😊' });
   
-  // 设置面板抽屉状态
-  const [showSettings, setShowSettings] = useState(false);
+  // 设置面板抽屉状态 - 已移除，内容整合到主体菜单
   
   // 导入模式
   const [importMode, setImportMode] = useState('merge');
@@ -680,144 +679,257 @@ export function ProfilePage(
         </button>
       </div>
       
-      {/* 功能菜单 */}
-      <div className="px-4 mt-4 space-y-3">
+      {/* 功能菜单 - 分组结构 */}
+      <div className="mt-4">
 
-        
-{/* 主题设置 */}
-        <button
-          onClick=
-{() => setShowThemeModal(true)}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
-            <Palette className="w-5 h-5 text-pink-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">主题设置</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">自定义应用颜色主题</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        
-{/* 标签自定义 */}
-        <button
-          onClick={() => setShowTagGroup(!showTagGroup)}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-            <Tags className="w-5 h-5 text-indigo-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">标签自定义</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">管理里程碑、心情、虚拟时光标签</p>
-          </div>
-          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showTagGroup ? 'rotate-180' : ''}`} />
-        </button>
-        
-        {showTagGroup && (
-          <div className="space-y-2 pl-4">
-            {/* 里程碑标签自定义 */}
+        {/* 个性化分组 */}
+        <div className="px-4">
+          <p className="text-xs text-gray-400 mb-2 px-1">个性化</p>
+          <div className="space-y-2">
+            {/* 主题设置 */}
             <button
-              onClick=
-{() => 
-{
-                setEditingMilestone(null);
-                setMilestoneForm(
-{ label: '', emoji: '⭐', color: '#FF7B70' });
-                setShowMilestoneModal(true);
-              }}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              onClick={() => setShowThemeModal(true)}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                <Tag className="w-4 h-4 text-yellow-500" />
+              <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+                <Palette className="w-5 h-5 text-pink-500" />
               </div>
               <div className="flex-1 text-left">
-                <span className="font-medium text-sm dark:text-white">里程碑标签自定义</span>
+                <span className="font-medium dark:text-white">主题设置</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">自定义应用颜色主题</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </button>
-            
-            {/* 心情标签自定义 */}
-            <button
-              onClick=
-{() => 
-{
-                setEditingMood(null);
-                setMoodForm(
-{ label: '', emoji: '😊' });
-                setShowMoodModal(true);
-              }}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-purple-500" />
-              </div>
-              <div className="flex-1 text-left">
-                <span className="font-medium text-sm dark:text-white">心情标签自定义</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
-            {/* 虚拟时光标签自定义 */}
+            {/* 标签自定义 */}
             <button
-              onClick={() => navigate('/virtual-time-categories')}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              onClick={() => setShowTagGroup(!showTagGroup)}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                <Tags className="w-5 h-5 text-indigo-500" />
               </div>
               <div className="flex-1 text-left">
-                <span className="font-medium text-sm dark:text-white">虚拟时光标签自定义</span>
+                <span className="font-medium dark:text-white">标签自定义</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">管理里程碑、心情、虚拟时光标签</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showTagGroup ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showTagGroup && (
+              <div className="space-y-2 pl-4">
+                {/* 里程碑标签自定义 */}
+                <button
+                  onClick={() => {
+                    setEditingMilestone(null);
+                    setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
+                    setShowMilestoneModal(true);
+                  }}
+                  className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                    <Tag className="w-4 h-4 text-yellow-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <span className="font-medium text-sm dark:text-white">里程碑标签自定义</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+
+                {/* 心情标签自定义 */}
+                <button
+                  onClick={() => {
+                    setEditingMood(null);
+                    setMoodForm({ label: '', emoji: '😊' });
+                    setShowMoodModal(true);
+                  }}
+                  className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <span className="font-medium text-sm dark:text-white">心情标签自定义</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+
+                {/* 虚拟时光标签自定义 */}
+                <button
+                  onClick={() => navigate('/virtual-time-categories')}
+                  className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <span className="font-medium text-sm dark:text-white">虚拟时光标签自定义</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 数据管理分组 */}
+        <div className="px-4 mt-4">
+          <p className="text-xs text-gray-400 mb-2 px-1">数据管理</p>
+          <div className="space-y-2">
+            {/* 导入示例数据 */}
+            <button
+              onClick={handleImportSampleData}
+              disabled={!currentBaby || isImportingSample}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
+            >
+              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Database className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">导入示例数据</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、日记'}
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 导出数据 */}
+            <button
+              onClick={() => handleExport()}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Download className="w-5 h-5 text-green-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">导出数据</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">备份应用数据到本地</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 导入数据 */}
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Upload className="w-5 h-5 text-amber-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">导入数据</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">从备份文件恢复数据</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 回收站 */}
+            <button
+              onClick={() => onOpenRecycleBin()}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">回收站</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">查看已删除的时光记录</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 清除缓存 */}
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium text-red-500 dark:text-red-400">清除缓存</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">谨慎操作，将清除所有本地数据</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
           </div>
-        )}
-        
-        
-{/* 导入示例数据 */}
-        <button
-          onClick=
-{handleImportSampleData}
-          disabled=
-{!currentBaby || isImportingSample}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
-        >
-          <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <Database className="w-5 h-5 text-blue-500" />
+        </div>
+
+        {/* 其他分组 */}
+        <div className="px-4 mt-4">
+          <p className="text-xs text-gray-400 mb-2 px-1">其他</p>
+          <div className="space-y-2">
+            {/* 帮助与反馈 */}
+            <button
+              onClick={() => window.open('https://support.coze.cn', '_blank')}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-sky-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">帮助与反馈</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">获取使用帮助或提交反馈</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 隐私政策 */}
+            <button
+              onClick={() => window.open('https://www.coze.cn/privacy', '_blank')}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">隐私政策</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">了解数据收集与使用政策</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 用户协议 */}
+            <button
+              onClick={() => window.open('https://www.coze.cn/terms', '_blank')}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-violet-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">用户协议</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">使用条款与免责声明</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 版本信息 */}
+            <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Info className="w-5 h-5 text-gray-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium dark:text-white">版本信息</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">当前版本 v2.42.0</p>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导入示例数据</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              
-{isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、日记'}
-            </p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        {/* 设置按钮 */}
-        <button
-          onClick=
-{() => setShowSettings(true)}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-gray-500" />
-          </div>
-          <span className="font-medium dark:text-white">设置</span>
-        </button>
-        <button
-          onClick=
-{handleLogout}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <LogOut className="w-5 h-5 text-gray-500" />
-          </div>
-          <span className="font-medium dark:text-white">退出登录</span>
-        </button>
+        </div>
+
+        {/* 退出登录 - 独立 */}
+        <div className="px-4 mt-6 mb-4">
+          <button
+            onClick={handleLogout}
+            className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+              <LogOut className="w-5 h-5 text-red-400" />
+            </div>
+            <span className="font-medium text-red-500 dark:text-red-400">退出登录</span>
+          </button>
+        </div>
       </div>
       
       
@@ -1344,142 +1456,7 @@ export function ProfilePage(
       )}
       
       
-{/* 设置面板抽屉 - 新增 */}
-      
-{showSettings && (
-        <div className="fixed inset-0 z-50">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick=
-{() => setShowSettings(false)}
-          />
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-2xl overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold dark:text-white">⚙️ 设置</h3>
-                <button onClick=
-{() => setShowSettings(false)}>
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                                
-{/* 回收站入口 */}
-                <button
-                  onClick=
-{() => 
-{
-                    setShowSettings(false);
-                    onOpenRecycleBin();
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Trash2 className="w-5 h-5 text-red-500" />
-                  <span className="font-medium dark:text-white">回收站</span>
-                </button>
-
-                
-{/* 导出数据 */}
-                <button
-                  onClick=
-{() => 
-{
-                    handleExport();
-                    setShowSettings(false);
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Download className="w-5 h-5 text-blue-500" />
-                  <span className="font-medium dark:text-white">导出数据</span>
-                </button>
-
-                
-{/* 导入数据 */}
-                <button
-                  onClick=
-{() => 
-{
-                    setShowSettings(false);
-                    setShowImportModal(true);
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Upload className="w-5 h-5 text-orange-500" />
-                  <span className="font-medium dark:text-white">导入数据</span>
-                </button>
-
-                
-{/* 清除缓存 */}
-                <button
-                  onClick=
-{() => 
-{
-                    setShowSettings(false);
-                    setShowClearConfirm(true);
-                  }}
-                  className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center gap-3"
-                >
-                  <Trash2 className="w-5 h-5 text-red-500" />
-                  <span className="font-medium text-red-500">清除缓存</span>
-                </button>
-                
-                
-{/* 底部功能列表 */}
-                <div className="space-y-2 mt-2">
-                  {/* 帮助与反馈 */}
-                  <button
-                    onClick={() => window.open('https://support.coze.cn', '_blank')}
-                    className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HelpCircle className="w-5 h-5 text-blue-500" />
-                      <span className="font-medium dark:text-white">帮助与反馈</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
-
-                  {/* 隐私政策 */}
-                  <button
-                    onClick={() => window.open('https://www.coze.cn/privacy', '_blank')}
-                    className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-green-500" />
-                      <span className="font-medium dark:text-white">隐私政策</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
-
-                  {/* 用户协议 */}
-                  <button
-                    onClick={() => window.open('https://www.coze.cn/terms', '_blank')}
-                    className="w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-purple-500" />
-                      <span className="font-medium dark:text-white">用户协议</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
-
-                  {/* 版本 */}
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Info className="w-5 h-5 text-gray-400" />
-                      <span className="font-medium dark:text-white">版本</span>
-                    </div>
-                    <span className="text-sm text-gray-400">v2.42.0</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      
-{/* 示例数据模板选择面板 */}
+      {/* 示例数据模板选择面板 */}
       {sampleStep && (
         <div 
           className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center animate-fadeIn"
