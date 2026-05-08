@@ -3,18 +3,20 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/ymgate",
-      "destination": "/api/ymgate"
+      "src": "/ymgate",
+      "dest": "/api/ymgate",
+      "check": true
     },
     {
-      "source": "/ymgate/(.*)",
-      "destination": "/api/ymgate"
+      "src": "/ymgate/(.*)",
+      "dest": "/api/ymgate",
+      "check": true
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
   "headers": [
