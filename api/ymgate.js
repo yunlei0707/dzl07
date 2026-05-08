@@ -1,5 +1,5 @@
 // 一门APP在线网关代理 - Vercel Edge Function
-// 完全模拟Nginx反向代理行为，使用Edge Runtime获得完整headers控制
+// 完全模拟Nginx反向代理行为
 
 export const config = {
   runtime: 'edge',
@@ -45,56 +45,49 @@ export default async function handler(request) {
     const fetchOptions = {
       method: request.method,
       headers: headers,
-      redirect: 'manual',  // 不自动跟随重定向
+      redirect: 'manual',
     };
 
-    // 如果有请求体，转发
     if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
       fetchOptions.body = request.body;
     }
 
-    // 发起请求到目标网关
     const response = await fetch(targetUrl, fetchOptions);
 
-    // 构建响应头 - 完全原样转发
+    // 构建响应头
     const responseHeaders = new Headers();
     
-    // Edge Runtime中需要特殊处理Set-Cookie
-    const setCookieHeaders = [];
-    
+    // 遍历所有响应头（Set-Cookie在entries()中会被跳过，需要单独处理）
     for (const [key, value] of response.headers.entries()) {
       const lowerKey = key.toLowerCase();
       if (!['transfer-encoding', 'connection'].includes(lowerKey)) {
         responseHeaders.set(key, value);
       }
     }
-    
-    // 用getAll处理Set-Cookie（Edge Runtime支持）
-    try {
-      const cookies = response.headers.getAll?.('set-cookie');
-      if (cookies) {
-        cookies.forEach(c => responseHeaders.append('set-cookie', c));
-      }
-    } catch (e) {
-      // getAll不可用，尝试getSetCookie
-      try {
-        const cookies = response.headers.getSetCookie?.();
-        if (cookies && cookies.length > 0) {
-          cookies.forEach(c => responseHeaders.append('set-cookie', c));
-        }
-      } catch (e2) {
-        // 最后尝试直接get
-        const cookieStr = response.headers.get('set-cookie');
-        if (cookieStr) {
-          responseHeaders.set('set-cookie', cookieStr);
+
+    // 单独处理Set-Cookie
+    // 方法1：getSetCookie()
+    if (typeof response.headers.getSetCookie === 'function') {
+      const cookies = response.headers.getSetCookie();
+      if (cookies && cookies.length > 0) {
+        for (const cookie of cookies) {
+          responseHeaders.append('set-cookie', cookie);
         }
       }
     }
+    // 方法2：直接get
+    else {
+      const cookieStr = response.headers.get('set-cookie');
+      if (cookieStr) {
+        responseHeaders.set('set-cookie', cookieStr);
+      }
+    }
 
-    // 获取响应体
+    // 添加调试头，确认代码版本
+    responseHeaders.set('X-Proxy-Version', 'edge-v3');
+
     const body = await response.arrayBuffer();
 
-    // 原样返回
     return new Response(body, {
       status: response.status,
       statusText: response.statusText,
