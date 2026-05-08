@@ -1,5 +1,5 @@
-// 一门APP在线网关代理 - Vercel Edge Function
-// 完全模拟Nginx反向代理行为，并修复重定向Location头
+// 一门APP在线网关 - 完全还原 ymgate.php 逻辑
+// Vercel Edge Function
 
 export const config = {
   runtime: 'edge',
@@ -19,76 +19,65 @@ export default async function handler(request) {
     });
   }
 
-  // 获取用户ID和密钥
-  const userId = process.env.YM_USER_ID || '495126';
-  const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
-  const xYmUser = `u${userId}.${userSecret}`;
+  // PHP文件中嵌入的认证信息
+  const xYmUser = 'u495126.5cb2b8bcb0d2bb0839c9a595f2a39e5040baed34';
+  const xYmVer = 'PHPv20250415';
 
-  // 构建目标URL
+  // 构建目标URL - 完全按照PHP逻辑：总是发送到 /ymgate/? + query_string
+  // PHP: "http://gate.open.yimenyun.com/ymgate/?" . $_SERVER['QUERY_STRING']
   const url = new URL(request.url);
-  let gatewayPath = url.pathname;
-  if (gatewayPath.startsWith('/api/ymgate')) {
-    gatewayPath = gatewayPath.replace('/api/ymgate', '/ymgate');
-  }
-  const targetUrl = `http://gate.open.yimenyun.com${gatewayPath}${url.search}`;
+  const queryString = url.searchParams.toString();
+  const targetUrl = `http://gate.open.yimenyun.com/ymgate/${queryString ? '?' + queryString : ''}`;
 
-  // 构建转发请求头
+  // 构建转发请求头 - 精确匹配PHP的 $headers 数组 + User-Agent
   const headers = new Headers();
   headers.set('X-Ym-User', xYmUser);
-  
-  const excludeHeaders = ['host', 'content-length', 'connection', 'transfer-encoding'];
-  for (const [key, value] of request.headers.entries()) {
-    const lowerKey = key.toLowerCase();
-    if (!excludeHeaders.includes(lowerKey)) {
-      headers.set(key, value);
-    }
-  }
+  headers.set('X-Ym-Ver', xYmVer);
+  headers.set('User-Agent', request.headers.get('User-Agent') || '');
 
   try {
     const fetchOptions = {
       method: request.method,
       headers: headers,
-      redirect: 'manual',  // 不自动跟随重定向
+      redirect: 'manual',  // 等同于 CURLOPT_FOLLOWLOCATION = 0
     };
 
-    if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
-      fetchOptions.body = request.body;
+    // 处理POST请求 - 匹配PHP的 CURLOPT_POST + CURLOPT_POSTFIELDS
+    if (request.method === 'POST') {
+      const contentType = request.headers.get('Content-Type') || '';
+      if (contentType.includes('multipart/form-data')) {
+        fetchOptions.body = await request.formData();
+      } else {
+        fetchOptions.body = await request.arrayBuffer();
+        if (contentType) headers.set('Content-Type', contentType);
+      }
     }
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // 构建响应头
+    // 构建响应头 - 只转发 Content-Type 和 Location，匹配PHP行为
     const responseHeaders = new Headers();
     
-    for (const [key, value] of response.headers.entries()) {
-      const lowerKey = key.toLowerCase();
-      if (!['transfer-encoding', 'connection'].includes(lowerKey)) {
-        responseHeaders.set(key, value);
-      }
+    // 转发 Content-Type - 匹配 PHP: if (!empty($contentType)) header("Content-Type: " . $contentType);
+    const respContentType = response.headers.get('Content-Type');
+    if (respContentType) {
+      responseHeaders.set('Content-Type', respContentType);
     }
 
-    // 单独处理Set-Cookie
-    if (typeof response.headers.getSetCookie === 'function') {
-      const cookies = response.headers.getSetCookie();
-      if (cookies && cookies.length > 0) {
-        for (const cookie of cookies) {
-          responseHeaders.append('set-cookie', cookie);
-        }
-      }
-    }
-
-    // 关键修复：处理302重定向的Location头
-    // 一门网关的302 Location可能是相对路径如 /ymgate/download/xxx
-    // APP会基于我们的域名拼接，导致请求 new.ylmyyh.com/ymgate/download/xxx
-    // 被Vercel的catch-all拦截返回index.html（"跳转到系统首页"）
-    // 解决方案：将相对路径的Location改写为一门网关的绝对路径
+    // 处理重定向 - 匹配 PHP: if (!empty($redirectUrl)) header("Location: " . $redirectUrl);
+    // PHP的 CURLINFO_REDIRECT_URL 返回绝对URL
+    // Fetch API的 redirect:'manual' 时，Location头可能是相对路径，需要转换为绝对路径
     if ([301, 302, 303, 307, 308].includes(response.status)) {
-      const location = response.headers.get('location');
+      const location = response.headers.get('Location');
       if (location) {
-        // 如果Location是相对路径（不以http开头），改写为一门网关的绝对路径
-        if (!location.startsWith('http')) {
-          const absoluteLocation = `http://gate.open.yimenyun.com${location}`;
-          responseHeaders.set('location', absoluteLocation);
+        if (location.startsWith('http://') || location.startsWith('https://')) {
+          responseHeaders.set('Location', location);
+        } else if (location.startsWith('//')) {
+          responseHeaders.set('Location', `http:${location}`);
+        } else if (location.startsWith('/')) {
+          responseHeaders.set('Location', `http://gate.open.yimenyun.com${location}`);
+        } else {
+          responseHeaders.set('Location', `http://gate.open.yimenyun.com/ymgate/${location}`);
         }
       }
     }
@@ -102,13 +91,10 @@ export default async function handler(request) {
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ 
-      code: 502, 
-      message: '网关代理请求失败',
-      error: error.message 
-    }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json' },
+    // 匹配PHP的错误处理：curl_errno时返回500 + 错误信息
+    return new Response(error.message || 'Gateway Error', {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' },
     });
   }
 }
