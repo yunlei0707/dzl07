@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Baby, Camera, X, User, Users, Smile, Eye, Plus } from 'lucide-react';
+import { Heart, Baby, Camera, X } from 'lucide-react';
 
 // 亲属角色配置 - 统一使用主色体系
 const FAMILY_ROLES = [

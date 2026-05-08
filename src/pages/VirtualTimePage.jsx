@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowLeft, X, Expand, Heart, MessageCircle, Copy, Check, Share2, Plus, Trash2, Lock } from 'lucide-react';
+import { Sparkles, Share2 } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
 import { ShareCard } from '../components/ShareCard';

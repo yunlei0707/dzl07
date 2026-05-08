@@ -8,7 +8,7 @@ import { useApp } from '../store/AppContext';
 import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
-import { Gift, TrendingUp, Camera, Calendar, Star, BookOpen } from 'lucide-react'
+import { Gift, TrendingUp, Camera, Star, BookOpen } from 'lucide-react'
 import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 import { TimeBlindBox } from '../components/TimeBlindBox';
 

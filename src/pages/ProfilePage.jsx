@@ -113,6 +113,10 @@ export function ProfilePage(
   const [isImportingSample, setIsImportingSample] = useState(false);
   const [showTagGroup, setShowTagGroup] = useState(false);
   
+  // 分组折叠状态 - 数据管理和"其他"默认折叠
+  const [showDataManagement, setShowDataManagement] = useState(false);
+  const [showOther, setShowOther] = useState(false);
+  
   // 示例数据模板选择流程状态
   const [sampleStep, setSampleStep] = useState(null); // null | 'age' | 'template' | 'edit'
   const [selectedAge, setSelectedAge] = useState(null);
@@ -684,7 +688,7 @@ export function ProfilePage(
 
         {/* 个性化分组 */}
         <div className="px-4">
-          <p className="text-xs text-gray-400 mb-2 px-1">个性化</p>
+          <p className="text-sm font-medium text-gray-500 mb-2 px-1">个性化</p>
           <div className="space-y-2">
             {/* 主题设置 */}
             <button
@@ -758,26 +762,30 @@ export function ProfilePage(
           </div>
         </div>
 
-        {/* 数据管理分组 */}
+        {/* 数据管理分组 - 可折叠 */}
         <div className="px-4 mt-4">
-          <p className="text-xs text-gray-400 mb-2 px-1">数据管理</p>
-          <div className="space-y-2">
+          <button
+            onClick={() => setShowDataManagement(!showDataManagement)}
+            className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
+          >
+            <p className="text-sm font-medium text-gray-500">数据管理</p>
+            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showDataManagement ? 'rotate-180' : ''}`} />
+          </button>
+          {showDataManagement && (
+            <div className="space-y-2">
             {/* 导入示例数据 */}
             <button
               onClick={handleImportSampleData}
               disabled={!currentBaby || isImportingSample}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Database className="w-5 h-5 text-primary-500" />
-              </div>
+              <Database className="w-5 h-5 text-primary-500" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">导入示例数据</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、日记'}
                 </p>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* 导出数据 */}
@@ -785,9 +793,7 @@ export function ProfilePage(
               onClick={() => handleExport()}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <Download className="w-5 h-5 text-amber-500" />
-              </div>
+              <Download className="w-5 h-5 text-amber-500" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">导出数据</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">备份应用数据到本地</p>
@@ -800,14 +806,11 @@ export function ProfilePage(
               onClick={() => setShowImportModal(true)}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Upload className="w-5 h-5 text-gray-500" />
-              </div>
+              <Upload className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">导入数据</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">从备份文件恢复数据</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* 回收站 */}
@@ -815,9 +818,7 @@ export function ProfilePage(
               onClick={() => onOpenRecycleBin()}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-gray-500" />
-              </div>
+              <Trash2 className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">回收站</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">查看已删除的时光记录</p>
@@ -830,30 +831,33 @@ export function ProfilePage(
               onClick={() => setShowClearConfirm(true)}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-500" />
-              </div>
+              <RotateCcw className="w-5 h-5 text-red-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium text-red-500 dark:text-red-400">清除缓存</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">谨慎操作，将清除所有本地数据</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
           </div>
+          )}
         </div>
 
-        {/* 其他分组 */}
+        {/* 其他分组 - 可折叠 */}
         <div className="px-4 mt-4">
-          <p className="text-xs text-gray-400 mb-2 px-1">其他</p>
-          <div className="space-y-2">
+          <button
+            onClick={() => setShowOther(!showOther)}
+            className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
+          >
+            <p className="text-sm font-medium text-gray-500">其他</p>
+            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showOther ? 'rotate-180' : ''}`} />
+          </button>
+          {showOther && (
+            <div className="space-y-2">
             {/* 帮助与反馈 */}
             <button
               onClick={() => window.open('https://support.coze.cn', '_blank')}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-sky-500" />
-              </div>
+              <HelpCircle className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">帮助与反馈</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">获取使用帮助或提交反馈</p>
@@ -866,9 +870,7 @@ export function ProfilePage(
               onClick={() => window.open('https://www.coze.cn/privacy', '_blank')}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-emerald-500" />
-              </div>
+              <Shield className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">隐私政策</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">了解数据收集与使用政策</p>
@@ -881,9 +883,7 @@ export function ProfilePage(
               onClick={() => window.open('https://www.coze.cn/terms', '_blank')}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-violet-500" />
-              </div>
+              <FileText className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">用户协议</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">使用条款与免责声明</p>
@@ -893,15 +893,14 @@ export function ProfilePage(
 
             {/* 版本信息 */}
             <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Info className="w-5 h-5 text-gray-500" />
-              </div>
+              <Info className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">版本信息</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">当前版本 v2.42.0</p>
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* 退出登录 - 独立 */}
@@ -910,9 +909,7 @@ export function ProfilePage(
             onClick={handleLogout}
             className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
-            <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-              <LogOut className="w-5 h-5 text-red-400" />
-            </div>
+            <LogOut className="w-5 h-5 text-red-400" />
             <span className="font-medium text-red-500 dark:text-red-400">退出登录</span>
           </button>
         </div>
