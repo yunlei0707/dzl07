@@ -2,23 +2,22 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": "vite",
   "functions": {
-    "ymgate.js": {
+    "api/ymgate.js": {
       "runtime": "nodejs18.x"
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/ymgate",
-      "dest": "/ymgate"
+      "source": "/ymgate",
+      "destination": "/api/ymgate"
     },
     {
-      "src": "/ymgate/(.*)",
-      "dest": "/ymgate"
+      "source": "/ymgate/(.*)",
+      "destination": "/api/ymgate"
     },
     {
-      "src": "/(.*)",
+      "source": "/(.*)",
       "dest": "/index.html"
     }
   ],
