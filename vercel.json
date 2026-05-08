@@ -4,11 +4,15 @@
   "installCommand": "npm install",
   "rewrites": [
     {
-      "source": "/ymgate",
+      "source": "/api/ymgate/(.*)",
       "destination": "/api/ymgate"
     },
     {
       "source": "/ymgate/(.*)",
+      "destination": "/api/ymgate"
+    },
+    {
+      "source": "/ymgate",
       "destination": "/api/ymgate"
     },
     {
