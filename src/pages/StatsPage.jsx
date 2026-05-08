@@ -35,7 +35,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       setV2Moments(timeline);
       setIsSystemAccount(isSystem);
       setHasV2Baby(!!babyInfo);
-      setV2AccountInfo(account?.accountData || null);
+      setV2AccountInfo(account || null);
       setV2Growth(growth);
       setV2BabyInfo(babyInfo);
     };
@@ -270,34 +270,36 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       
       {/* 头部 - 优化：左上角显示头像 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
-        <div className="px-4 pt-4 pb-6 relative">
-          <div className="flex items-center gap-2 mb-4">
-            {/* 头像显示在左上角 - 修复：统一使用 v2AccountInfo.accountData?.avatar */}
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              {v2AccountInfo?.avatar ? (
-                v2AccountInfo.avatar.startsWith('data:') || v2AccountInfo.avatar.startsWith('http') ? (
-                  <img src={v2AccountInfo.avatar} alt="" className="w-full h-full object-cover" />
+        <div className="px-4 pt-4 pb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              {/* 头像显示在左上角（使用v2账号身份信息） */}
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+                {v2AccountInfo?.accountData?.avatar ? (
+                  v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
+                    <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{v2AccountInfo.accountData.avatar}</span>
+                  )
+                ) : currentUser?.avatar ? (
+                  currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
+                    <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{currentUser.avatar}</span>
+                  )
                 ) : (
-                  <span>{v2AccountInfo.avatar}</span>
-                )
-              ) : currentUser?.avatar ? (
-                currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
-                  <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{currentUser.avatar}</span>
-                )
-              ) : (
-                <span>👶</span>
-              )}
+                  <span>👶</span>
+                )}
+              </div>
+              <h1 className="text-xl font-bold">
+                {v2AccountInfo?.identityName || currentUser?.name || "📊 成长数据"}
+              </h1>
             </div>
-            <h1 className="text-xl font-bold">
-              {v2BabyInfo?.nickname || v2BabyInfo?.name || currentUser?.name || "📊 成长数据"}
-            </h1>
-            <div className="flex-1" />
-            <TimeBlindBox moments={hasV2Baby ? v2Moments.filter(m => !m.isDeleted) : (moments || [])} babyName={v2BabyInfo?.nickname || v2BabyInfo?.name || displayBaby?.name || '宝宝'} />
+            <div className="flex items-center gap-2">
+              <TimeBlindBox moments={hasV2Baby ? v2Moments.filter(m => !m.isDeleted) : (moments || [])} babyName={v2BabyInfo?.nickname || v2BabyInfo?.name || displayBaby?.name || '宝宝'} />
+            </div>
           </div>
           
-          {/* 账号切换器 */}
           <BabyHeader />
           
           {/* 系统账号提示 */}

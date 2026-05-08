@@ -132,7 +132,7 @@ export function ProfilePage(
 {
       const account = getCurrentV2Account();
       const babyInfo = getCurrentBabyInfo();
-      setV2AccountInfo(account?.identityData || null);
+      setV2AccountInfo(account || null);
       setHasV2Baby(!!babyInfo);
     };
     
@@ -624,7 +624,7 @@ export function ProfilePage(
 {/* 头部 - 左上角展示账号头像和名称，参考成长数据页面 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center justify-between mb-4">
             
             {/* 账号头像显示在左上角（只展示登录身份） */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
@@ -649,13 +649,12 @@ export function ProfilePage(
             </h1>
             <div className="flex-1" />
             
-
           </div>
+          
+          {/* 账号切换器 */}
+          <BabyHeader />
         </div>
       </header>
-      
-      {/* 账号切换器 */}
-      <BabyHeader />
       
       {/* 编辑宝宝信息入口 */}
       <div className="px-4 mt-2">

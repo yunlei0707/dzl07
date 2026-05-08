@@ -40,7 +40,7 @@ export function VirtualTimePage() {
     const updateV2Info = () => {
       const account = getCurrentV2Account();
       const virtualTime = getCurrentVirtualTime();
-      setV2AccountInfo(account?.identityData || null);
+      setV2AccountInfo(account || null);
       setV2VirtualTime(virtualTime || []);
     };
     
@@ -204,11 +204,30 @@ export function VirtualTimePage() {
     <div className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900">
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
-              <span>✨</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              {/* 头像显示在左上角（使用v2账号身份信息） */}
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+                {v2AccountInfo?.accountData?.avatar ? (
+                  v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
+                    <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{v2AccountInfo.accountData.avatar}</span>
+                  )
+                ) : currentUser?.avatar ? (
+                  currentUser.avatar.startsWith('data:') || currentUser.avatar.startsWith('http') ? (
+                    <img src={currentUser.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{currentUser.avatar}</span>
+                  )
+                ) : (
+                  <span>✨</span>
+                )}
+              </div>
+              <h1 className="text-xl font-bold">
+                {v2AccountInfo?.identityName || currentUser?.name || "✨ 虚拟时光"}
+              </h1>
             </div>
-            <h1 className="text-xl font-bold">✨ 虚拟时光</h1>
           </div>
           
           <BabyHeader />
