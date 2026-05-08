@@ -94,10 +94,10 @@ export function TimelinePage({
   const milestoneFilters = useMemo(() => {
     const allMilestones = getAllMilestones();
     return [
-      { value: '', label: '里程碑' },
+      { value: '', label: '全部' },
       ...allMilestones.map(m => ({
         value: m.id,
-        label: `${m.emoji} ${m.label}`
+        label: m.label
       }))
     ];
   }, [getAllMilestones]);
@@ -106,10 +106,10 @@ export function TimelinePage({
   const moodFilters = useMemo(() => {
     const allMoods = getAllMoods();
     return [
-      { value: '', label: '心情' },
+      { value: '', label: '全部' },
       ...allMoods.map(m => ({
         value: m.id,
-        label: `${m.emoji} ${m.label}`
+        label: m.label
       }))
     ];
   }, [getAllMoods]);
