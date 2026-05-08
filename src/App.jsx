@@ -154,7 +154,7 @@ function AppContent() {
       setEditingBaby(null);
       
     } catch (error) {
-      showToast('保存失败: ' + error.message, 'error');
+      console.error('[GrowthRecord] Save error:', error); showToast('保存失败: ' + error.message, 'error');
     }
   };
 
@@ -241,7 +241,7 @@ function AppContent() {
       setEditingMoment(null);
       
     } catch (error) {
-      showToast('保存失败: ' + error.message, 'error');
+      console.error('[GrowthRecord] Save error:', error); showToast('保存失败: ' + error.message, 'error');
     }
   };
 
@@ -266,7 +266,7 @@ function AppContent() {
       refreshCapsules(currentBaby?.id);
       
     } catch (error) {
-      showToast('保存失败: ' + error.message, 'error');
+      console.error('[GrowthRecord] Save error:', error); showToast('保存失败: ' + error.message, 'error');
     }
   };
 
@@ -274,6 +274,7 @@ function AppContent() {
   const handleSaveGrowthRecord = async (recordData) => {
     try {
       const babyId = recordData.babyId || currentBaby?.id || getCurrentBabyInfo()?.id;
+      console.log('[GrowthRecord] Saving with babyId:', babyId, 'recordData:', recordData);
       
       // 获取宝宝昵称
       const babyInfo = getCurrentBabyInfo() || currentBaby;
@@ -343,7 +344,7 @@ function AppContent() {
       refreshGrowthRecords(currentBaby?.id);
       
     } catch (error) {
-      showToast('保存失败: ' + error.message, 'error');
+      console.error('[GrowthRecord] Save error:', error); showToast('保存失败: ' + error.message, 'error');
     }
   };
 

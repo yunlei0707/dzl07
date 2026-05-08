@@ -131,6 +131,9 @@ export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-white flex items-center gap-1">
               {displayInfo.nickname || displayInfo.name}
+              {displayInfo.nickname && displayInfo.name && displayInfo.nickname !== displayInfo.name && (
+                <span className="text-xs text-gray-400 font-normal">· {displayInfo.name}</span>
+              )}
               {onEditBaby && <span className="text-xs text-primary-400">✏️</span>}
             </h2>
             {/* 系统账号标记 */}
@@ -144,12 +147,12 @@ export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount
           
           {/* 年龄或预产期倒计时 */}
           {isUnborn && countdown ? (
-            <p className="text-purple-600 dark:text-purple-400 font-medium text-sm">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
               🤰 预产期倒计时 {countdown.display}
             </p>
           ) : age ? (
             <p className="text-primary-600 dark:text-primary-400 font-medium text-sm">
-              {age.display} {zodiac.emoji}{constellation.emoji}
+              {age.display}
             </p>
           ) : null}
           
