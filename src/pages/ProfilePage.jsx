@@ -633,6 +633,10 @@ export function ProfilePage(
             <div 
               className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm cursor-pointer hover:opacity-80 active:scale-95 transition-all"
               onClick={() => {
+                if (isSystemAccount) {
+                  showToast('系统账号不可编辑', 'error');
+                  return;
+                }
                 const babyInfo = v2AccountInfo || currentBaby;
                 if (babyInfo) {
                   onEditBaby(babyInfo);
@@ -658,6 +662,10 @@ export function ProfilePage(
             <h1 
               className="text-xl font-bold cursor-pointer hover:text-primary-500 transition-colors"
               onClick={() => {
+                if (isSystemAccount) {
+                  showToast('系统账号不可编辑', 'error');
+                  return;
+                }
                 const babyInfo = v2AccountInfo || currentBaby;
                 if (babyInfo) {
                   onEditBaby(babyInfo);
