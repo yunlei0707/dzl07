@@ -99,8 +99,26 @@ export function AppProvider({ children }) {
     async function init() {
       try {
         // 检查登录状态
-        const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userStr = localStorage.getItem('currentUser');
+        let loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        let userStr = localStorage.getItem('currentUser');
+        
+        // 未登录但有记住的用户 → 自动登录
+        if (!loggedIn || !userStr) {
+          const rememberedStr = localStorage.getItem('rememberedUser');
+          if (rememberedStr) {
+            try {
+              const rememberedUser = JSON.parse(rememberedStr);
+              // 恢复登录状态
+              localStorage.setItem('isLoggedIn', 'true');
+              localStorage.setItem('currentUser', rememberedStr);
+              loggedIn = true;
+              userStr = rememberedStr;
+            } catch (e) {
+              localStorage.removeItem('rememberedUser');
+            }
+          }
+        }
+        
         let currentUserId = null;
         if (loggedIn && userStr) {
           try {
@@ -391,10 +409,17 @@ export function AppProvider({ children }) {
     setIsLoggedIn(true);
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('currentUser', JSON.stringify(user));
+    // 更新记住的用户
+    localStorage.setItem('rememberedUser', JSON.stringify(user));
   }, []);
 
   // 登出处理
   const logout = useCallback(() => {
+    // 记住当前用户，下次打开自动登录
+    const userStr = localStorage.getItem('currentUser');
+    if (userStr) {
+      localStorage.setItem('rememberedUser', userStr);
+    }
     setCurrentUser(null);
     setIsLoggedIn(false);
     localStorage.removeItem('isLoggedIn');
