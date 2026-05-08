@@ -8,7 +8,7 @@ import { useApp } from '../store/AppContext';
 import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
-import { Gift, TrendingUp, Camera, Star, BookOpen } from 'lucide-react'
+import { Gift, TrendingUp, Camera, Star, BookOpen, ChevronDown } from 'lucide-react'
 import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 import { TimeBlindBox } from '../components/TimeBlindBox';
 
@@ -76,6 +76,11 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  
+  // 折叠状态 - 成长概览默认展开，其他折叠
+  const [showGrowthOverview, setShowGrowthOverview] = useState(true);
+  const [showMilestoneStats, setShowMilestoneStats] = useState(false);
+  const [showRecordTypes, setShowRecordTypes] = useState(false);
   const touchStartY = useRef(0);
   const scrollTop = useRef(0);
   const containerRef = useRef(null);
@@ -364,12 +369,17 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       <main className="px-4 -mt-4 space-y-4 max-w-lg mx-auto">
         {/* 概览卡片 */}
         <div className="card animate-fade-in">
-          <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+          <h3 
+            className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 cursor-pointer hover:text-gray-600"
+            onClick={() => setShowGrowthOverview(!showGrowthOverview)}
+          >
             <TrendingUp className="w-5 h-5 text-primary-500" />
             成长概览
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${showGrowthOverview ? 'rotate-180' : ''}`} />
           </h3>
           
-          <div className="grid grid-cols-2 gap-3">
+          {showGrowthOverview && (
+            <div className="grid grid-cols-2 gap-3">
             {/* 成长记录 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
@@ -414,16 +424,22 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">成长天数</p>
             </div>
           </div>
+          )}
         </div>
         
         {/* 记录类型分布 */}
         <div className="card animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+          <h3 
+            className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 cursor-pointer hover:text-gray-600"
+            onClick={() => setShowRecordTypes(!showRecordTypes)}
+          >
             <Camera className="w-5 h-5 text-primary-500" />
             记录类型
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${showRecordTypes ? 'rotate-180' : ''}`} />
           </h3>
           
-          <div className="space-y-3">
+          {showRecordTypes && (
+            <div className="space-y-3">
             {/* 照片记录 */}
             <div 
               className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -504,16 +520,22 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               </div>
             </div>
           </div>
+          )}
         </div>
         
         {/* 里程碑类型统计 */}
         <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+          <h3 
+            className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 cursor-pointer hover:text-gray-600"
+            onClick={() => setShowMilestoneStats(!showMilestoneStats)}
+          >
             <Star className="w-5 h-5 text-amber-500" />
             里程碑统计
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${showMilestoneStats ? 'rotate-180' : ''}`} />
           </h3>
           
-          <div className="space-y-3">
+          {showMilestoneStats && (
+            <div className="space-y-3">
             {milestoneStats.length > 0 ? milestoneStats.map((ms) => (
               <div 
                 key={ms.id}
@@ -553,6 +575,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               </div>
             )}
           </div>
+          )}
         </div>
         
         {/* 宝宝成长档案入口 */}

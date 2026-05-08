@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { X, Download, Image as ImageIcon } from 'lucide-react';
+import { X, Download, Image as ImageIcon, Gift } from 'lucide-react';
 import { playBGM, stopBGM, toggleMute, isBGMMuted, loadMutePreference } from '../utils/bgm';
 
 // 格式化日期显示

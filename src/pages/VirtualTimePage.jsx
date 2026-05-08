@@ -246,12 +246,8 @@ export function VirtualTimePage() {
 
       <main className="px-4 -mt-4 max-w-lg mx-auto">
 
-        {/* AI 生成内容区域 */}
+        {/* 专题卡片列表 */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <h3 className="font-bold text-gray-800 dark:text-white">AI 生成内容</h3>
-          </div>
           {virtualTimeTopics.map((topic) => (
             <TopicCard key={topic.id} topic={topic} />
           ))}

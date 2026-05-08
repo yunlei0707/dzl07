@@ -656,10 +656,10 @@ export function ProfilePage(
             {/* 给宝宝的信按钮 */}
             <button
               onClick={onOpenCapsules}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
             >
-              <span className="text-sm">💌</span>
-              <span className="text-sm font-medium text-gray-800">给宝宝的信</span>
+              <Heart className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">给宝宝的信</span>
             </button>
           </div>
           
