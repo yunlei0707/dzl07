@@ -7,10 +7,9 @@ export default async function handler(req, res) {
   const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
   const xYmUser = `u${userId}.${userSecret}`;
 
-  // 构建目标URL - 网关使用 http 协议和 /ymgate 路径
-  // 移除 /ymgate 前缀，保留剩余路径
-  const urlPath = req.url.replace(/^\/ymgate/, '') || '/';
-  const targetUrl = `http://gate.open.yimenyun.com/ymgate${urlPath === '/' ? '' : urlPath}`;
+  // 构建目标URL - 保留完整路径，一门网关要求 /ymgate 路径
+  // req.url 可能是 /ymgate 或 /ymgate/xxx，直接拼接到网关地址
+  const targetUrl = `http://gate.open.yimenyun.com${req.url}`;
 
   console.log('网关代理请求:', { targetUrl, method: req.method });
 
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
     'Content-Type': req.headers['content-type'] || 'application/json',
   };
 
-  // 复制其他必要的请求头（除了host和content-length）
+  // 复制其他必要的请求头
   const excludeHeaders = ['host', 'content-length', 'connection'];
   Object.entries(req.headers).forEach(([key, value]) => {
     if (!excludeHeaders.includes(key.toLowerCase()) && !headers[key]) {
@@ -29,7 +28,6 @@ export default async function handler(req, res) {
   });
 
   try {
-    // 构建fetch请求配置
     const fetchOptions = {
       method: req.method,
       headers: headers,
@@ -40,7 +38,7 @@ export default async function handler(req, res) {
       fetchOptions.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
 
-    // 发起请求到目标网关
+    // 发起请求到目标网关（使用http协议）
     const response = await fetch(targetUrl, fetchOptions);
 
     // 获取响应内容

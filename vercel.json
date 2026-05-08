@@ -10,6 +10,14 @@
   },
   "rewrites": [
     {
+      "source": "/ymgate",
+      "destination": "/ymgate.js"
+    },
+    {
+      "source": "/ymgate/(.*)",
+      "destination": "/ymgate.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
