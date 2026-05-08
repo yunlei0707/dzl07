@@ -11,6 +11,7 @@ import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
 import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react'
 import { TimeBlindBox } from '../components/TimeBlindBox';
 import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
+import { TimeBlindBox } from '../components/TimeBlindBox';
 
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast } = useApp();
@@ -297,6 +298,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             <h1 className="text-xl font-bold">
               {v2BabyInfo?.nickname || v2BabyInfo?.name || currentUser?.name || "📊 成长数据"}
             </h1>
+            <div className="flex-1" />
+            <TimeBlindBox moments={hasV2Baby ? v2Moments.filter(m => !m.isDeleted) : (moments || [])} />
           </div>
           
           {/* 账号切换器 */}

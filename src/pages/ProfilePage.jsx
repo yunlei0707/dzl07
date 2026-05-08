@@ -649,24 +649,7 @@ export function ProfilePage(
             </h1>
             <div className="flex-1" />
             
-{/* 设置按钮 */}
-            <button
-              onClick=
-{() => setShowSettings(true)}
-              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            
-{/* 主题切换 */}
-            <button
-              onClick=
-{toggleTheme}
-              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-            >
-              
-{theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+
           </div>
         </div>
       </header>
@@ -807,6 +790,17 @@ export function ProfilePage(
             </p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
+        {/* 设置按钮 */}
+        <button
+          onClick=
+{() => setShowSettings(true)}
+          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+            <Settings className="w-5 h-5 text-gray-500" />
+          </div>
+          <span className="font-medium dark:text-white">设置</span>
         </button>
         <button
           onClick=
