@@ -236,7 +236,7 @@ export function VirtualTimePage() {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
             >
               <span className="text-sm">📩</span>
-              <span className="text-sm font-medium text-gray-800">来自宝宝的信</span>
+              <span className="text-base font-medium text-gray-700">来自宝宝的信</span>
             </button>
           </div>
           

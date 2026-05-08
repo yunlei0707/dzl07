@@ -181,7 +181,7 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
         }`}
       >
         <span className="text-base">🎁</span>
-        <span className="text-sm font-medium text-gray-700">时光盲盒</span>
+        <span className="text-base font-medium text-gray-700">时光盲盒</span>
       </button>
 
       {/* 盲盒卡片弹窗 - 底部抽屉 */}

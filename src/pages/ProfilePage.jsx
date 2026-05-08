@@ -659,7 +659,7 @@ export function ProfilePage(
               className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
             >
               <Heart className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">给宝宝的信</span>
+              <span className="text-base font-medium text-gray-700">给宝宝的信</span>
             </button>
           </div>
           
