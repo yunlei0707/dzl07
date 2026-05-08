@@ -13,7 +13,7 @@ import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurren
 import { TimeBlindBox } from '../components/TimeBlindBox';
 
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
-  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast } = useApp();
+  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones } = useApp();
   
   // v2 账号系统：获取当前账号信息
   const [v2Moments, setV2Moments] = useState([]);
@@ -198,6 +198,52 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       : (moments && moments.length > 0 ? moments : []);
     return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
   }, [moments, v2Moments, hasV2Baby]);
+
+  // 里程碑类型统计
+  const milestoneStats = useMemo(() => {
+    const sourceMoments = hasV2Baby
+      ? v2Moments
+      : (moments && moments.length > 0 ? moments : []);
+    const milestoneMoments = sourceMoments.filter(m => m.milestone && !m.isDeleted);
+    
+    // 获取所有里程碑选项
+    const allOptions = getAllMilestones();
+    
+    // 按milestone id分组计数
+    const countMap = {};
+    milestoneMoments.forEach(m => {
+      const key = m.milestone;
+      if (key) {
+        countMap[key] = (countMap[key] || 0) + 1;
+      }
+    });
+    
+    // 构建结果：只显示有记录的类型
+    const result = allOptions
+      .filter(opt => countMap[opt.id])
+      .map(opt => ({
+        id: opt.id,
+        label: opt.label,
+        emoji: opt.emoji,
+        count: countMap[opt.id],
+      }));
+    
+    // 也加上没有匹配到选项的里程碑（自定义被删除的）
+    Object.keys(countMap).forEach(key => {
+      if (!result.find(r => r.id === key)) {
+        const sample = milestoneMoments.find(m => m.milestone === key);
+        result.push({
+          id: key,
+          label: sample?.milestoneLabel || key,
+          emoji: sample?.milestoneEmoji || '⭐',
+          count: countMap[key],
+        });
+      }
+    });
+    
+    // 按数量降序
+    return result.sort((a, b) => b.count - a.count);
+  }, [moments, v2Moments, hasV2Baby, getAllMilestones]);
   
   if (!displayBaby || !stats) {
     return (
@@ -460,31 +506,33 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
           </div>
         </div>
         
-        {/* 里程碑列表 */}
-        {milestones.length > 0 && (
+        {/* 里程碑类型统计 */}
+        {milestoneStats.length > 0 && (
           <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-500" />
-              里程碑
+              里程碑统计
             </h3>
             
-            <div className="space-y-2">
-              {milestones.map((m, i) => (
+            <div className="space-y-3">
+              {milestoneStats.map((ms) => (
                 <div 
-                  key={i}
-                  className="flex items-center gap-3 p-2 bg-cream-50 dark:bg-gray-700/50 rounded-xl cursor-pointer hover:bg-cream-100 dark:hover:bg-gray-700"
-                  onClick={() => onStatClick({ type: 'moment', momentId: m.id })}
+                  key={ms.id}
+                  className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => onStatClick({ type: 'filter', filterMilestone: ms.id })}
                 >
-                  <span className="text-2xl">
-                    {m.milestoneEmoji || '⭐'}
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800 dark:text-white">
-                      {m.milestoneLabel || '里程碑'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(m.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{ms.emoji}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{ms.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-amber-400 rounded-full"
+                        style={{ width: `${(ms.count / Math.max(stats.milestoneCount, 1)) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm text-gray-500 w-8 font-medium text-right">{ms.count}</span>
                   </div>
                 </div>
               ))}
