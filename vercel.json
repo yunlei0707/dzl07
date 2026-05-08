@@ -8,18 +8,18 @@
       "runtime": "nodejs18.x"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/ymgate/(.*)",
-      "destination": "/api/ymgate"
+      "src": "/ymgate",
+      "dest": "/api/ymgate"
     },
     {
-      "source": "/ymgate",
-      "destination": "/api/ymgate"
+      "src": "/ymgate/(.*)",
+      "dest": "/api/ymgate"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
   "headers": [
