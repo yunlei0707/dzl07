@@ -126,11 +126,11 @@ export function CapsulesPage({ onClose, onAddCapsule, onEditCapsule }) {
             <p className="text-xs text-gray-500">全部胶囊</p>
           </div>
           <div className="card text-center py-3">
-            <p className="text-2xl font-bold text-green-600">{stats.unlocked}</p>
+            <p className="text-2xl font-bold text-primary-500">{stats.unlocked}</p>
             <p className="text-xs text-gray-500">已解锁</p>
           </div>
           <div className="card text-center py-3">
-            <p className="text-2xl font-bold text-warm-600">{stats.locked}</p>
+            <p className="text-2xl font-bold text-amber-500">{stats.locked}</p>
             <p className="text-xs text-gray-500">待开封</p>
           </div>
         </div>

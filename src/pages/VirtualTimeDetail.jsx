@@ -410,7 +410,7 @@ export function VirtualTimeDetail() {
                 {/* 联动内容标识 */}
                 {item.is_linked && (
                   <div className="px-4 pt-3 flex items-center gap-2">
-                    <div className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-medium rounded-full shadow-sm flex items-center gap-1">
+                    <div className="px-2 py-0.5 bg-gradient-to-r from-primary-500 to-amber-500 text-white text-xs font-medium rounded-full shadow-sm flex items-center gap-1">
                       💖 来自真实记录
                     </div>
                     <span className="text-xs text-pink-600 dark:text-pink-400">

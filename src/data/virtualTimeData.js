@@ -9,7 +9,7 @@ export const virtualTimeTopics = [
     title: '幼儿园宝宝',
     description: 'AI想象宝宝在幼儿园的快乐时光，画画、游戏、交朋友',
     coverEmoji: '🎨',
-    coverGradient: 'from-pink-400 to-orange-300',
+    coverGradient: 'from-primary-400 to-amber-400',
     coverIcon: '🏫',
     items: [
       {

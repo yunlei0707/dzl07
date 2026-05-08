@@ -25,7 +25,7 @@ export function AIChoiceModal({ show, onCancel }) {
         className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-[85%] max-w-xs overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-primary-50 to-orange-50 dark:from-gray-700 dark:to-gray-700">
+        <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-primary-50 to-amber-50 dark:from-gray-700 dark:to-gray-700">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />

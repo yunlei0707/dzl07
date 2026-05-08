@@ -13,7 +13,7 @@ import
 { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
   Palette, Tag, Tags, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, ChevronDown, Database,
-  HelpCircle, Shield, FileText, Info
+  HelpCircle, Shield, FileText, Info, RotateCcw
 } from 'lucide-react';
 import 
 { exportAllData, importAllData, clearAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
@@ -691,14 +691,11 @@ export function ProfilePage(
               onClick={() => setShowThemeModal(true)}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-pink-500" />
-              </div>
+              <Palette className="w-5 h-5 text-primary-500" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">主题设置</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">自定义应用颜色主题</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* 标签自定义 */}
@@ -706,9 +703,7 @@ export function ProfilePage(
               onClick={() => setShowTagGroup(!showTagGroup)}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                <Tags className="w-5 h-5 text-indigo-500" />
-              </div>
+              <Tags className="w-5 h-5 text-amber-500" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">标签自定义</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">管理里程碑、心情、虚拟时光标签</p>
@@ -727,13 +722,10 @@ export function ProfilePage(
                   }}
                   className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                    <Tag className="w-4 h-4 text-yellow-500" />
-                  </div>
+                  <span className="text-sm text-primary-500">⭐</span>
                   <div className="flex-1 text-left">
                     <span className="font-medium text-sm dark:text-white">里程碑标签自定义</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
 
                 {/* 心情标签自定义 */}
@@ -745,13 +737,10 @@ export function ProfilePage(
                   }}
                   className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-purple-500" />
-                  </div>
+                  <span className="text-sm text-amber-500">😊</span>
                   <div className="flex-1 text-left">
                     <span className="font-medium text-sm dark:text-white">心情标签自定义</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
 
                 {/* 虚拟时光标签自定义 */}
@@ -759,13 +748,10 @@ export function ProfilePage(
                   onClick={() => navigate('/virtual-time-categories')}
                   className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-green-500" />
-                  </div>
+                  <span className="text-sm text-gray-400">✨</span>
                   <div className="flex-1 text-left">
                     <span className="font-medium text-sm dark:text-white">虚拟时光标签自定义</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
             )}
@@ -782,8 +768,8 @@ export function ProfilePage(
               disabled={!currentBaby || isImportingSample}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50"
             >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <Database className="w-5 h-5 text-blue-500" />
+              <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <Database className="w-5 h-5 text-primary-500" />
               </div>
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">导入示例数据</span>
@@ -799,8 +785,8 @@ export function ProfilePage(
               onClick={() => handleExport()}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Download className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Download className="w-5 h-5 text-amber-500" />
               </div>
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">导出数据</span>
@@ -814,8 +800,8 @@ export function ProfilePage(
               onClick={() => setShowImportModal(true)}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <Upload className="w-5 h-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Upload className="w-5 h-5 text-gray-500" />
               </div>
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">导入数据</span>
@@ -829,8 +815,8 @@ export function ProfilePage(
               onClick={() => onOpenRecycleBin()}
               className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-500" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-gray-500" />
               </div>
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">回收站</span>

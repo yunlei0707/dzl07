@@ -264,7 +264,7 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
                 {/* 类型标识 */}
                 <div className="flex items-center gap-2 mb-2">
                   {selectedMoment.type === 'audio' && (
-                    <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 px-2 py-0.5 rounded-full">
                       🎙️ 语音
                     </span>
                   )}

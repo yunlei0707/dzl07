@@ -232,8 +232,8 @@ export function GrowthReport({ onClose }) {
         className="w-full bg-gradient-to-b from-cream-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-t-3xl max-h-[95vh] overflow-hidden flex flex-col animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
-        {/* 头部 - 蓝绿渐变 */}
-        <div className="bg-gradient-to-r from-teal-400 to-cyan-500 px-4 py-3 flex items-center justify-between">
+        {/* 头部 - 主色深浅渐变 */}
+        <div className="bg-gradient-to-r from-primary-400 to-primary-500 px-4 py-3 flex items-center justify-between">
           <h2 className="font-bold text-lg text-white flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             宝宝成长档案
@@ -301,23 +301,23 @@ export function GrowthReport({ onClose }) {
                 {/* 统计卡片 */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 mb-4 shadow-sm">
                   <div className="grid grid-cols-4 gap-3">
-                    <div className="bg-gradient-to-br from-pink-100 to-pink-200 rounded-xl p-3 text-center">
-                      <Camera className="w-5 h-5 mx-auto mb-1 text-pink-600" />
+                    <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl p-3 text-center">
+                      <Camera className="w-5 h-5 mx-auto mb-1 text-primary-600" />
                       <p className="text-xl font-bold text-gray-800">{stats.photoCount}</p>
                       <p className="text-xs text-gray-600">照片</p>
                     </div>
-                    <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-3 text-center">
-                      <Video className="w-5 h-5 mx-auto mb-1 text-purple-600" />
+                    <div className="bg-gradient-to-br from-primary-200 to-amber-200 rounded-xl p-3 text-center">
+                      <Video className="w-5 h-5 mx-auto mb-1 text-primary-600" />
                       <p className="text-xl font-bold text-gray-800">{stats.videoCount}</p>
                       <p className="text-xs text-gray-600">视频</p>
                     </div>
-                    <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-3 text-center">
-                      <FileText className="w-5 h-5 mx-auto mb-1 text-blue-600" />
+                    <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl p-3 text-center">
+                      <FileText className="w-5 h-5 mx-auto mb-1 text-amber-600" />
                       <p className="text-xl font-bold text-gray-800">{stats.diaryCount}</p>
                       <p className="text-xs text-gray-600">日记</p>
                     </div>
-                    <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-3 text-center">
-                      <Mic className="w-5 h-5 mx-auto mb-1 text-orange-600" />
+                    <div className="bg-gradient-to-br from-amber-200 to-warm-200 rounded-xl p-3 text-center">
+                      <Mic className="w-5 h-5 mx-auto mb-1 text-amber-600" />
                       <p className="text-xl font-bold text-gray-800">{stats.audioCount}</p>
                       <p className="text-xs text-gray-600">语音</p>
                     </div>
@@ -362,10 +362,10 @@ export function GrowthReport({ onClose }) {
                 {stats.representativeMoment && (
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 mb-4 shadow-sm">
                     <h4 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-red-500" />
+                      <Heart className="w-4 h-4 text-primary-500" />
                       代表时刻
                     </h4>
-                    <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-3">
+                    <div className="bg-gradient-to-br from-primary-50 to-amber-50 rounded-xl p-3">
                       <div className="flex gap-3">
                         {getRepresentativeThumb() && (
                           <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">

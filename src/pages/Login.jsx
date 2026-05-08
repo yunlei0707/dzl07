@@ -6,17 +6,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Baby, Camera, X, User, Users, Smile, Eye, Plus } from 'lucide-react';
 
-// 亲属角色配置
+// 亲属角色配置 - 统一使用主色体系
 const FAMILY_ROLES = [
-  { id: 'father', name: '无敌奶爸', icon: '👨', color: 'from-blue-400 to-blue-500', welcome: '欢迎爸爸光临' },
-  { id: 'mother', name: '温柔宝妈', icon: '👩', color: 'from-pink-400 to-pink-500', welcome: '欢迎妈妈光临' },
-  { id: 'grandpa', name: '慈祥姥爷', icon: '👴', color: 'from-amber-400 to-amber-500', welcome: '欢迎姥爷光临' },
-  { id: 'grandma', name: '和蔼姥姥', icon: '👵', color: 'from-rose-400 to-rose-500', welcome: '欢迎姥姥光临' },
-  { id: 'uncle', name: '帅气老舅', icon: '🧔', color: 'from-indigo-400 to-indigo-500', welcome: '欢迎舅舅光临' },
-  { id: 'aunt', name: '漂亮小姨', icon: '💃', color: 'from-fuchsia-400 to-fuchsia-500', welcome: '欢迎小姨光临' },
-  { id: 'grandpa-father', name: '慈祥爷爷', icon: '👴🏻', color: 'from-orange-400 to-orange-500', welcome: '欢迎爷爷光临' },
-  { id: 'baby', name: '宝宝本人', icon: '👶', color: 'from-yellow-400 to-yellow-500', welcome: '欢迎宝宝光临' },
-  { id: 'guest', name: '访客参观', icon: '👀', color: 'from-gray-400 to-gray-500', welcome: '欢迎您来参观' },
+  { id: 'father', name: '无敌奶爸', icon: '👨', color: 'primary', welcome: '欢迎爸爸光临' },
+  { id: 'mother', name: '温柔宝妈', icon: '👩', color: 'primary', welcome: '欢迎妈妈光临' },
+  { id: 'grandpa', name: '慈祥姥爷', icon: '👴', color: 'primary', welcome: '欢迎姥爷光临' },
+  { id: 'grandma', name: '和蔼姥姥', icon: '👵', color: 'primary', welcome: '欢迎姥姥光临' },
+  { id: 'uncle', name: '帅气老舅', icon: '🧔', color: 'primary', welcome: '欢迎舅舅光临' },
+  { id: 'aunt', name: '漂亮小姨', icon: '💃', color: 'primary', welcome: '欢迎小姨光临' },
+  { id: 'grandpa-father', name: '慈祥爷爷', icon: '👴🏻', color: 'primary', welcome: '欢迎爷爷光临' },
+  { id: 'baby', name: '宝宝本人', icon: '👶', color: 'primary', welcome: '欢迎宝宝光临' },
+  { id: 'guest', name: '访客参观', icon: '👀', color: 'gray', welcome: '欢迎您来参观' },
 ];
 
 // 自定义身份可选图标
@@ -117,19 +117,9 @@ export function LoginPage({ onLogin }) {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* 背景渐变 */}
+      {/* 背景渐变 - 统一使用主色-暖色体系 */}
       <div 
-        className="absolute inset-0 bg-gradient-to-br transition-all duration-500"
-        style={{
-          background: customBg 
-            ? `url(${customBg}) center/cover no-repeat`
-            : selectedRole 
-              ? `linear-gradient(135deg, var(--tw-gradient-stops))` 
-              : 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%)',
-          '--tw-gradient-stops': selectedRole 
-            ? `var(--color-${selectedRole.color.split('-')[0]}-400), var(--color-${selectedRole.color.split('-')[1]}-500)`
-            : undefined,
-        }}
+        className="absolute inset-0 bg-gradient-to-br from-primary-100 via-primary-50 to-warm-50 transition-all duration-500"
       />
       
       {/* 遮罩层 - 有自定义背景时使用深色遮罩 */}
@@ -142,7 +132,7 @@ export function LoginPage({ onLogin }) {
         {/* Logo区域 */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 mx-auto bg-white rounded-2xl shadow-xl flex items-center justify-center mb-4">
-            <Baby className="w-12 h-12 text-pink-500" />
+            <Baby className="w-12 h-12 text-primary-500" />
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">宝贝时光</h1>
           <p className="text-gray-600">记录宝宝成长的每一个珍贵瞬间</p>
@@ -247,7 +237,7 @@ export function LoginPage({ onLogin }) {
                     onClick={() => setCustomIcon(icon)}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
                       customIcon === icon
-                        ? 'bg-teal-100 ring-2 ring-teal-500 scale-110'
+                        ? 'bg-primary-100 ring-2 ring-primary-400 scale-110'
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
@@ -266,16 +256,16 @@ export function LoginPage({ onLogin }) {
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder="输入您的身份名称，如：干妈、哥哥..."
                 maxLength={8}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-200 outline-none transition-all text-gray-800 placeholder:text-gray-400"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-200 outline-none transition-all text-gray-800 placeholder:text-gray-400"
               />
               <p className="text-xs text-gray-400 mt-1">最多8个字</p>
             </div>
 
             {/* 预览 */}
             {customName && (
-              <div className="mb-4 p-3 bg-teal-50 rounded-xl flex items-center gap-3">
+              <div className="mb-4 p-3 bg-primary-50 rounded-xl flex items-center gap-3">
                 <span className="text-2xl">{customIcon}</span>
-                <span className="font-medium text-teal-700">{customName}</span>
+                <span className="font-medium text-primary-600">{customName}</span>
               </div>
             )}
 
@@ -287,7 +277,7 @@ export function LoginPage({ onLogin }) {
                   id: 'custom',
                   name: customName.trim(),
                   icon: customIcon,
-                  color: 'from-teal-400 to-teal-500',
+                  color: 'primary',
                   welcome: `欢迎${customName.trim()}光临`,
                 };
                 setSelectedRole(customRole);
@@ -299,7 +289,7 @@ export function LoginPage({ onLogin }) {
               disabled={!customName.trim()}
               className={`w-full py-3 rounded-xl font-semibold transition-all ${
                 customName.trim()
-                  ? 'bg-teal-500 text-white hover:bg-teal-600 active:scale-98'
+                  ? 'bg-primary-500 text-white hover:bg-primary-600 active:scale-98'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >

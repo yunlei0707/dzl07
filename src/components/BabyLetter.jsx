@@ -249,9 +249,9 @@ export function BabyLetter({
             </div>
             
             {/* 信封主体 */}
-            <div className="bg-gradient-to-b from-[#CD853F] to-[#DEB887] px-6 py-8">
+            <div className="bg-gradient-to-b from-primary-300 to-amber-300 px-6 py-8">
               <div className="bg-[#FFF8DC] rounded-lg p-4 shadow-inner">
-                <p className="text-[#8B4513] text-center text-sm leading-relaxed">
+                <p className="text-primary-700 text-center text-sm leading-relaxed">
                   {hasRecords 
                     ? '这封信装载着未来的美好祝愿，请查收~'
                     : '虽然还没有未来的记录，但这封信会带着宝宝的爱先寄出~'
@@ -261,13 +261,13 @@ export function BabyLetter({
             </div>
             
             {/* 信封底部 */}
-            <div className="bg-gradient-to-b from-[#DEB887] to-[#D2691E] h-4 -mt-2" />
+            <div className="bg-gradient-to-b from-amber-300 to-primary-400 h-4 -mt-2" />
           </div>
         ) : (
           /* ===== 已打开的信纸 ===== */
           <div ref={cardRef} className="bg-[#FFF8F0]">
             {/* 信纸头部装饰 */}
-            <div className="bg-gradient-to-r from-[#DC143C] via-[#B22222] to-[#8B0000] px-6 py-4 text-center">
+            <div className="bg-gradient-to-r from-primary-500 to-amber-400 px-6 py-4 text-center">
               <p className="text-white/80 text-xs">✉️ 来自未来的信</p>
               <p className="text-white font-medium mt-1">{letter.year}年某一天</p>
             </div>
@@ -324,7 +324,7 @@ export function BabyLetter({
                 disabled={!hasRecords}
                 className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
                   hasRecords
-                    ? 'bg-white text-[#8B4513] hover:bg-[#FFF8DC] active:scale-[0.98] border border-[#DEB887]'
+                    ? 'bg-white text-primary-600 hover:bg-primary-50 active:scale-[0.98] border border-primary-200'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -335,7 +335,7 @@ export function BabyLetter({
               {shareImage ? (
                 <button
                   onClick={downloadImage}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#DC143C] to-[#B22222] text-white flex items-center justify-center gap-2 text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-amber-400 text-white flex items-center justify-center gap-2 text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all"
                 >
                   <Download className="w-4 h-4" />
                   <span>保存图片</span>
@@ -344,7 +344,7 @@ export function BabyLetter({
                 <button
                   onClick={generateShareImage}
                   disabled={generating}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#DC143C] to-[#B22222] text-white flex items-center justify-center gap-2 text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-70"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-amber-400 text-white flex items-center justify-center gap-2 text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-70"
                 >
                   <span className={generating ? 'animate-spin' : ''}>
                     {generating ? '✨' : '🖼️'}

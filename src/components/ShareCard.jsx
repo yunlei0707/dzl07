@@ -124,11 +124,11 @@ export function ShareCard({
               {/* 预览卡片 - 这是真正要截图的部分 */}
               <div 
                 ref={cardRef}
-                className="relative bg-gradient-to-br from-pink-50 via-orange-50 to-yellow-50 rounded-2xl overflow-hidden shadow-lg"
+                className="relative bg-gradient-to-br from-primary-50 via-primary-50 to-amber-50 rounded-2xl overflow-hidden shadow-lg"
               >
                 {/* 装饰背景 */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-200/30 to-orange-200/30 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-yellow-200/30 to-pink-200/30 rounded-full translate-y-1/2 -translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-200/30 to-amber-200/30 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-amber-200/30 to-primary-200/30 rounded-full translate-y-1/2 -translate-x-1/2" />
                 
                 {/* 卡片内容 */}
                 <div className="relative p-6">
