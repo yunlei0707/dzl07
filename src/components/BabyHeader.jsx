@@ -9,7 +9,7 @@ import { useApp } from '../store/AppContext';
 import { calculateAge, getCountdown, getZodiacFromBirthOrDue, getConstellationFromBirthOrDue } from '../utils/dateUtils';
 import { getCurrentBabyInfo, getAvailableAccounts, switchAccount, isSystemAccount } from '../utils/dbV2';
 
-export const BabyHeader = memo(function BabyHeader() {
+export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount, showToast }) {
   const { currentBaby, setCurrentBaby } = useApp();
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
   const [currentAccountInfo, setCurrentAccountInfo] = useState(null);
@@ -93,7 +93,20 @@ export const BabyHeader = memo(function BabyHeader() {
   const isSysAccount = displayInfo.isSystem;
 
   return (
-    <div className="card mb-4">
+    <div 
+      className={`card mb-4 ${onEditBaby ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      onClick={() => {
+        if (!onEditBaby) return;
+        if (isSystemAccount) {
+          showToast?.('系统账号不可编辑', 'error');
+          return;
+        }
+        const babyInfo = currentAccountInfo || currentBaby;
+        if (babyInfo) {
+          onEditBaby(babyInfo);
+        }
+      }}
+    >
       <div className="flex items-center gap-4">
         {/* 头像区域 */}
         <div className="relative">
@@ -116,8 +129,9 @@ export const BabyHeader = memo(function BabyHeader() {
         {/* 宝宝信息区域 */}
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-1">
               {displayInfo.nickname || displayInfo.name}
+              {onEditBaby && <span className="text-xs text-primary-400">✏️</span>}
             </h2>
             {/* 系统账号标记 */}
             {isSysAccount && (

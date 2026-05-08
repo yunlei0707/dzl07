@@ -629,19 +629,9 @@ export function ProfilePage(
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             
-            {/* 账号头像显示在左上角（点击可编辑宝宝信息） */}
+            {/* 账号头像显示在左上角 */}
             <div 
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm cursor-pointer hover:opacity-80 active:scale-95 transition-all"
-              onClick={() => {
-                if (isSystemAccount) {
-                  showToast('系统账号不可编辑', 'error');
-                  return;
-                }
-                const babyInfo = v2AccountInfo || currentBaby;
-                if (babyInfo) {
-                  onEditBaby(babyInfo);
-                }
-              }}
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm"
             >
               {v2AccountInfo?.accountData?.avatar ? (
                 v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
@@ -659,35 +649,22 @@ export function ProfilePage(
                 <User className="w-5 h-5" />
               )}
             </div>
-            <h1 
-              className="text-xl font-bold cursor-pointer hover:text-primary-500 transition-colors"
-              onClick={() => {
-                if (isSystemAccount) {
-                  showToast('系统账号不可编辑', 'error');
-                  return;
-                }
-                const babyInfo = v2AccountInfo || currentBaby;
-                if (babyInfo) {
-                  onEditBaby(babyInfo);
-                }
-              }}
-            >
+            <h1 className="text-xl font-bold">
               {v2AccountInfo?.identityName || currentUser?.name || "我的"}
-              <span className="ml-1 text-xs text-primary-400">✏️</span>
             </h1>
             <div className="flex-1" />
             {/* 给宝宝的信按钮 */}
             <button
               onClick={onOpenCapsules}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-100 hover:bg-primary-200 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
             >
               <span className="text-sm">💌</span>
-              <span className="text-xs font-medium text-primary-600">给宝宝的信</span>
+              <span className="text-sm font-medium text-gray-800">给宝宝的信</span>
             </button>
           </div>
           
           {/* 账号切换器 */}
-          <BabyHeader />
+          <BabyHeader onEditBaby={(babyInfo) => onEditBaby(babyInfo)} isSystemAccount={isSystemAccount} showToast={showToast} />
         </div>
       </header>
       
@@ -776,7 +753,7 @@ export function ProfilePage(
             onClick={() => setShowDataManagement(!showDataManagement)}
             className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
           >
-            <p className="text-sm font-medium text-gray-500">数据管理</p>
+            <p className="text-base font-medium text-gray-500">数据管理</p>
             <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showDataManagement ? 'rotate-180' : ''}`} />
           </button>
           {showDataManagement && (
