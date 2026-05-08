@@ -507,38 +507,53 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
         </div>
         
         {/* 里程碑类型统计 */}
-        {milestoneStats.length > 0 && (
-          <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <Star className="w-5 h-5 text-amber-500" />
-              里程碑统计
-            </h3>
-            
-            <div className="space-y-3">
-              {milestoneStats.map((ms) => (
-                <div 
-                  key={ms.id}
-                  className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  onClick={() => onStatClick({ type: 'filter', filterMilestone: ms.id })}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{ms.emoji}</span>
-                    <span className="text-gray-700 dark:text-gray-300">{ms.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-amber-400 rounded-full"
-                        style={{ width: `${(ms.count / Math.max(stats.milestoneCount, 1)) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-500 w-8 font-medium text-right">{ms.count}</span>
-                  </div>
+        <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500" />
+            里程碑统计
+          </h3>
+          
+          <div className="space-y-3">
+            {milestoneStats.length > 0 ? milestoneStats.map((ms) => (
+              <div 
+                key={ms.id}
+                className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => onStatClick({ type: 'filter', filterMilestone: ms.id })}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{ms.emoji}</span>
+                  <span className="text-gray-700 dark:text-gray-300">{ms.label}</span>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-400 rounded-full"
+                      style={{ width: `${(ms.count / Math.max(stats.milestoneCount, 1)) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500 w-8 font-medium text-right">{ms.count}</span>
+                </div>
+              </div>
+            )) : (
+              <div className="space-y-3">
+                {getAllMilestones().map((opt) => (
+                  <div key={opt.id} className="flex items-center justify-between rounded-lg p-1 -m-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{opt.emoji}</span>
+                      <span className="text-gray-400">{opt.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-400 rounded-full" style={{ width: '0%' }} />
+                      </div>
+                      <span className="text-sm text-gray-400 w-8 font-medium text-right">0</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
         
         {/* 宝宝成长档案入口 */}
         <div 

@@ -18,6 +18,7 @@ import { CapsulesPage } from './pages/CapsulesPage';
 import { MomentForm } from './components/MomentForm';
 import { CapsuleForm } from './components/CapsuleForm';
 import { BabyForm } from './components/BabyForm';
+import { MonthlyReport } from './components/MonthlyReport';
 import { RecycleBin } from './components/RecycleBin';
 
 import { LoginPage } from './pages/Login';
@@ -79,6 +80,7 @@ function AppContent() {
   const [editingCapsule, setEditingCapsule] = useState(null);
   const [editingBaby, setEditingBaby] = useState(null);
   const [showCapsulesPage, setShowCapsulesPage] = useState(false);
+  const [showGrowthReport, setShowGrowthReport] = useState(false);
   
   // AI 选择弹窗状态
   const [showAIChoice, setShowAIChoice] = useState(false);
@@ -281,6 +283,7 @@ function AppContent() {
           <StatsPage
             onOpenCapsules={() => setShowCapsulesPage(true)}
             onAddCapsule={() => setShowCapsuleForm(true)}
+            onOpenMonthlyReport={() => setShowGrowthReport(true)}
           />
         );
       case 'virtual':
@@ -379,6 +382,11 @@ function AppContent() {
       {/* 回收站 */}
       {showRecycleBin && (
         <RecycleBin onClose={() => setShowRecycleBin(false)} />
+      )}
+      
+      {/* 宝宝成长档案 */}
+      {showGrowthReport && (
+        <MonthlyReport onClose={() => setShowGrowthReport(false)} />
       )}
     </div>
   );
