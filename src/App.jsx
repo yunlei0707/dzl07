@@ -71,7 +71,7 @@ function RoutePersistence({ children }) {
 
 // 主应用内容
 function AppContent() {
-  const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies, currentUser } = useApp();
+  const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies, currentUser, refreshGrowthRecords } = useApp();
   
   const [activeTab, setActiveTab] = useState('timeline');
   const [showMomentForm, setShowMomentForm] = useState(false);
@@ -339,6 +339,8 @@ function AppContent() {
       
       setShowGrowthForm(false);
       setEditingGrowthRecord(null);
+      // 刷新成长记录列表
+      refreshGrowthRecords(currentBaby?.id);
       
     } catch (error) {
       showToast('保存失败: ' + error.message, 'error');

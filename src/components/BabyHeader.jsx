@@ -139,17 +139,7 @@ export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount
                 📌 系统示例
               </span>
             )}
-            {/* 属相和星座 */}
-            {(zodiac.name || constellation.name) && (
-              <div className="flex items-center gap-1 text-xs">
-                {zodiac.emoji && (
-                  <span className="text-gray-500 dark:text-gray-400">{zodiac.emoji}</span>
-                )}
-                {constellation.emoji && (
-                  <span className="text-gray-500 dark:text-gray-400">{constellation.emoji}</span>
-                )}
-              </div>
-            )}
+
           </div>
           
           {/* 年龄或预产期倒计时 */}
@@ -159,35 +149,21 @@ export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount
             </p>
           ) : age ? (
             <p className="text-primary-600 dark:text-primary-400 font-medium text-sm">
-              {age.display}
+              {age.display} {zodiac.emoji}{constellation.emoji}
             </p>
           ) : null}
           
-          <div className="flex items-center justify-between mt-0.5 flex-wrap gap-1">
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              {displayInfo.name} 
-              {displayInfo.birthDate ? (
-                <> · 生日 {new Date(displayInfo.birthDate).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}</>
-              ) : displayInfo.dueDate ? (
-                <> · 预产期 {new Date(displayInfo.dueDate).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}</>
-              ) : (
-                <> · 等待设置生日</>
-              )}
-            </p>
-            
-            {/* 账号切换按钮 */}
-            {availableAccounts.length > 1 && (
-              <button
-                onClick={() => setShowAccountSwitcher(!showAccountSwitcher)}
-                className="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 flex items-center gap-1"
-              >
-                <span>切换账号</span>
-                <svg className={`w-3 h-3 transition-transform ${showAccountSwitcher ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            )}
-          </div>
+          {availableAccounts.length > 1 && (
+            <button
+              onClick={() => setShowAccountSwitcher(!showAccountSwitcher)}
+              className="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 flex items-center gap-1 mt-0.5"
+            >
+              <span>切换</span>
+              <svg className={`w-3 h-3 transition-transform ${showAccountSwitcher ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
