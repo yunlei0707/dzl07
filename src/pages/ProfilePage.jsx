@@ -628,7 +628,7 @@ export function ProfilePage(
       <header className="bg-gradient-to-b from-primary-50 to-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
-            
+            <div className="flex items-center gap-2">
             {/* 账号头像显示在左上角 */}
             <div 
               className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm"
@@ -652,7 +652,8 @@ export function ProfilePage(
             <h1 className="text-base font-medium text-gray-600 dark:text-gray-300">
               {v2AccountInfo?.identityName || currentUser?.name || "我的"}
             </h1>
-            <div className="flex-1" />
+            </div>
+            <div className="flex items-center gap-2">
             {/* 给宝宝的信按钮 */}
             <button
               onClick={onOpenCapsules}
@@ -661,6 +662,7 @@ export function ProfilePage(
               <Heart className="w-4 h-4 text-gray-600" />
               <span className="text-base font-medium text-gray-700">给宝宝的信</span>
             </button>
+            </div>
           </div>
           
           {/* 账号切换器 */}
