@@ -109,7 +109,12 @@ function createSystemAccount() {
     nickname: '豆芽',
     avatar: null,
     birthDate: beanSproutBirth.toISOString(),
+    dueDate: '',
     gender: 'girl',
+    birthTime: '辰时',
+    birthHeight: 50,
+    birthWeight: 3.2,
+    birthplace: '北京市海淀区',
     isSystem: true,
     createdAt: now.toISOString(),
     // 5条示例动态
@@ -205,7 +210,12 @@ function createEmptyUserAccount() {
     nickname: '',
     avatar: null,
     birthDate: '',
+    dueDate: '',
     gender: 'girl',
+    birthTime: '',
+    birthHeight: null,
+    birthWeight: null,
+    birthplace: '',
     isSystem: false,
     createdAt: now.toISOString(),
     // 空数据
@@ -269,7 +279,12 @@ export function getCurrentBabyInfo() {
     nickname: accountData.nickname || accountData.name || '我的宝宝',
     avatar: accountData.avatar,
     birthDate: accountData.birthDate,
+    dueDate: accountData.dueDate || '',
     gender: accountData.gender || 'girl',
+    birthTime: accountData.birthTime || '',
+    birthHeight: accountData.birthHeight,
+    birthWeight: accountData.birthWeight,
+    birthplace: accountData.birthplace || '',
     isSystem: accountData.isSystem || false,
     accountId
   };

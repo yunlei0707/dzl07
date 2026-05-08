@@ -34,22 +34,41 @@ import { zhCN } from 'date-fns/locale';
 /**
  * 计算宝宝年龄
  * @param {string|Date} birthDate - 出生日期
- * @returns {Object} 年龄对象 { years, months, days, totalDays }
+ * @param {string|Date} dueDate - 预产期（可选，用于未出生宝宝）
+ * @returns {Object} 年龄对象 { years, months, days, totalDays, isUnborn, display }
  */
-export function calculateAge(birthDate) {
-  // 空值保护：如果生日为空，返回默认的显示格式
-  if (!birthDate) {
+export function calculateAge(birthDate, dueDate) {
+  // 空值保护：如果生日为空但有预产期，计算出生前天数
+  const effectiveDate = birthDate || dueDate;
+  if (!effectiveDate) {
     return {
       years: 0,
       months: 0,
       days: 0,
       totalDays: 0,
+      isUnborn: true,
       display: '等待设置生日'
     };
   }
   
-  const birth = typeof birthDate === 'string' ? parseISO(birthDate) : birthDate;
+  const birth = typeof effectiveDate === 'string' ? parseISO(effectiveDate) : effectiveDate;
   const now = new Date();
+  
+  // 检查是否是未来日期（未出生宝宝）
+  if (isAfter(birth, now)) {
+    const totalDays = differenceInDays(birth, now);
+    const months = differenceInMonths(birth, now) % 12;
+    const days = totalDays % 30;
+    
+    return {
+      years: 0,
+      months: months,
+      days: days,
+      totalDays: -totalDays, // 负数表示出生前
+      isUnborn: true,
+      display: `出生前${totalDays}天`,
+    };
+  }
   
   const years = differenceInYears(now, birth);
   const months = differenceInMonths(now, birth) % 12;
@@ -70,6 +89,7 @@ export function calculateAge(birthDate) {
     months,
     days,
     totalDays,
+    isUnborn: false,
     display: formatAgeDisplay(years, months, days),
   };
 }
@@ -314,3 +334,134 @@ export function getQuickDateOptions(baseDate = new Date()) {
 }
 
 export { getYear, getMonth, getDate };
+
+// ============ 属相和星座计算函数 ============
+
+/**
+ * 属相数据
+ */
+const ZODIAC_ANIMALS = [
+  { emoji: '🐀', name: '鼠', celestial: '子' },
+  { emoji: '🐂', name: '牛', celestial: '丑' },
+  { emoji: '🐅', name: '虎', celestial: '寅' },
+  { emoji: '🐇', name: '兔', celestial: '卯' },
+  { emoji: '🐉', name: '龙', celestial: '辰' },
+  { emoji: '🐍', name: '蛇', celestial: '巳' },
+  { emoji: '🐎', name: '马', celestial: '午' },
+  { emoji: '🐏', name: '羊', celestial: '未' },
+  { emoji: '🐒', name: '猴', celestial: '申' },
+  { emoji: '🐓', name: '鸡', celestial: '酉' },
+  { emoji: '🐕', name: '狗', celestial: '戌' },
+  { emoji: '🐖', name: '猪', celestial: '亥' },
+];
+
+/**
+ * 星座数据
+ */
+const CONSTELLATIONS = [
+  { emoji: '♈', name: '白羊座', start: [3, 21], end: [4, 19] },
+  { emoji: '♉', name: '金牛座', start: [4, 20], end: [5, 20] },
+  { emoji: '♊', name: '双子座', start: [5, 21], end: [6, 21] },
+  { emoji: '♋', name: '巨蟹座', start: [6, 22], end: [7, 22] },
+  { emoji: '♌', name: '狮子座', start: [7, 23], end: [8, 22] },
+  { emoji: '♍', name: '处女座', start: [8, 23], end: [9, 22] },
+  { emoji: '♎', name: '天秤座', start: [9, 23], end: [10, 23] },
+  { emoji: '♏', name: '天蝎座', start: [10, 24], end: [11, 22] },
+  { emoji: '♐', name: '射手座', start: [11, 23], end: [12, 21] },
+  { emoji: '♑', name: '摩羯座', start: [12, 22], end: [1, 19] },
+  { emoji: '♒', name: '水瓶座', start: [1, 20], end: [2, 18] },
+  { emoji: '♓', name: '双鱼座', start: [2, 19], end: [3, 20] },
+];
+
+/**
+ * 计算属相
+ * @param {string|Date} dateStr - 日期字符串或日期对象
+ * @returns {Object} { emoji, name, fullName } 如 { emoji: '🐉', name: '龙', fullName: '辰龙' }
+ */
+export function calculateZodiac(dateStr) {
+  if (!dateStr) {
+    return { emoji: '', name: '', fullName: '' };
+  }
+  
+  try {
+    const date = typeof dateStr === 'string' ? parseISO(dateStr) : dateStr;
+    const year = getYear(date);
+    // 属相计算：(年份 - 4) % 12，1900年是鼠年（索引0）
+    const index = ((year - 4) % 12 + 12) % 12;
+    const zodiac = ZODIAC_ANIMALS[index];
+    
+    return {
+      emoji: zodiac.emoji,
+      name: zodiac.name,
+      fullName: zodiac.celestial + zodiac.name,
+    };
+  } catch (e) {
+    return { emoji: '', name: '', fullName: '' };
+  }
+}
+
+/**
+ * 计算星座
+ * @param {string|Date} dateStr - 日期字符串或日期对象
+ * @returns {Object} { emoji, name } 如 { emoji: '♌', name: '狮子座' }
+ */
+export function calculateConstellation(dateStr) {
+  if (!dateStr) {
+    return { emoji: '', name: '' };
+  }
+  
+  try {
+    const date = typeof dateStr === 'string' ? parseISO(dateStr) : dateStr;
+    const month = getMonth(date) + 1; // 月份从1开始
+    const day = getDate(date);
+    
+    // 遍历星座，找到匹配的
+    for (const constellation of CONSTELLATIONS) {
+      const [startMonth, startDay] = constellation.start;
+      const [endMonth, endDay] = constellation.end;
+      
+      // 处理跨年星座（摩羯座）
+      if (startMonth > endMonth) {
+        // 摩羯座：12.22 - 1.19
+        if (month === startMonth && day >= startDay) {
+          return { emoji: constellation.emoji, name: constellation.name };
+        }
+        if (month === endMonth && day <= endDay) {
+          return { emoji: constellation.emoji, name: constellation.name };
+        }
+      } else {
+        // 普通星座
+        if (month === startMonth && day >= startDay) {
+          return { emoji: constellation.emoji, name: constellation.name };
+        }
+        if (month === startMonth + 1 && day <= endDay) {
+          return { emoji: constellation.emoji, name: constellation.name };
+        }
+      }
+    }
+    
+    return { emoji: '', name: '' };
+  } catch (e) {
+    return { emoji: '', name: '' };
+  }
+}
+
+/**
+ * 根据出生日期或预产期计算属相
+ * @param {string|Date} birthDate - 出生日期
+ * @param {string|Date} dueDate - 预产期
+ * @returns {Object} { emoji, name, fullName }
+ */
+export function getZodiacFromBirthOrDue(birthDate, dueDate) {
+  return calculateZodiac(birthDate || dueDate);
+}
+
+/**
+ * 根据出生日期或预产期计算星座
+ * @param {string|Date} birthDate - 出生日期
+ * @param {string|Date} dueDate - 预产期
+ * @returns {Object} { emoji, name }
+ */
+export function getConstellationFromBirthOrDue(birthDate, dueDate) {
+  return calculateConstellation(birthDate || dueDate);
+}

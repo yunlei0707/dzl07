@@ -1,11 +1,12 @@
 /**
  * 宝宝信息卡片组件（v2 双账号版本）
  * 支持账号切换和系统账号标记
+ * 支持未出生宝宝（预产期）
  */
 
 import { memo, useState, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
-import { calculateAge } from '../utils/dateUtils';
+import { calculateAge, getCountdown, getZodiacFromBirthOrDue, getConstellationFromBirthOrDue } from '../utils/dateUtils';
 import { getCurrentBabyInfo, getAvailableAccounts, switchAccount, isSystemAccount } from '../utils/dbV2';
 
 export const BabyHeader = memo(function BabyHeader() {
@@ -72,11 +73,22 @@ export const BabyHeader = memo(function BabyHeader() {
     nickname: currentBaby?.nickname || currentBaby?.name || '我的宝宝',
     avatar: currentBaby?.avatar,
     birthDate: currentBaby?.birthDate,
+    dueDate: currentBaby?.dueDate || '',
     gender: currentBaby?.gender || 'girl',
     isSystem: false
   };
 
+  // 判断是否未出生宝宝
+  const isUnborn = !displayInfo.birthDate && displayInfo.dueDate;
+  
+  // 计算年龄或预产期倒计时
   const age = displayInfo.birthDate ? calculateAge(displayInfo.birthDate) : null;
+  const countdown = isUnborn && displayInfo.dueDate ? getCountdown(displayInfo.dueDate) : null;
+  
+  // 计算属相和星座
+  const zodiac = getZodiacFromBirthOrDue(displayInfo.birthDate, displayInfo.dueDate);
+  const constellation = getConstellationFromBirthOrDue(displayInfo.birthDate, displayInfo.dueDate);
+  
   const avatarUrl = displayInfo.avatar || 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=200';
   const isSysAccount = displayInfo.isSystem;
 
@@ -96,11 +108,14 @@ export const BabyHeader = memo(function BabyHeader() {
           {displayInfo.gender === 'boy' && (
             <span className="absolute -bottom-1 -right-1 text-lg">👦</span>
           )}
+          {isUnborn && (
+            <span className="absolute -bottom-1 -right-1 text-lg">🤰</span>
+          )}
         </div>
         
         {/* 宝宝信息区域 */}
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white">
               {displayInfo.nickname || displayInfo.name}
             </h2>
@@ -110,19 +125,39 @@ export const BabyHeader = memo(function BabyHeader() {
                 📌 系统示例
               </span>
             )}
+            {/* 属相和星座 */}
+            {(zodiac.name || constellation.name) && (
+              <div className="flex items-center gap-1 text-xs">
+                {zodiac.emoji && (
+                  <span className="text-gray-500 dark:text-gray-400">{zodiac.emoji}</span>
+                )}
+                {constellation.emoji && (
+                  <span className="text-gray-500 dark:text-gray-400">{constellation.emoji}</span>
+                )}
+              </div>
+            )}
           </div>
           
-          {age && (
+          {/* 年龄或预产期倒计时 */}
+          {isUnborn && countdown ? (
+            <p className="text-purple-600 dark:text-purple-400 font-medium text-sm">
+              🤰 预产期倒计时 {countdown.display}
+            </p>
+          ) : age ? (
             <p className="text-primary-600 dark:text-primary-400 font-medium text-sm">
               {age.display}
             </p>
-          )}
+          ) : null}
           
-          <div className="flex items-center justify-between mt-0.5">
+          <div className="flex items-center justify-between mt-0.5 flex-wrap gap-1">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {displayInfo.name} 
-              {displayInfo.birthDate && (
+              {displayInfo.birthDate ? (
                 <> · 生日 {new Date(displayInfo.birthDate).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}</>
+              ) : displayInfo.dueDate ? (
+                <> · 预产期 {new Date(displayInfo.dueDate).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}</>
+              ) : (
+                <> · 等待设置生日</>
               )}
             </p>
             
@@ -151,27 +186,17 @@ export const BabyHeader = memo(function BabyHeader() {
               <button
                 key={account.id}
                 onClick={() => handleSwitchAccount(account.id)}
-                className={`px-3 py-1.5 rounded-full text-sm transition-all flex items-center gap-1.5 ${
-                  account.isCurrent
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-cream-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600'
+                className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                  account.id === (currentAccountInfo?.accountId || currentBaby?.id)
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium'
+                    : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-gray-600'
                 }`}
               >
-                <span>{account.nickname || account.name}</span>
-                {account.isSystem && <span>📌</span>}
-                {account.isCurrent && <span className="text-xs opacity-75">当前</span>}
+                {account.name}
+                {account.isSystem && ' 📌'}
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* 系统账号提示 */}
-      {isSysAccount && (
-        <div className="mt-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
-          <p className="text-xs text-amber-700 dark:text-amber-400">
-            📌 这是系统示例账号，记录了"豆芽"的成长故事。您可以在下方创建自己的宝宝档案。
-          </p>
         </div>
       )}
     </div>

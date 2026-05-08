@@ -225,9 +225,12 @@ export function TimelinePage({
   
   // 按年月分组 - 传入宝宝生日以显示相对时间
   const groupedMoments = useMemo(() => {
-    // 获取宝宝生日
-    const babyBirthday = v2AccountInfo?.accountData?.birthDate || currentBaby?.birthDate;
-    return groupByYearAndMonth(filteredMoments, babyBirthday);
+    // 获取宝宝生日或预产期
+    const babyBirthDate = v2AccountInfo?.accountData?.birthDate || currentBaby?.birthDate;
+    const babyDueDate = v2AccountInfo?.accountData?.dueDate || currentBaby?.dueDate;
+    // 如果有出生日期用出生日期，否则用预产期
+    const referenceDate = babyBirthDate || babyDueDate;
+    return groupByYearAndMonth(filteredMoments, referenceDate);
   }, [filteredMoments, v2AccountInfo, currentBaby]);
   
   // 是否有激活的筛选条件
