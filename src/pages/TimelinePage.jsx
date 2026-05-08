@@ -10,7 +10,6 @@ import { BabyHeader } from '../components/BabyHeader';
 import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
-import { TimeBlindBox } from '../components/TimeBlindBox';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown, Lock, Trash2, AlertTriangle, Sparkles, PenLine } from 'lucide-react';
@@ -673,7 +672,7 @@ export function TimelinePage({
       {/* 添加记录按钮 - 系统账号禁用 */}
       {isSystemAccount ? (
         <div 
-          className="fixed right-4 bottom-32 w-14 h-14 bg-gray-300 rounded-full shadow-lg flex items-center justify-center z-50 cursor-not-allowed"
+          className="fixed right-4 bottom-20 w-14 h-14 bg-gray-300 rounded-full shadow-lg flex items-center justify-center z-50 cursor-not-allowed"
           title="系统账号不可编辑"
         >
           <Lock className="w-6 h-6 text-gray-500" />
@@ -681,7 +680,7 @@ export function TimelinePage({
       ) : (
         <button
           onClick={() => setShowCreateChoice(true)}
-          className="fixed right-4 bottom-32 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-50 active:scale-95 transition-transform hover:shadow-xl"
+          className="fixed right-4 bottom-20 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-50 active:scale-95 transition-transform hover:shadow-xl"
         >
           <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
         </button>
@@ -799,11 +798,7 @@ export function TimelinePage({
         </div>
       )}
       
-      {/* 时光盲盒 */}
-      <TimeBlindBox 
-        moments={hasV2Baby ? v2Moments : moments}
-        onPhotoClick={handlePhotoClick}
-      />
+
     </div>
   );
 }

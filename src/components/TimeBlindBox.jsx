@@ -393,34 +393,16 @@ export function TimeBlindBox({ moments, onPhotoClick }) {
   
   // 摇一摇检测
   useEffect(() => {
-    // 检查是否在一门APP环境
-    const checkShakeSupport = () => {
-      // 一门APP环境
-      if (window.jsBridge && window.jsBridge.accelerometer && typeof window.jsBridge.accelerometer.enable === 'function') {
-        return true;
-      }
-      // 浏览器环境使用 DeviceMotion API
-      return typeof DeviceMotionEvent !== 'undefined';
-    };
+    const shake = shakeRef.current;
     
-    if (!checkShakeSupport()) return;
-    
-    const handleShake = (event) => {
-      // 防抖：3秒内只触发一次
+    // 通用摇一摇处理逻辑
+    const handleShakeData = (x, y, z) => {
       if (debounceRef.current) return;
-      
-      const acceleration = event.accelerationIncludingGravity || 
-        (event.accelerations && event.accelerations.length > 0 ? event.accelerations[0] : null);
-      
-      if (!acceleration) return;
-      
-      const { x, y, z } = acceleration;
-      const shake = shakeRef.current;
       
       const speed = Math.abs(x - shake.lastX) + Math.abs(y - shake.lastY) + Math.abs(z - shake.lastZ);
       const now = Date.now();
       
-      if (speed > 25 && now - shake.lastTime > 500) {
+      if (speed > 20 && now - shake.lastTime > 500) {
         shake.lastTime = now;
         shake.lastX = x;
         shake.lastY = y;
@@ -430,7 +412,6 @@ export function TimeBlindBox({ moments, onPhotoClick }) {
         debounceRef.current = true;
         handleOpen();
         
-        // 3秒后解除防抖
         setTimeout(() => {
           debounceRef.current = false;
         }, 3000);
@@ -441,29 +422,32 @@ export function TimeBlindBox({ moments, onPhotoClick }) {
       }
     };
     
-    // 监听摇一摇事件
-    if (window.jsBridge && window.jsBridge.accelerometer && 
-        typeof window.jsBridge.accelerometer.enable === 'function' &&
-        typeof window.jsBridge.accelerometer.addListener === 'function') {
-      // 一门APP环境：使用jsBridge加速度计
+    // 一门APP环境：jsBridge.accelerometer.start(callback) / .stop()
+    if (window.jsBridge && window.jsBridge.accelerometer && typeof window.jsBridge.accelerometer.start === 'function') {
       try {
-        window.jsBridge.accelerometer.enable({ interval: 100 });
-        window.jsBridge.accelerometer.addListener(handleShake);
-        
+        jsBridge.accelerometer.start(function(x, y, z) {
+          handleShakeData(x, y, z);
+        });
         return () => {
-          try {
-            window.jsBridge.accelerometer.removeListener(handleShake);
-            window.jsBridge.accelerometer.disable();
-          } catch(e) {}
+          try { jsBridge.accelerometer.stop(); } catch(e) {}
         };
       } catch(e) {
-        console.warn('[TimeBlindBox] jsBridge.accelerometer 调用失败:', e);
+        console.warn('[TimeBlindBox] jsBridge.accelerometer.start 失败:', e);
       }
-    } else if (typeof DeviceMotionEvent !== 'undefined') {
-      // 浏览器环境
-      window.addEventListener('devicemotion', handleShake);
+    }
+    
+    // 浏览器环境：DeviceMotionEvent
+    if (typeof DeviceMotionEvent !== 'undefined') {
+      // iOS 13+ 需要请求权限
+      const handleMotion = (event) => {
+        const acc = event.accelerationIncludingGravity;
+        if (!acc) return;
+        handleShakeData(acc.x || 0, acc.y || 0, acc.z || 0);
+      };
+      
+      window.addEventListener('devicemotion', handleMotion);
       return () => {
-        window.removeEventListener('devicemotion', handleShake);
+        window.removeEventListener('devicemotion', handleMotion);
       };
     }
   }, [handleOpen]);
