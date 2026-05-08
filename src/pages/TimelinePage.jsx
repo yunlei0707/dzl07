@@ -527,7 +527,7 @@ export function TimelinePage({
           </div>
           
           {/* 心情筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-3">
             {moodFilters.map(filter => (
               <button
                 key={filter.value}
@@ -544,7 +544,7 @@ export function TimelinePage({
           </div>
           
           {/* 里程碑筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-3">
             {milestoneFilters.map(filter => (
               <button
                 key={filter.value}
