@@ -177,15 +177,15 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
       {/* 盲盒卡片弹窗 - 居中弹窗 */}
       {showCard && selectedMoment && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in"
           onClick={handleClose}
         >
           <div 
-            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            className="w-full max-w-md bg-gradient-to-b from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl max-h-[80vh] overflow-hidden flex flex-col animate-scale-in"
             onClick={e => e.stopPropagation()}
           >
             {/* 头部 - 紫色渐变 */}
-            <div className="bg-gradient-to-r from-purple-200 to-purple-300 px-4 py-3 flex items-center justify-between relative">
+            <div className="bg-gradient-to-r from-purple-200 to-pink-200 px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🎁</span>
                 <div>
