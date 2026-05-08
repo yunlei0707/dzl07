@@ -9,7 +9,6 @@ import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
 import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react'
-import { TimeBlindBox } from '../components/TimeBlindBox';
 import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 import { TimeBlindBox } from '../components/TimeBlindBox';
 
@@ -272,10 +271,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       {/* 头部 - 优化：左上角显示头像 */}
       <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
         <div className="px-4 pt-4 pb-6 relative">
-          {/* 时光盲盒按钮 - 右上角 */}
-          <TimeBlindBox 
-            moments={hasV2Baby ? v2Moments : moments}
-          />
           <div className="flex items-center gap-2 mb-4">
             {/* 头像显示在左上角 - 修复：统一使用 v2AccountInfo.accountData?.avatar */}
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
