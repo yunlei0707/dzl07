@@ -43,8 +43,8 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const [milestoneEmoji, setMilestoneEmoji] = useState(moment?.milestoneEmoji || '');
   const [date, setDate] = useState(
     moment?.date 
-      ? new Date(moment.date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0]
+      ? (() => { const d = new Date(moment.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()
+      : (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()
   );
   const [saving, setSaving] = useState(false);
   
@@ -596,7 +596,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     const momentData = {
       babyId: babyId,
       type,
-      date: new Date(date).toISOString(),
+      date: new Date(date + 'T12:00:00').toISOString(), // 用中午12点避免时区偏移
       content: content.trim(),
       photos: type === 'photo' ? photos : [],
       videos: type === 'video' ? videos : [],
