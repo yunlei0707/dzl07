@@ -129,7 +129,7 @@ export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount
         {/* 宝宝信息区域 */}
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-1">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-white flex items-center gap-1">
               {displayInfo.nickname || displayInfo.name}
               {onEditBaby && <span className="text-xs text-primary-400">✏️</span>}
             </h2>

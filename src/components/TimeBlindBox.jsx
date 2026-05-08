@@ -174,14 +174,14 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
       <button
         onClick={handleClick}
         disabled={!hasMoments}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${
+        className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all ${
           hasMoments 
-            ? 'bg-black/5 hover:bg-black/10 active:scale-95' 
-            : 'bg-black/5 opacity-50'
+            ? 'bg-primary-50 hover:bg-primary-100 active:scale-95' 
+            : 'bg-primary-50 opacity-50'
         }`}
       >
-        <span className="text-sm">🎁</span>
-        <span className="text-sm font-medium text-gray-800">时光盲盒</span>
+        <span className="text-base">🎁</span>
+        <span className="text-sm font-medium text-gray-700">时光盲盒</span>
       </button>
 
       {/* 盲盒卡片弹窗 - 底部抽屉 */}

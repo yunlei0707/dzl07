@@ -400,7 +400,7 @@ export function TimelinePage({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm">
                 {v2AccountInfo?.accountData?.avatar ? (
                   v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                     <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
@@ -417,7 +417,7 @@ export function TimelinePage({
                   <span>👶</span>
                 )}
               </div>
-              <h1 className="text-lg font-bold dark:text-white">
+              <h1 className="text-base font-medium text-gray-600 dark:text-gray-300">
                 {v2AccountInfo?.identityName || currentUser?.name || "📅 时光轴"}
               </h1>
             </div>
@@ -563,7 +563,7 @@ export function TimelinePage({
       </div>
       
       {/* 时光轴内容 */}
-      <main className="px-4 mt-4">
+      <main className="px-4 -mt-4 max-w-lg mx-auto">
         {/* 筛选结果统计 */}
         {hasActiveFilters && (
           <div className="mb-4 text-center">

@@ -163,9 +163,9 @@ export function RecycleBin({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div 
-        className="w-full bg-white dark:bg-gray-800 rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col animate-slide-up"
+        className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl overflow-hidden max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* 头部 */}

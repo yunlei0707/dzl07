@@ -204,7 +204,7 @@ export function VirtualTimePage() {
 
   return (
     <div className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900">
-      <header className="bg-gradient-to-b from-primary-200 to-primary-100 safe-top">
+      <header className="bg-gradient-to-b from-[#FFF8F0] to-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">

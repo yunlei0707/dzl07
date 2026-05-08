@@ -673,7 +673,7 @@ export function ProfilePage(
 
         {/* 个性化分组 */}
         <div className="px-4">
-          <p className="text-sm font-medium text-gray-500 mb-2 px-1">个性化</p>
+          <p className="text-xs font-medium text-gray-400 mb-2 px-1">个性化</p>
           <div className="space-y-2">
             {/* 主题设置 */}
             <button
@@ -832,7 +832,7 @@ export function ProfilePage(
             onClick={() => setShowOther(!showOther)}
             className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
           >
-            <p className="text-sm font-medium text-gray-500">其他</p>
+            <p className="text-xs font-medium text-gray-400">其他</p>
             <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showOther ? 'rotate-180' : ''}`} />
           </button>
           {showOther && (
