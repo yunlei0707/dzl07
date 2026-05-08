@@ -6,7 +6,7 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'BabyTimeDB';
-const DB_VERSION = 4; // 版本升级以支持访客打卡功能
+const DB_VERSION = 5; // 版本升级以支持成长记录功能
 
 // 初始化数据库
 export async function initDB() {
@@ -62,6 +62,13 @@ export async function initDB() {
         visitStore.createIndex('visitorName', 'visitorName');
         visitStore.createIndex('visitDate', 'visitDate');
         visitStore.createIndex('createdAt', 'createdAt');
+      }
+
+      // 成长记录存储
+      if (!db.objectStoreNames.contains('growthRecords')) {
+        const growthStore = db.createObjectStore('growthRecords', { keyPath: 'id', autoIncrement: true });
+        growthStore.createIndex('babyId', 'babyId');
+        growthStore.createIndex('date', 'date');
       }
     },
   });
@@ -1677,5 +1684,58 @@ export async function clearAllData() {
   localStorage.removeItem('v2Data');
   localStorage.removeItem('currentAccountId');
   localStorage.removeItem('lastDataUpdate');
+  return true;
+}
+// ==================== 成长记录操作 ====================
+
+/**
+ * 添加成长记录
+ */
+export async function addGrowthRecord(recordData) {
+  const db = await initDB();
+  const record = {
+    ...recordData,
+    date: recordData.date || new Date().toISOString().split('T')[0],
+    createdAt: new Date().toISOString(),
+  };
+  const id = await db.add('growthRecords', record);
+  return { ...record, id };
+}
+
+/**
+ * 获取某个宝宝的成长记录
+ */
+export async function getGrowthRecordsByBaby(babyId) {
+  const db = await initDB();
+  const records = await db.getAllFromIndex('growthRecords', 'babyId', babyId);
+  return records.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+/**
+ * 获取某个宝宝最新一条成长记录
+ */
+export async function getLatestGrowthRecord(babyId) {
+  const records = await getGrowthRecordsByBaby(babyId);
+  return records[0] || null;
+}
+
+/**
+ * 更新成长记录
+ */
+export async function updateGrowthRecord(id, updates) {
+  const db = await initDB();
+  const record = await db.get('growthRecords', id);
+  if (!record) throw new Error('记录不存在');
+  const updated = { ...record, ...updates, updatedAt: new Date().toISOString() };
+  await db.put('growthRecords', updated);
+  return updated;
+}
+
+/**
+ * 删除成长记录
+ */
+export async function deleteGrowthRecord(id) {
+  const db = await initDB();
+  await db.delete('growthRecords', id);
   return true;
 }

@@ -26,6 +26,7 @@ import {
   updateUser,
   deleteBaby,
   addMoment,
+  getGrowthRecordsByBaby,
 } from '../utils/db';
 
 const AppContext = createContext(null);
@@ -66,6 +67,7 @@ export function AppProvider({ children }) {
   const [hiddenMilestones, setHiddenMilestones] = useState([]);
   const [customMoods, setCustomMoods] = useState([]);
   const [toast, setToast] = useState(null);
+  const [growthRecords, setGrowthRecords] = useState([]);
   
   // 认证状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -240,6 +242,15 @@ export function AppProvider({ children }) {
     if (currentBaby) {
       const babyCapsules = await getCapsulesByBaby(currentBaby.id);
       setCapsules(babyCapsules);
+    }
+  }, [currentBaby]);
+
+  // 刷新成长记录
+  const refreshGrowthRecords = useCallback(async (babyId) => {
+    const id = babyId || currentBaby?.id;
+    if (id) {
+      const records = await getGrowthRecordsByBaby(id);
+      setGrowthRecords(records);
     }
   }, [currentBaby]);
 
@@ -473,6 +484,9 @@ export function AppProvider({ children }) {
     // ✅ 性能配置
     perfConfig,
     deviceLevel: perfConfig.level,
+    // 成长记录
+    growthRecords,
+    refreshGrowthRecords,
   };
 
   return (

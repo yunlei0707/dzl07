@@ -8,12 +8,160 @@ import { useApp } from '../store/AppContext';
 import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
-import { Gift, TrendingUp, Camera, Star, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
+import { Gift, TrendingUp, Camera, Star, BookOpen, ChevronDown, ChevronRight, Plus, Trash2, Edit3 } from 'lucide-react'
 import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 import { TimeBlindBox } from '../components/TimeBlindBox';
+import { GROWTH_LABELS, GROWTH_UNITS, GROWTH_ICONS } from '../utils/growthMilestones';
 
-export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) {
-  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones } = useApp();
+// 成长曲线图组件
+function GrowthChart({ records, field }) {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+  
+  const fieldConfig = {
+    height: { color: '#FF7B70', name: '身高' },
+    weight: { color: '#FFC997', name: '体重' },
+    headCircumference: { color: '#A78BFA', name: '头围' },
+    footLength: { color: '#34D399', name: '脚长' },
+  };
+  
+  const config = fieldConfig[field] || fieldConfig.height;
+  
+  useEffect(() => {
+    if (!chartRef.current) return;
+    
+    // 准备数据（按日期升序）
+    const sortedRecords = [...records].reverse();
+    const dates = sortedRecords.map(r => r.date);
+    const values = sortedRecords.map(r => r[field]).filter(v => v != null);
+    
+    // 过滤有效数据点
+    const validData = sortedRecords.filter(r => r[field] != null);
+    
+    if (validData.length < 2) {
+      // 数据不足，显示提示
+      if (chartInstance.current) {
+        chartInstance.current.dispose();
+        chartInstance.current = null;
+      }
+      return;
+    }
+    
+    const validDates = validData.map(r => r.date);
+    const validValues = validData.map(r => r[field]);
+    
+    // 动态导入 echarts
+    import('echarts').then((echarts) => {
+      if (!chartRef.current) return;
+      
+      // 初始化或更新图表
+      if (!chartInstance.current) {
+        chartInstance.current = echarts.init(chartRef.current);
+      }
+      
+      const option = {
+        grid: {
+          top: 20,
+          right: 15,
+          bottom: 30,
+          left: 45,
+        },
+        xAxis: {
+          type: 'category',
+          data: validDates,
+          axisLabel: {
+            color: '#9CA3AF',
+            fontSize: 10,
+            formatter: (value) => {
+              const date = new Date(value);
+              return `${date.getMonth() + 1}/${date.getDate()}`;
+            },
+          },
+          axisLine: {
+            lineStyle: { color: '#E5E7EB' },
+          },
+        },
+        yAxis: {
+          type: 'value',
+          name: `${config.name}(${GROWTH_UNITS[field]})`,
+          nameTextStyle: {
+            color: '#9CA3AF',
+            fontSize: 10,
+          },
+          axisLabel: {
+            color: '#9CA3AF',
+            fontSize: 10,
+          },
+          axisLine: {
+            lineStyle: { color: '#E5E7EB' },
+          },
+          splitLine: {
+            lineStyle: { color: '#F3F4F6' },
+          },
+        },
+        series: [{
+          type: 'line',
+          data: validValues,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
+          lineStyle: {
+            color: config.color,
+            width: 2,
+          },
+          itemStyle: {
+            color: config.color,
+          },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: config.color + '30' },
+                { offset: 1, color: config.color + '05' },
+              ],
+            },
+          },
+        }],
+        tooltip: {
+          trigger: 'axis',
+          formatter: (params) => {
+            const p = params[0];
+            return `${p.axisValue}<br/>${config.name}: ${p.value}${GROWTH_UNITS[field]}`;
+          },
+        },
+      };
+      
+      chartInstance.current.setOption(option);
+    });
+    
+    // 清理
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.dispose();
+        chartInstance.current = null;
+      }
+    };
+  }, [records, field]);
+  
+  // 数据不足提示
+  const validCount = records.filter(r => r[field] != null).length;
+  
+  if (validCount < 2) {
+    return (
+      <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
+        记录数据后即可查看增长曲线📈
+      </div>
+    );
+  }
+  
+  return (
+    <div ref={chartRef} className="h-40 w-full" />
+  );
+}
+
+export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, onAddGrowthRecord, onEditGrowthRecord }) {
+  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones, growthRecords, refreshGrowthRecords } = useApp();
   
   // v2 账号系统：获取当前账号信息
   const [v2Moments, setV2Moments] = useState([]);
@@ -70,6 +218,14 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
     };
   }, [currentBaby, setMoments, setCapsules]);
   
+  // 刷新成长记录
+  useEffect(() => {
+    const babyId = v2BabyInfo?.id || currentBaby?.id;
+    if (babyId) {
+      refreshGrowthRecords(babyId);
+    }
+  }, [currentBaby, v2BabyInfo, refreshGrowthRecords]);
+  
   // 优先使用 v2 账号信息，兼容旧的 currentBaby
   const displayBaby = v2BabyInfo || currentBaby;
   
@@ -81,6 +237,10 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
   const [showGrowthOverview, setShowGrowthOverview] = useState(true);
   const [showMilestoneStats, setShowMilestoneStats] = useState(false);
   const [showRecordTypes, setShowRecordTypes] = useState(false);
+  const [showGrowthRecords, setShowGrowthRecords] = useState(true);
+  const [activeGrowthChart, setActiveGrowthChart] = useState('height'); // 身高/体重/头围/脚长
+  const [expandedRecordId, setExpandedRecordId] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const touchStartY = useRef(0);
   const scrollTop = useRef(0);
   const containerRef = useRef(null);
@@ -590,6 +750,204 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
           </h3>
           <p className="text-xs text-gray-400 mt-1">查看成长档案</p>
+        </div>
+        
+        {/* 身体成长区块 */}
+        <div className="card animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          <h3 
+            className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 cursor-pointer hover:text-gray-600"
+            onClick={() => setShowGrowthRecords(!showGrowthRecords)}
+          >
+            <span className="text-xl">📐</span>
+            身体成长
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${showGrowthRecords ? 'rotate-180' : ''}`} />
+          </h3>
+          
+          {showGrowthRecords && (
+            <div className="space-y-4">
+              {/* 最新数据卡片 */}
+              {growthRecords.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['height', 'weight', 'headCircumference', 'footLength'].map((field) => {
+                      const latest = growthRecords[0];
+                      const previous = growthRecords[1];
+                      const value = latest?.[field];
+                      const oldValue = previous?.[field];
+                      const change = value && oldValue ? (value - oldValue).toFixed(1) : null;
+                      const color = field === 'height' ? 'text-rose-400' : field === 'weight' ? 'text-amber-400' : field === 'headCircumference' ? 'text-purple-400' : 'text-emerald-400';
+                      
+                      return (
+                        <div key={field} className="bg-cream-50 dark:bg-gray-700 rounded-xl p-3">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                            <span>{GROWTH_ICONS[field]}</span>
+                            <span>{GROWTH_LABELS[field]}</span>
+                          </div>
+                          <p className={`text-xl font-bold text-gray-800 dark:text-white mt-1 ${color}`}>
+                            {value != null ? `${value} ${GROWTH_UNITS[field]}` : '--'}
+                          </p>
+                          {change && (
+                            <p className={`text-xs mt-0.5 ${parseFloat(change) >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                              {parseFloat(change) >= 0 ? '↑' : '↓'}{Math.abs(parseFloat(change))} {GROWTH_UNITS[field]}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* 增长曲线图 */}
+                  {growthRecords.length >= 2 && (
+                    <div className="space-y-3">
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {['height', 'weight', 'headCircumference', 'footLength'].map((field) => (
+                          <button
+                            key={field}
+                            onClick={() => setActiveGrowthChart(field)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                              activeGrowthChart === field
+                                ? 'bg-primary-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            }`}
+                          >
+                            {GROWTH_ICONS[field]} {GROWTH_LABELS[field]}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* 图表 */}
+                      <GrowthChart records={growthRecords} field={activeGrowthChart} />
+                    </div>
+                  )}
+                  
+                  {/* 添加记录按钮 */}
+                  <button
+                    onClick={() => onAddGrowthRecord?.()}
+                    className="w-full py-3 border-2 border-dashed border-primary-300 dark:border-primary-600 rounded-xl text-primary-500 font-medium flex items-center justify-center gap-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                    记录成长数据
+                  </button>
+                  
+                  {/* 历史记录列表 */}
+                  <div className="space-y-2">
+                    {growthRecords.map((record, index) => (
+                      <div key={record.id} className="bg-cream-50 dark:bg-gray-800 rounded-xl p-3">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => setExpandedRecordId(expandedRecordId === record.id ? null : record.id)}
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                              <span className="text-gray-400">📅</span>
+                              {record.date}
+                              {index === 0 && (
+                                <span className="px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 text-xs rounded">最新</span>
+                              )}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                              {record.height != null && (
+                                <span className="flex items-center gap-0.5">{GROWTH_ICONS.height} {record.height}cm</span>
+                              )}
+                              {record.weight != null && (
+                                <span className="flex items-center gap-0.5">{GROWTH_ICONS.weight} {record.weight}kg</span>
+                              )}
+                              {record.headCircumference != null && (
+                                <span className="flex items-center gap-0.5">{GROWTH_ICONS.headCircumference} {record.headCircumference}cm</span>
+                              )}
+                              {record.footLength != null && (
+                                <span className="flex items-center gap-0.5">{GROWTH_ICONS.footLength} {record.footLength}cm</span>
+                              )}
+                              {record.photos?.length > 0 && (
+                                <span className="flex items-center gap-0.5">📷 {record.photos.length}张照片</span>
+                              )}
+                              {record.note && (
+                                <span className="flex items-center gap-0.5">📝 {record.note}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onEditGrowthRecord?.(record); }}
+                              className="p-2 text-gray-400 hover:text-primary-500"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(record.id); }}
+                              className="p-2 text-gray-400 hover:text-red-500"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expandedRecordId === record.id ? 'rotate-180' : ''}`} />
+                          </div>
+                        </div>
+                        
+                        {/* 展开的照片 */}
+                        {expandedRecordId === record.id && record.photos?.length > 0 && (
+                          <div className="mt-3 grid grid-cols-3 gap-2">
+                            {record.photos.map((photo, i) => (
+                              <img 
+                                key={i}
+                                src={photo}
+                                alt=""
+                                className="w-full aspect-square object-cover rounded-lg"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 dark:text-gray-500 mb-4">还没有成长记录哦</p>
+                  <button
+                    onClick={() => onAddGrowthRecord?.()}
+                    className="px-6 py-3 bg-primary-500 text-white rounded-full font-medium inline-flex items-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    记录成长数据
+                  </button>
+                </div>
+              )}
+              
+              {/* 删除确认弹窗 */}
+              {deleteConfirmId && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-xs w-full">
+                    <h3 className="font-bold text-gray-800 dark:text-white mb-2">确认删除</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">删除后将无法恢复，确定要删除这条成长记录吗？</p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="flex-1 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-600 dark:text-gray-400 font-medium"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const { deleteGrowthRecord } = await import('../utils/db');
+                            await deleteGrowthRecord(deleteConfirmId);
+                            await refreshGrowthRecords();
+                            showToast('已删除');
+                          } catch (e) {
+                            showToast('删除失败', 'error');
+                          }
+                          setDeleteConfirmId(null);
+                        }}
+                        className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-medium"
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>
