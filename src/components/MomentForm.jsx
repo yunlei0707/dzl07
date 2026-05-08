@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play, Pause, Navigation, Search } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { getCurrentBabyInfo } from '../utils/dbV2';
+import { isInApp, jsBridgeAudioRecorder } from '../utils/jsBridge';
 
 const moodOptions = [
   { value: 'happy', emoji: '😊', label: '开心' },
@@ -217,8 +218,8 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     });
   }, [searchKeyword, updateMarker]);
 
-  // 停止录音
-  const stopRecording = () => {
+  // 停止录音（浏览器方式）
+  const stopBrowserRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
@@ -234,97 +235,180 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setIsRecording(false);
   };
   
-  // 开始录音
-  const startRecording = async () => {
+  // 停止录音（APP方式）
+  const stopAppRecording = async () => {
     try {
-      // 先检查是否支持录音
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('当前浏览器不支持录音功能，请使用Chrome或Safari浏览器');
-        return;
-      }
+      const result = await jsBridgeAudioRecorder.stopRecord();
+      const duration = result?.duration || recordingTime;
       
-      // 检查是否在安全上下文（HTTPS）
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        alert('录音功能需要HTTPS安全连接，请使用HTTPS访问');
-        return;
-      }
+      // 读取录音数据
+      const base64 = await jsBridgeAudioRecorder.read();
+      const blob = jsBridgeAudioRecorder.toBlob(base64, 'audio/mp4');
+      const reader = new FileReader();
       
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      
-      // 设置音频分析器
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-      
-      // 开始录音
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
+      reader.onload = () => {
+        // 生成模拟波形数据
+        const simulatedWaveform = [];
+        for (let i = 0; i < 50; i++) {
+          simulatedWaveform.push(Array.from({length: 32}, () => Math.random() * 200));
         }
-      };
-      
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.onload = () => {
-          const audioData = {
-            url: reader.result,
-            duration: recordingTime,
-            waveform: [...audioWaveform]
-          };
-          setAudios(prev => [...prev, audioData]);
+        
+        const audioData = {
+          url: reader.result,
+          duration: duration,
+          waveform: simulatedWaveform
         };
-        reader.readAsDataURL(audioBlob);
+        setAudios(prev => [...prev, audioData]);
       };
+      reader.readAsDataURL(blob);
       
-      mediaRecorder.start();
+      setIsRecording(false);
+      return true;
+    } catch (error) {
+      console.error('APP停止录音失败:', error);
+      setIsRecording(false);
+      return false;
+    }
+  };
+  
+  // 停止录音（统一入口）
+  const stopRecording = async () => {
+    if (isInApp() && jsBridgeAudioRecorder.isAvailable()) {
+      await stopAppRecording();
+    } else {
+      stopBrowserRecording();
+    }
+  };
+  
+  // 开始录音（浏览器方式）
+  const startBrowserRecording = async () => {
+    // 先检查是否支持录音
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('当前浏览器不支持录音功能，请使用Chrome或Safari浏览器');
+      return;
+    }
+    
+    // 检查是否在安全上下文（HTTPS）
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      alert('录音功能需要HTTPS安全连接，请使用HTTPS访问');
+      return;
+    }
+    
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = stream;
+    
+    // 设置音频分析器
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+    
+    // 开始录音
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    mediaRecorderRef.current = mediaRecorder;
+    audioChunksRef.current = [];
+    
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        audioChunksRef.current.push(e.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const audioData = {
+          url: reader.result,
+          duration: recordingTime,
+          waveform: [...audioWaveform]
+        };
+        setAudios(prev => [...prev, audioData]);
+      };
+      reader.readAsDataURL(audioBlob);
+    };
+    
+    mediaRecorder.start();
+    setIsRecording(true);
+    setRecordingTime(0);
+    setAudioWaveform([]);
+    
+    // 开始计时
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => {
+        if (prev >= 599) { // 10分钟限制
+          stopRecording();
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    
+    // 开始波形采集
+    const captureWaveform = () => {
+      if (!analyserRef.current) return;
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+      analyserRef.current.getByteFrequencyData(dataArray);
+      // 采样32个点
+      const sampled = [];
+      for (let i = 0; i < 32; i++) {
+        sampled.push(dataArray[Math.floor(i * dataArray.length / 32)]);
+      }
+      setAudioWaveform(prev => [...prev.slice(-200), sampled]); // 保留最近200帧
+      animationRef.current = requestAnimationFrame(captureWaveform);
+    };
+    captureWaveform();
+  };
+  
+  // 开始录音（APP方式）
+  const startAppRecording = async () => {
+    try {
+      // 设置监听器
+      jsBridgeAudioRecorder.setListener({
+        onDuration: (duration) => {
+          setRecordingTime(Math.floor(duration));
+        },
+        onAmplitude: (amplitude) => {
+          // 将振幅数据转换为波形格式
+          const normalized = [];
+          for (let i = 0; i < 32; i++) {
+            // 模拟32个频段的振幅
+            normalized.push(Math.min(255, amplitude * (0.5 + Math.random())));
+          }
+          setAudioWaveform(prev => [...prev.slice(-200), normalized]);
+        },
+        onMaxDuration: () => {
+          stopRecording();
+        },
+        onStopped: (data) => {
+          // 处理停止事件
+        }
+      });
+      
+      await jsBridgeAudioRecorder.startRecord({
+        maxDuration: 60,
+        hiddenUI: true,
+        source: 'mic'
+      });
+      
       setIsRecording(true);
       setRecordingTime(0);
       setAudioWaveform([]);
       
-      // 开始计时
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          if (prev >= 599) { // 10分钟限制
-            stopRecording();
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-      
-      // 开始波形采集
-      const captureWaveform = () => {
-        if (!analyserRef.current) return;
-        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-        analyserRef.current.getByteFrequencyData(dataArray);
-        // 采样32个点
-        const sampled = [];
-        for (let i = 0; i < 32; i++) {
-          sampled.push(dataArray[Math.floor(i * dataArray.length / 32)]);
-        }
-        setAudioWaveform(prev => [...prev.slice(-200), sampled]); // 保留最近200帧
-        animationRef.current = requestAnimationFrame(captureWaveform);
-      };
-      captureWaveform();
-      
     } catch (error) {
-      console.error('录音权限错误:', error);
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        alert('麦克风权限被拒绝，请在浏览器设置中允许访问麦克风后重试');
-      } else if (error.name === 'NotFoundError') {
-        alert('未找到麦克风设备，请确认设备已连接');
-      } else {
-        alert('无法访问麦克风，请检查权限设置');
-      }
+      console.error('APP开始录音失败:', error);
+      alert('无法启动录音：' + (error.message || '未知错误'));
+    }
+  };
+  
+  // 开始录音（统一入口）
+  const startRecording = async () => {
+    if (isInApp() && jsBridgeAudioRecorder.isAvailable()) {
+      await startAppRecording();
+    } else {
+      await startBrowserRecording();
     }
   };
   
@@ -721,7 +805,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
             }`}
           >
             <Mic className="w-4 h-4" />
-            <span>语音日记</span>
+            <span>语音</span>
           </button>
           <button
             onClick={() => setType('diary')}
@@ -891,12 +975,12 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           </div>
         )}
         
-        {/* 语音日记 */}
+        {/* 语音 */}
         {type === 'audio' && (
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
               <Mic className="w-4 h-4 inline mr-1" />
-              语音日记
+              语音
             </label>
             
             {audios.length > 0 && (

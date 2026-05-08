@@ -204,6 +204,281 @@ export const importFromFile = async (filePath) => {
   }
 };
 
+// ==================== 录音API封装 ====================
+
+// 录音状态和监听器管理
+let audioRecorderListeners = {
+  onDuration: null,      // event 10: 录音进度，每秒回调
+  onMaxDuration: null,   // event 11: 达到最大录音长度
+  onAmplitude: null,     // event 12: 声波振幅，每200毫秒回调
+  onStopped: null,       // event 13: 已停止录音
+  onUploadProgress: null, // event 20: 上传进度
+  onUploadEnd: null,     // event 21: 上传结束
+};
+
+/**
+ * 设置录音监听器
+ * @param {Object} callbacks - 回调函数对象
+ */
+export const setAudioRecorderListener = (callbacks) => {
+  audioRecorderListeners = { ...audioRecorderListeners, ...callbacks };
+};
+
+/**
+ * 清除录音监听器
+ */
+export const clearAudioRecorderListener = () => {
+  audioRecorderListeners = {
+    onDuration: null,
+    onMaxDuration: null,
+    onAmplitude: null,
+    onStopped: null,
+    onUploadProgress: null,
+    onUploadEnd: null,
+  };
+};
+
+/**
+ * 注册原生录音监听器（内部使用）
+ */
+const setupNativeRecorderListener = () => {
+  if (!window.jsBridge || !window.jsBridge.audioRecorder) return;
+  
+  window.jsBridge.audioRecorder.setListener((event, data) => {
+    switch (event) {
+      case 10: // 录音进度，每秒回调
+        audioRecorderListeners.onDuration?.(data?.duration);
+        break;
+      case 11: // 达到最大录音长度
+        audioRecorderListeners.onMaxDuration?.(data?.duration);
+        break;
+      case 12: // 声波振幅，每200毫秒回调
+        audioRecorderListeners.onAmplitude?.(data?.amplitude);
+        break;
+      case 13: // 已停止录音
+        audioRecorderListeners.onStopped?.(data);
+        break;
+      case 20: // 上传进度
+        audioRecorderListeners.onUploadProgress?.(data);
+        break;
+      case 21: // 上传结束
+        audioRecorderListeners.onUploadEnd?.(data);
+        break;
+    }
+  });
+};
+
+/**
+ * 检查APP录音是否可用
+ */
+export const isAudioRecorderAvailable = () => {
+  return isInApp() && window.jsBridge && window.jsBridge.audioRecorder;
+};
+
+/**
+ * 开始录音（APP环境）
+ * @param {Object} options - 录音选项
+ * @returns {Promise<boolean>} - 是否成功开始
+ */
+export const startAppRecord = (options = {}) => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+
+    const { maxDuration = 60, hiddenUI = true, source = 'mic' } = options;
+
+    // 设置监听器
+    setupNativeRecorderListener();
+
+    window.jsBridge.audioRecorder.startRecord({
+      maxDuration,
+      hiddenUI,
+      source,
+    }, (succ, data) => {
+      if (succ) {
+        resolve(true);
+      } else {
+        reject(new Error(data?.message || '开始录音失败'));
+      }
+    });
+  });
+};
+
+/**
+ * 停止录音（APP环境）
+ * @returns {Promise<{duration: number}>} - 录音时长
+ */
+export const stopAppRecord = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+
+    window.jsBridge.audioRecorder.stopRecord((succ, data) => {
+      if (succ) {
+        resolve(data || { duration: 0 });
+      } else {
+        reject(new Error(data?.message || '停止录音失败'));
+      }
+    });
+  });
+};
+
+/**
+ * 读取录音文件（Base64）
+ * @returns {Promise<string>} - Base64编码的音频数据
+ */
+export const readAppRecord = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+
+    window.jsBridge.audioRecorder.read((contentAsBase64) => {
+      if (contentAsBase64) {
+        resolve(contentAsBase64);
+      } else {
+        reject(new Error('读取录音数据失败'));
+      }
+    });
+  });
+};
+
+/**
+ * Base64转Blob
+ * @param {string} base64 - Base64数据
+ * @param {string} mimeType - MIME类型
+ * @returns {Blob}
+ */
+export const base64ToBlob = (base64, mimeType = 'audio/mp4') => {
+  const base64Data = base64.replace(/^data:[^;]+;base64,/, '');
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: mimeType });
+};
+
+/**
+ * 播放录音（APP环境）
+ */
+export const playAppRecord = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+    window.jsBridge.audioRecorder.play((succ) => {
+      resolve(succ);
+    });
+  });
+};
+
+/**
+ * 暂停播放（APP环境）
+ */
+export const pauseAppRecord = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+    window.jsBridge.audioRecorder.pause((succ) => {
+      resolve(succ);
+    });
+  });
+};
+
+/**
+ * 恢复播放（APP环境）
+ */
+export const resumeAppRecord = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+    window.jsBridge.audioRecorder.resume((succ) => {
+      resolve(succ);
+    });
+  });
+};
+
+/**
+ * 停止播放（APP环境）
+ */
+export const stopAppPlay = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+    window.jsBridge.audioRecorder.stop((succ) => {
+      resolve(succ);
+    });
+  });
+};
+
+/**
+ * 删除录音（APP环境）
+ */
+export const removeAppRecord = () => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+    window.jsBridge.audioRecorder.remove((succ) => {
+      resolve(succ);
+    });
+  });
+};
+
+/**
+ * 上传录音（APP环境）
+ * @param {Object} options
+ * @param {string} options.url - 上传地址
+ * @param {string} options.name - form-data表单项名称
+ */
+export const uploadAppRecord = (options) => {
+  return new Promise((resolve, reject) => {
+    if (!isAudioRecorderAvailable()) {
+      reject(new Error('APP录音不可用'));
+      return;
+    }
+    window.jsBridge.audioRecorder.upload(options, (succ, data) => {
+      if (succ) {
+        resolve(data);
+      } else {
+        reject(new Error(data?.message || '上传失败'));
+      }
+    });
+  });
+};
+
+// 导出录音API
+export const jsBridgeAudioRecorder = {
+  isAvailable: isAudioRecorderAvailable,
+  setListener: setAudioRecorderListener,
+  clearListener: clearAudioRecorderListener,
+  startRecord: startAppRecord,
+  stopRecord: stopAppRecord,
+  read: readAppRecord,
+  toBlob: base64ToBlob,
+  play: playAppRecord,
+  pause: pauseAppRecord,
+  resume: resumeAppRecord,
+  stop: stopAppPlay,
+  remove: removeAppRecord,
+  upload: uploadAppRecord,
+};
+
 // 默认导出
 export default {
   isInApp,
@@ -211,4 +486,5 @@ export default {
   fs: jsBridgeFS,
   exportToFile,
   importFromFile,
+  audioRecorder: jsBridgeAudioRecorder,
 };
