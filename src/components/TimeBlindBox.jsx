@@ -396,7 +396,7 @@ export function TimeBlindBox({ moments, onPhotoClick }) {
     // 检查是否在一门APP环境
     const checkShakeSupport = () => {
       // 一门APP环境
-      if (window.jsBridge && typeof window.jsBridge.accelerometer !== 'undefined') {
+      if (window.jsBridge && window.jsBridge.accelerometer && typeof window.jsBridge.accelerometer.enable === 'function') {
         return true;
       }
       // 浏览器环境使用 DeviceMotion API
@@ -442,15 +442,23 @@ export function TimeBlindBox({ moments, onPhotoClick }) {
     };
     
     // 监听摇一摇事件
-    if (window.jsBridge && window.jsBridge.accelerometer) {
+    if (window.jsBridge && window.jsBridge.accelerometer && 
+        typeof window.jsBridge.accelerometer.enable === 'function' &&
+        typeof window.jsBridge.accelerometer.addListener === 'function') {
       // 一门APP环境：使用jsBridge加速度计
-      window.jsBridge.accelerometer.enable({ interval: 100 });
-      window.jsBridge.accelerometer.addListener(handleShake);
-      
-      return () => {
-        window.jsBridge.accelerometer.removeListener(handleShake);
-        window.jsBridge.accelerometer.disable();
-      };
+      try {
+        window.jsBridge.accelerometer.enable({ interval: 100 });
+        window.jsBridge.accelerometer.addListener(handleShake);
+        
+        return () => {
+          try {
+            window.jsBridge.accelerometer.removeListener(handleShake);
+            window.jsBridge.accelerometer.disable();
+          } catch(e) {}
+        };
+      } catch(e) {
+        console.warn('[TimeBlindBox] jsBridge.accelerometer 调用失败:', e);
+      }
     } else if (typeof DeviceMotionEvent !== 'undefined') {
       // 浏览器环境
       window.addEventListener('devicemotion', handleShake);
