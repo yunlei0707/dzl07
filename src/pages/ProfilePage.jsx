@@ -45,7 +45,7 @@ const THEME_PRESETS = [
 const EMOJI_OPTIONS = ['⭐', '🌱', '💪', '📚', '✨', '🎈', '🎀', '🌟', '💫', '🌈', '☀️', '🌙', '❤️', '🎉', '👏', '🦋', '🌸', '🍀'];
 
 export function ProfilePage(
-{ onEditBaby, onAddBaby, onOpenRecycleBin }) 
+{ onEditBaby, onAddBaby, onOpenRecycleBin, onOpenCapsules }) 
 {
   const navigate = useNavigate();
   const 
@@ -648,7 +648,14 @@ export function ProfilePage(
               {v2AccountInfo?.identityName || currentUser?.name || "我的"}
             </h1>
             <div className="flex-1" />
-            
+            {/* 给宝宝的信按钮 */}
+            <button
+              onClick={onOpenCapsules}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/25 hover:bg-white/40 active:scale-95 transition-all"
+            >
+              <span className="text-sm">💌</span>
+              <span className="text-xs font-medium text-white">给宝宝的信</span>
+            </button>
           </div>
           
           {/* 账号切换器 */}

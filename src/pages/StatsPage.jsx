@@ -460,33 +460,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
           </div>
         </div>
         
-        {/* 时空胶囊 */}
-        <div className="card animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-              <Gift className="w-5 h-5 text-primary-500" />
-              时空胶囊
-            </h3>
-            <button
-              onClick={onOpenCapsules}
-              className="text-sm text-primary-500 hover:text-primary-600"
-            >
-              查看全部 →
-            </button>
-          </div>
-          
-          <div className="flex gap-4">
-            <div className="flex-1 bg-green-50 dark:bg-green-900/20 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.unlockedCapsules}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">已解锁</p>
-            </div>
-            <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">{stats.lockedCapsules}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">待解锁</p>
-            </div>
-          </div>
-        </div>
-        
         {/* 里程碑列表 */}
         {milestones.length > 0 && (
           <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>

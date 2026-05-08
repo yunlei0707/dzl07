@@ -1,5 +1,5 @@
 /**
- * 时空胶囊页面
+ * 给宝宝的信页面
  */
 
 import { useState, useMemo } from 'react';
@@ -107,7 +107,7 @@ export function CapsulesPage({ onClose, onAddCapsule, onEditCapsule }) {
           </button>
           <h2 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
             <Gift className="w-5 h-5 text-primary-500" />
-            时空胶囊
+            给宝宝的信
           </h2>
           <button 
             onClick={onAddCapsule}
@@ -230,7 +230,7 @@ export function CapsulesPage({ onClose, onAddCapsule, onEditCapsule }) {
                 <Gift className="w-10 h-10 text-gray-300" />
               </div>
               <p className="text-gray-500 dark:text-gray-400 mb-2">
-                {selectedDate ? '该日期暂无胶囊' : '还没有时空胶囊'}
+                {selectedDate ? '该日期暂无胶囊' : '还没有给宝宝的信'}
               </p>
               <button
                 onClick={onAddCapsule}

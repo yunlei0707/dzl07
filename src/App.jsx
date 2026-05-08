@@ -294,6 +294,7 @@ function AppContent() {
             }}
             onAddBaby={handleAddBaby}
             onOpenRecycleBin={() => setShowRecycleBin(true)}
+            onOpenCapsules={() => setShowCapsulesPage(true)}
           />
         );
       default:

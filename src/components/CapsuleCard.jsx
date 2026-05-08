@@ -1,5 +1,5 @@
 /**
- * 时空胶囊卡片组件
+ * 给宝宝的信卡片组件
  */
 
 import { useState, useEffect } from 'react';
@@ -38,7 +38,7 @@ export function CapsuleCard({ capsule, onUnlock, onDelete }) {
   };
   
   const handleDelete = () => {
-    if (confirm('确定要删除这个时空胶囊吗？')) {
+    if (confirm('确定要删除这个给宝宝的信吗？')) {
       onDelete(capsule.id);
     }
   };
@@ -70,7 +70,7 @@ export function CapsuleCard({ capsule, onUnlock, onDelete }) {
               </div>
               <div>
                 <h3 className="font-bold text-gray-800 dark:text-white">
-                  {capsule.title || '时空胶囊'}
+                  {capsule.title || '给宝宝的信'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {formatDateFull(capsule.unlockDate)}

@@ -1,5 +1,5 @@
 /**
- * 时空胶囊编辑表单组件
+ * 给宝宝的信编辑表单组件
  */
 
 import { useState } from 'react';
@@ -139,7 +139,7 @@ export function CapsuleForm({ capsule, onSave, onCancel, babyId }) {
             <X className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
           <h2 className="font-bold text-gray-800 dark:text-white">
-            {capsule ? '编辑胶囊' : '创建时空胶囊'}
+            {capsule ? '编辑胶囊' : '创建给宝宝的信'}
           </h2>
           <button 
             onClick={handleSubmit}
@@ -164,7 +164,7 @@ export function CapsuleForm({ capsule, onSave, onCancel, babyId }) {
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-blue-700 dark:text-blue-300">
-              时空胶囊将在设定日期后解锁，期间内容会被加密保存
+              给宝宝的信将在设定日期后解锁，期间内容会被加密保存
             </p>
           </div>
         </div>
