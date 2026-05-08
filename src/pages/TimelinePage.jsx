@@ -10,6 +10,7 @@ import { BabyHeader } from '../components/BabyHeader';
 import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
+import { TimeBlindBox } from '../components/TimeBlindBox';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
 import { Plus, Calendar, Clock, X, ChevronDown, Lock, Trash2, AlertTriangle, Sparkles, PenLine } from 'lucide-react';
@@ -797,6 +798,12 @@ export function TimelinePage({
           </div>
         </div>
       )}
+      
+      {/* 时光盲盒 */}
+      <TimeBlindBox 
+        moments={hasV2Baby ? v2Moments : moments}
+        onPhotoClick={handlePhotoClick}
+      />
     </div>
   );
 }
