@@ -19,8 +19,6 @@ export default async function handler(req, res) {
   const xYmUser = `u${userId}.${userSecret}`;
 
   // 构建目标URL - 完全模拟Nginx proxy_pass行为
-  // Nginx: location /ymgate { proxy_pass http://gate.open.yimenyun.com; }
-  // 会原样把 /ymgate 及子路径传给目标
   const targetUrl = `http://gate.open.yimenyun.com${req.url}`;
 
   // 构建转发请求头 - 模拟 proxy_set_header
@@ -54,17 +52,24 @@ export default async function handler(req, res) {
     // 原样返回状态码（包括3xx重定向）
     res.statusCode = response.status;
 
-    // 原样转发所有响应头（包括Location、Set-Cookie等）
+    // 原样转发所有响应头
+    // 注意：Set-Cookie 是Fetch API的"禁止响应头"，forEach遍历不到
+    // 需要用 getSetCookie() 单独获取
     const rawHeaders = response.headers;
     rawHeaders.forEach((value, key) => {
       const lowerKey = key.toLowerCase();
-      // 跳过Vercel/HTTP2不允许重复设置的头
       if (!['transfer-encoding', 'connection'].includes(lowerKey)) {
         res.setHeader(key, value);
       }
     });
 
-    // 返回响应内容（用arrayBuffer处理二进制和文本）
+    // 单独处理 Set-Cookie（Fetch API forEach会跳过此头）
+    const cookies = rawHeaders.getSetCookie?.() || [];
+    if (cookies.length > 0) {
+      res.setHeader('Set-Cookie', cookies);
+    }
+
+    // 返回响应内容
     const buffer = await response.arrayBuffer();
     res.end(Buffer.from(buffer));
 
