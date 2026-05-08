@@ -1,52 +1,22 @@
-// 一门APP在线网关代理 - Vercel Serverless Function
-// 使用Node.js原生http模块，完全模拟Nginx反向代理行为
-// 避免Fetch API对Set-Cookie等头的限制
+// 一门APP在线网关代理 - Vercel Edge Function
+// 完全模拟Nginx反向代理行为，使用Edge Runtime获得完整headers控制
 
-import http from 'http';
+export const config = {
+  runtime: 'edge',
+};
 
-function proxyRequest(targetUrl, method, reqHeaders, body) {
-  return new Promise((resolve, reject) => {
-    const url = new URL(targetUrl);
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 80,
-      path: url.pathname + url.search,
-      method: method,
-      headers: reqHeaders,
-    };
-    
-    const proxyReq = http.request(options, (proxyRes) => {
-      const chunks = [];
-      proxyRes.on('data', chunk => chunks.push(chunk));
-      proxyRes.on('end', () => {
-        resolve({
-          statusCode: proxyRes.statusCode,
-          headers: proxyRes.headers,  // 原始headers，包含Set-Cookie
-          body: Buffer.concat(chunks),
-        });
-      });
-    });
-    
-    proxyReq.on('error', reject);
-    proxyReq.setTimeout(10000, () => {
-      proxyReq.destroy();
-      reject(new Error('请求超时'));
-    });
-    if (body) proxyReq.write(body);
-    proxyReq.end();
-  });
-}
-
-export default async function handler(req, res) {
+export default async function handler(request) {
   // 处理OPTIONS预检请求
-  if (req.method === 'OPTIONS') {
-    res.statusCode = 200;
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Access-Control-Max-Age', '86400');
-    res.end();
-    return;
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
   }
 
   // 获取用户ID和密钥
@@ -55,58 +25,90 @@ export default async function handler(req, res) {
   const xYmUser = `u${userId}.${userSecret}`;
 
   // 构建目标URL
-  const targetUrl = `http://gate.open.yimenyun.com${req.url}`;
+  const url = new URL(request.url);
+  const targetUrl = `http://gate.open.yimenyun.com${url.pathname}${url.search}`;
 
-  // 构建转发请求头 - 模拟Nginx proxy_set_header
-  const headers = {
-    'X-Ym-User': xYmUser,
-  };
+  // 构建转发请求头
+  const headers = new Headers();
+  headers.set('X-Ym-User', xYmUser);
   
-  // 复制客户端请求头（排除不需要的）
+  // 复制客户端请求头
   const excludeHeaders = ['host', 'content-length', 'connection', 'transfer-encoding'];
-  Object.entries(req.headers || {}).forEach(([key, value]) => {
+  for (const [key, value] of request.headers.entries()) {
     const lowerKey = key.toLowerCase();
     if (!excludeHeaders.includes(lowerKey)) {
-      headers[key] = value;
+      headers.set(key, value);
     }
-  });
+  }
 
   try {
-    // 获取请求体
-    let body = null;
-    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
-      body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const fetchOptions = {
+      method: request.method,
+      headers: headers,
+      redirect: 'manual',  // 不自动跟随重定向
+    };
+
+    // 如果有请求体，转发
+    if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
+      fetchOptions.body = request.body;
     }
 
-    // 使用http模块发起请求（不走Fetch API，避免头限制）
-    const result = await proxyRequest(targetUrl, req.method || 'GET', headers, body);
+    // 发起请求到目标网关
+    const response = await fetch(targetUrl, fetchOptions);
 
-    // 原样返回状态码（包括3xx重定向）
-    res.statusCode = result.statusCode;
-
-    // 原样转发所有响应头（http模块返回原始headers，无Fetch API限制）
-    Object.entries(result.headers).forEach(([key, value]) => {
+    // 构建响应头 - 完全原样转发
+    const responseHeaders = new Headers();
+    
+    // Edge Runtime中需要特殊处理Set-Cookie
+    const setCookieHeaders = [];
+    
+    for (const [key, value] of response.headers.entries()) {
       const lowerKey = key.toLowerCase();
       if (!['transfer-encoding', 'connection'].includes(lowerKey)) {
-        // Set-Cookie可能是数组，需要特殊处理
-        if (lowerKey === 'set-cookie' && Array.isArray(value)) {
-          res.setHeader(key, value);
-        } else {
-          res.setHeader(key, value);
+        responseHeaders.set(key, value);
+      }
+    }
+    
+    // 用getAll处理Set-Cookie（Edge Runtime支持）
+    try {
+      const cookies = response.headers.getAll?.('set-cookie');
+      if (cookies) {
+        cookies.forEach(c => responseHeaders.append('set-cookie', c));
+      }
+    } catch (e) {
+      // getAll不可用，尝试getSetCookie
+      try {
+        const cookies = response.headers.getSetCookie?.();
+        if (cookies && cookies.length > 0) {
+          cookies.forEach(c => responseHeaders.append('set-cookie', c));
+        }
+      } catch (e2) {
+        // 最后尝试直接get
+        const cookieStr = response.headers.get('set-cookie');
+        if (cookieStr) {
+          responseHeaders.set('set-cookie', cookieStr);
         }
       }
+    }
+
+    // 获取响应体
+    const body = await response.arrayBuffer();
+
+    // 原样返回
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
     });
 
-    // 原样返回响应内容
-    res.end(result.body);
-
   } catch (error) {
-    console.error('网关代理错误:', error);
-    res.statusCode = 502;
-    res.end(JSON.stringify({ 
+    return new Response(JSON.stringify({ 
       code: 502, 
       message: '网关代理请求失败',
       error: error.message 
-    }));
+    }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
