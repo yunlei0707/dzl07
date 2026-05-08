@@ -1427,20 +1427,20 @@ export function ProfilePage(
       {/* 示例数据模板选择面板 */}
       {sampleStep && (
         <div 
-          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center animate-fadeIn"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => resetSampleSelection()}
         >
           <div 
-            className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-t-3xl max-h-[85vh] flex flex-col animate-slideUp"
+            className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl max-h-[85vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 标题栏 */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
               <button
                 onClick={handleSampleStepBack}
-                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <ChevronRight className="w-5 h-5 text-gray-500 rotate-180" />
+                <ChevronRight className="w-4 h-4 text-gray-500 rotate-180" />
               </button>
               <h3 className="font-bold dark:text-white">
                 {sampleStep === 'age' && '选择宝宝月龄'}
@@ -1449,9 +1449,9 @@ export function ProfilePage(
               </h3>
               <button
                 onClick={resetSampleSelection}
-                className="p-2 -mr-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
             
