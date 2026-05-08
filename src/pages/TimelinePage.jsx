@@ -12,7 +12,7 @@ import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
 import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
-import { Plus, Calendar, Clock, X, ChevronDown, Lock, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Calendar, Clock, X, ChevronDown, Lock, Trash2, AlertTriangle, Sparkles, PenLine } from 'lucide-react';
 import { 
   getCurrentV2Account, 
   getCurrentTimeline, 
@@ -121,6 +121,7 @@ export function TimelinePage({
   const [showSameDay, setShowSameDay] = useState(false);
   const [sameDayMoments, setSameDayMoments] = useState([]);
   const [sharingMoment, setSharingMoment] = useState(null);
+  const [showCreateChoice, setShowCreateChoice] = useState(false);
   
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -678,11 +679,75 @@ export function TimelinePage({
         </div>
       ) : (
         <button
-          onClick={onAddMoment}
+          onClick={() => setShowCreateChoice(true)}
           className="fixed right-4 bottom-32 w-14 h-14 bg-gradient-to-br from-primary-500 to-warm-500 rounded-full shadow-lg flex items-center justify-center z-50 active:scale-95 transition-transform hover:shadow-xl"
         >
           <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
         </button>
+      )}
+
+      {/* 创作方式选择弹窗 */}
+      {showCreateChoice && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center"
+          onClick={() => setShowCreateChoice(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-6 animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white text-center mb-5">
+              选择创作方式
+            </h3>
+            
+            <div className="space-y-3">
+              {/* 自己创作 */}
+              <button
+                onClick={() => {
+                  setShowCreateChoice(false);
+                  onAddMoment();
+                }}
+                className="w-full p-4 bg-cream-50 dark:bg-gray-700 rounded-xl flex items-center gap-4 hover:bg-cream-100 dark:hover:bg-gray-600 transition-colors active:scale-[0.98]"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                  <PenLine className="w-6 h-6 text-primary-500" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-gray-800 dark:text-white">自己创作</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">手动记录宝宝的成长瞬间</div>
+                </div>
+              </button>
+
+              {/* AI智能创作 */}
+              <button
+                onClick={() => {
+                  setShowCreateChoice(false);
+                  showToast('AI智能创作即将上线，敬请期待~', 'info');
+                }}
+                className="w-full p-4 bg-cream-50 dark:bg-gray-700 rounded-xl flex items-center gap-4 hover:bg-cream-100 dark:hover:bg-gray-600 transition-colors active:scale-[0.98] relative overflow-hidden"
+              >
+                <div className="absolute top-2 right-2 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs rounded-full font-medium">
+                  即将上线
+                </div>
+                <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-purple-500" />
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-gray-800 dark:text-white">AI智能创作</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">AI帮您生成个性化成长记录</div>
+                </div>
+              </button>
+            </div>
+
+            {/* 取消按钮 */}
+            <button
+              onClick={() => setShowCreateChoice(false)}
+              className="w-full mt-4 py-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
       )}
       
       {/* 删除确认弹窗 */}
