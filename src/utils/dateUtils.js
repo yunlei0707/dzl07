@@ -185,9 +185,58 @@ export function formatCountdownDisplay(years, months, days, hours) {
 }
 
 /**
- * 按年月分组
+ * 基于宝宝生日格式化日期为相对时间显示
+ * @param {string|Date} date - 记录日期
+ * @param {string|Date} birthday - 宝宝生日
+ * @returns {Object|null} { display: 显示文本, monthsDiff: 月份差 } 或 null（无生日时）
  */
-export function groupByYearAndMonth(moments) {
+export function formatDateRelativeToBirthday(date, birthday) {
+  const recordDate = typeof date === 'string' ? parseISO(date) : date;
+  
+  // 如果没有生日，返回 null 以便降级显示原日历日期
+  if (!birthday) {
+    return null;
+  }
+  
+  const birthDate = typeof birthday === 'string' ? parseISO(birthday) : birthday;
+  
+  // 使用本地时间计算年月
+  const recordYear = recordDate.getFullYear();
+  const recordMonth = recordDate.getMonth();
+  const birthYear = birthDate.getFullYear();
+  const birthMonth = birthDate.getMonth();
+  
+  // 计算总月份差（使用年*12+月，确保跨年正确）
+  const totalRecordMonths = recordYear * 12 + recordMonth;
+  const totalBirthMonths = birthYear * 12 + birthMonth;
+  const monthsDiff = totalRecordMonths - totalBirthMonths;
+  
+  // 判断出生前后
+  if (monthsDiff < 0) {
+    return {
+      display: `出生前${Math.abs(monthsDiff)}个月`,
+      monthsDiff
+    };
+  } else if (monthsDiff === 0) {
+    return {
+      display: '出生月',
+      monthsDiff
+    };
+  } else {
+    return {
+      display: `出生后${monthsDiff}个月`,
+      monthsDiff
+    };
+  }
+}
+
+/**
+ * 按年月分组
+ * @param {Array} moments - 动态数组
+ * @param {string|Date} birthday - 宝宝生日（可选），传入后分组标题显示相对时间
+ * @returns {Array} 分组后的数组，每个分组包含 year, month, moments, relativeDisplay, monthsDiff
+ */
+export function groupByYearAndMonth(moments, birthday = null) {
   const groups = {};
   
   // 先按创建时间倒序排列所有动态
@@ -204,10 +253,15 @@ export function groupByYearAndMonth(moments) {
     const key = `${year}-${String(month + 1).padStart(2, '0')}`;
     
     if (!groups[key]) {
+      // 计算该月第一条记录的相对时间
+      const relativeInfo = formatDateRelativeToBirthday(date, birthday);
+      
       groups[key] = {
         year,
         month: month + 1,
         moments: [],
+        relativeDisplay: relativeInfo?.display || null,
+        monthsDiff: relativeInfo?.monthsDiff ?? null,
       };
     }
     groups[key].moments.push(moment);
@@ -258,4 +312,5 @@ export function getQuickDateOptions(baseDate = new Date()) {
     { label: '自定义', date: null },
   ];
 }
+
 export { getYear, getMonth, getDate };

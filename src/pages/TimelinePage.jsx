@@ -258,10 +258,12 @@ export function TimelinePage({
     return result;
   }, [v2Moments, moments, hasV2Baby, selectedType, selectedMood, selectedMilestone]);
   
-  // 按年月分组
+  // 按年月分组 - 传入宝宝生日以显示相对时间
   const groupedMoments = useMemo(() => {
-    return groupByYearAndMonth(filteredMoments);
-  }, [filteredMoments]);
+    // 获取宝宝生日
+    const babyBirthday = v2AccountInfo?.accountData?.birthDate || currentBaby?.birthDate;
+    return groupByYearAndMonth(filteredMoments, babyBirthday);
+  }, [filteredMoments, v2AccountInfo, currentBaby]);
   
   // 是否有激活的筛选条件
   const hasActiveFilters = useMemo(() => {
@@ -644,11 +646,11 @@ export function TimelinePage({
             
             {groupedMoments.map((group) => (
               <div key={`${group.year}-${group.month}`} className="relative mb-6">
-                {/* 年月标签 */}
+                {/* 年月标签 - 显示相对时间或降级为日历日期 */}
                 <div className="sticky top-0 z-10 py-2">
                   <div className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full px-4 py-1.5 shadow-sm">
                     <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                      {group.year}年{group.month}月
+                      {group.relativeDisplay || `${group.year}年${group.month}月`}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {group.moments.length}条记录
