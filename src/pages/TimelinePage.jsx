@@ -555,57 +555,93 @@ export function TimelinePage({
         {/* 筛选器卡片 */}
         <div className="card mb-4">
           {/* 类型筛选 */}
-          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-            <span className="text-xs text-gray-400 flex-shrink-0">类型</span>
-            {typeFilters.map(filter => (
-              <button
-                key={filter.value}
-                onClick={() => setSelectedType(filter.value)}
-                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
-                  selectedType === filter.value
-                    ? 'bg-primary-100 text-primary-600 font-medium'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 flex-shrink-0">类型多</span>
+            <button
+              onClick={() => setSelectedType('')}
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
+                selectedType === ''
+                  ? 'bg-primary-100 text-primary-600 font-medium'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              全部
+            </button>
+            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+              {typeFilters.filter(f => f.value !== '').map(filter => (
+                <button
+                  key={filter.value}
+                  onClick={() => setSelectedType(filter.value)}
+                  className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
+                    selectedType === filter.value
+                      ? 'bg-primary-100 text-primary-600 font-medium'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 心情筛选 */}
-          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar mt-2">
-            <span className="text-xs text-gray-400 flex-shrink-0">心情</span>
-            {moodFilters.map(filter => (
-              <button
-                key={filter.value}
-                onClick={() => setSelectedMood(filter.value)}
-                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
-                  selectedMood === filter.value
-                    ? 'bg-amber-100 text-amber-600 font-medium'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-gray-400 flex-shrink-0">心情好</span>
+            <button
+              onClick={() => setSelectedMood('')}
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
+                selectedMood === ''
+                  ? 'bg-amber-100 text-amber-600 font-medium'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              全部
+            </button>
+            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+              {moodFilters.filter(f => f.value !== '').map(filter => (
+                <button
+                  key={filter.value}
+                  onClick={() => setSelectedMood(filter.value)}
+                  className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
+                    selectedMood === filter.value
+                      ? 'bg-amber-100 text-amber-600 font-medium'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 里程碑筛选 */}
-          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar mt-2">
+          <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-gray-400 flex-shrink-0">里程碑</span>
-            {milestoneFilters.map(filter => (
-              <button
-                key={filter.value}
-                onClick={() => setSelectedMilestone(filter.value)}
-                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
-                  selectedMilestone === filter.value
-                    ? 'bg-purple-100 text-purple-600 font-medium'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+            <button
+              onClick={() => setSelectedMilestone('')}
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
+                selectedMilestone === ''
+                  ? 'bg-purple-100 text-purple-600 font-medium'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              全部
+            </button>
+            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+              {milestoneFilters.filter(f => f.value !== '').map(filter => (
+                <button
+                  key={filter.value}
+                  onClick={() => setSelectedMilestone(filter.value)}
+                  className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
+                    selectedMilestone === filter.value
+                      ? 'bg-purple-100 text-purple-600 font-medium'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         
