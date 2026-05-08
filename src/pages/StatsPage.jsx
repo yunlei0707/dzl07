@@ -8,7 +8,7 @@ import { useApp } from '../store/AppContext';
 import { BabyHeader } from '../components/BabyHeader';
 import { calculateAge } from '../utils/dateUtils';
 import { getMomentsByBaby, getCapsulesByBaby } from '../utils/db';
-import { Gift, TrendingUp, Camera, Calendar, Star, BarChart2 } from 'lucide-react'
+import { Gift, TrendingUp, Camera, Calendar, Star, BookOpen } from 'lucide-react'
 import { getCurrentV2Account, getCurrentTimeline, getCurrentGrowth, updateCurrentGrowth, isSystemAccount as checkIsSystemAccount, getCurrentBabyInfo } from '../utils/dbV2';
 import { TimeBlindBox } from '../components/TimeBlindBox';
 
@@ -540,7 +540,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
           </div>
         )}
         
-        {/* 月度报告入口 */}
+        {/* 宝宝成长档案入口 */}
         <div 
           className="card cursor-pointer active:scale-[0.98] transition-transform animate-fade-in"
           style={{ animationDelay: '0.4s' }}
@@ -548,11 +548,11 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
         >
           <div className="flex items-center gap-3 text-primary-500">
             <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-              <BarChart2 className="w-5 h-5" />
+              <BookOpen className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold">月度报告</h3>
-              <p className="text-xs text-gray-500">查看本月成长数据</p>
+              <h3 className="font-bold">宝宝成长档案</h3>
+              <p className="text-xs text-gray-500">查看成长档案</p>
             </div>
             <span className="text-xs text-gray-400">→</span>
           </div>

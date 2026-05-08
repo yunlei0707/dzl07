@@ -1259,6 +1259,228 @@ export async function getMonthlyStats(babyId, year, month) {
   };
 }
 
+// ==================== 宝宝成长档案统计 ====================
+
+/**
+ * 停用词列表（用于关键词提取）
+ */
+const STOP_WORDS = new Set([
+  '的', '了', '是', '在', '我', '你', '他', '她', '有', '和', '就', '不', '都', '也', '还', '很', '这', '那', '要', '会', '对', '说', '去', '到', '能', '让', '把', '给', '从', '被', '比', '等', '着', '过', '但', '又', '却', '而', '以', '为', '之', '于', '上', '下', '中', '后', '前', '里', '时', '来', '出', '没', '可', '只', '这个', '那个', '什么', '怎么', '没有', '可以', '因为', '所以', '但是', '如果', '虽然', '自己', '一个', '一些', '一样', '一点', '已经', '现在', '今天', '明天', '昨天', '每天', '然后', '可是', '或者', '而且', '还是', '就是', '这样', '那样', '这么', '那么', '真', '好', '真', '太', '最', '更', '挺', '蛮', '挺', '满', '怪', '死', '老', '多', '少', '点', '下', '起', '地', '得'
+]);
+
+/**
+ * 从文本中提取关键词（出现2次以上的词）
+ * @param {Array} diaryMoments - 日记动态列表
+ * @returns {Array} 关键词数组 [{word, count}]
+ */
+function extractKeywords(diaryMoments) {
+  const wordCount = {};
+  
+  diaryMoments.forEach(moment => {
+    const content = moment.content || '';
+    // 简单分词：按空格和标点分割
+    const words = content
+      .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 2 && w.length <= 6) // 过滤太短或太长的词
+      .filter(w => !STOP_WORDS.has(w.toLowerCase()));
+    
+    words.forEach(word => {
+      const key = word.toLowerCase();
+      wordCount[key] = (wordCount[key] || 0) + 1;
+    });
+  });
+  
+  // 返回出现2次以上的词
+  return Object.entries(wordCount)
+    .filter(([_, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10) // 最多10个
+    .map(([word, count]) => ({ word, count }));
+}
+
+/**
+ * 根据时间范围获取开始和结束日期
+ * @param {string} range - '1month' | '3months' | '1year' | 'all'
+ * @param {string} birthDate - 宝宝出生日期
+ * @returns {{ startDate: Date, endDate: Date, rangeDays: number }}
+ */
+function getDateRange(range, birthDate) {
+  const now = new Date();
+  const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  let startDate;
+  let rangeDays;
+  
+  switch (range) {
+    case '1month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+      rangeDays = 30;
+      break;
+    case '3months':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+      rangeDays = 90;
+      break;
+    case '1year':
+      startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      rangeDays = 365;
+      break;
+    case 'all':
+    default:
+      // 从出生日期开始计算
+      startDate = birthDate ? new Date(birthDate) : new Date(0);
+      const diffTime = endDate - startDate;
+      rangeDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      break;
+  }
+  
+  return { startDate, endDate, rangeDays };
+}
+
+/**
+ * 生成时光寄语
+ * @param {Object} stats - 统计数据
+ * @param {string} range - 时间范围
+ * @param {string} babyName - 宝宝名字
+ * @returns {string}
+ */
+function generateTimeMessage(stats, range, babyName) {
+  const { totalMoments, milestoneCount, firstMilestones } = stats;
+  const rangeText = {
+    '1month': '一个月',
+    '3months': '三个月',
+    '1year': '一年',
+    'all': '这段时间'
+  }[range] || '这段时间';
+  
+  const name = babyName || '宝宝';
+  
+  // 优先规则：第一次里程碑
+  if (firstMilestones && firstMilestones.length > 0) {
+    return `这${rangeText}，${name}又解锁了${firstMilestones.length}个第一次，每一步都值得被记住。`;
+  }
+  
+  // 里程碑数>=3
+  if (milestoneCount >= 3) {
+    return `这${rangeText}，${name}达成了${milestoneCount}个里程碑，成长的速度让人惊叹！`;
+  }
+  
+  // 记录数>=10
+  if (totalMoments >= 10) {
+    return `这${rangeText}一共记录了${totalMoments}条时光，每一刻都是爱的印记。`;
+  }
+  
+  // 记录数>0
+  if (totalMoments > 0) {
+    return `虽然记录不多，但每一刻都珍贵。继续陪伴，继续记录❤️`;
+  }
+  
+  // 没有记录
+  return `还没有记录，但爱一直在。现在就开始记录吧✨`;
+}
+
+/**
+ * 找出代表时刻（最"重"的记录）
+ * @param {Array} moments - 动态列表
+ * @returns {Object|null}
+ */
+function findRepresentativeMoment(moments) {
+  if (!moments || moments.length === 0) return null;
+  
+  // 计算每条记录的"重量"
+  const scoredMoments = moments.map(m => {
+    const photoCount = m.photos?.length || 0;
+    const contentLength = (m.content || '').length;
+    const date = new Date(m.date).getTime();
+    
+    // 权重：照片最多 > 文字最长 > 最新
+    const score = photoCount * 1000 + contentLength * 10 + date * 0.001;
+    
+    return { ...m, _score: score };
+  });
+  
+  // 返回得分最高的
+  return scoredMoments.sort((a, b) => b._score - a._score)[0];
+}
+
+/**
+ * 获取宝宝成长档案统计数据
+ * @param {string} babyId - 宝宝ID
+ * @param {string} range - 时间范围：'1month' | '3months' | '1year' | 'all'
+ * @param {string} birthDate - 宝宝出生日期（可选）
+ * @returns {Promise<Object>}
+ */
+export async function getGrowthReportStats(babyId, range = '1month', birthDate = null) {
+  const db = await initDB();
+  const moments = await db.getAllFromIndex('moments', 'babyId', babyId);
+  
+  // 计算时间范围
+  const { startDate, endDate, rangeDays } = getDateRange(range, birthDate);
+  
+  // 筛选时间范围内的记录
+  const filteredMoments = moments.filter(m => {
+    const momentDate = new Date(m.date);
+    return momentDate >= startDate && momentDate <= endDate;
+  });
+  
+  // 统计各类型数量
+  const photoMoments = filteredMoments.filter(m => m.type === 'photo');
+  const videoMoments = filteredMoments.filter(m => m.type === 'video');
+  const diaryMoments = filteredMoments.filter(m => m.type === 'diary');
+  const audioMoments = filteredMoments.filter(m => m.type === 'audio');
+  
+  // 照片总数
+  const photoCount = photoMoments.reduce((acc, m) => acc + (m.photos?.length || 0), 0);
+  
+  // 视频总数
+  const videoCount = videoMoments.reduce((acc, m) => acc + (m.videos?.length || 0), 0);
+  
+  // 获取里程碑事件
+  const milestones = filteredMoments
+    .filter(m => m.milestone)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // 分离"第一次"里程碑
+  const firstMilestones = milestones.filter(m => m.milestone === 'first');
+  
+  // 获取心情分布
+  const moodStats = {};
+  filteredMoments.forEach(m => {
+    if (m.mood) {
+      moodStats[m.mood] = (moodStats[m.mood] || 0) + 1;
+    }
+  });
+  
+  // 提取关键词
+  const keywords = extractKeywords(diaryMoments);
+  
+  // 找出代表时刻
+  const representativeMoment = findRepresentativeMoment(filteredMoments);
+  
+  // 计算总记录数
+  const totalMoments = filteredMoments.length;
+  
+  return {
+    range,
+    rangeDays,
+    totalMoments,
+    photoCount,
+    videoCount,
+    diaryCount: diaryMoments.length,
+    audioCount: audioMoments.length,
+    milestones,
+    milestoneCount: milestones.length,
+    firstMilestones,
+    moodStats,
+    keywords,
+    representativeMoment,
+    timeMessage: generateTimeMessage({
+      totalMoments,
+      milestoneCount: milestones.length,
+      firstMilestones
+    }, range, null), // babyName 由组件传入
+  };
+}
+
 // ==================== 忘记密码功能（安全问题） ====================
 
 /**
