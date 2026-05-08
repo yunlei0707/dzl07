@@ -193,6 +193,37 @@ export function ProfilePage(
     setEditedMoments(prev => prev.map((m, i) => i === index ? { ...m, content } : m));
   }, []);
 
+  // 替换记录图片
+  const handleReplaceImage = useCallback((index) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        setEditedMoments(prev => prev.map((m, i) => {
+          if (i !== index) return m;
+          return { ...m, photos: [dataUrl] };
+        }));
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }, []);
+
+  // 删除记录图片
+  const handleRemoveImage = useCallback((index) => {
+    setEditedMoments(prev => prev.map((m, i) => {
+      if (i !== index) return m;
+      const updated = { ...m };
+      delete updated.photos;
+      return updated;
+    }));
+  }, []);
+
   // 执行导入
   const executeImport = useCallback(async () => {
     if (!editedMoments.length || isImportingSample) return;
@@ -1593,14 +1624,61 @@ export function ProfilePage(
                       </div>
                       
                       {/* 照片预览 */}
-                      {moment.photos && moment.photos[0] && (
-                        <div className="mt-3 rounded-lg overflow-hidden">
+                      {moment.photos && moment.photos[0] ? (
+                        <div className="mt-3 relative group">
                           <img 
                             src={moment.photos[0]} 
                             alt="" 
-                            className="w-full h-32 object-cover"
+                            className="w-full h-32 object-cover rounded-lg"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '';
+                              e.target.parentElement.innerHTML = `
+                                <div class="w-full h-32 bg-gray-200 dark:bg-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                  <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                  <span class="text-xs">图片加载失败</span>
+                                </div>
+                              `;
+                            }}
                           />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-3 md:opacity-0">
+                            <button
+                              onClick={() => handleReplaceImage(index)}
+                              className="px-3 py-1.5 bg-white rounded-lg text-sm font-medium text-gray-800 active:bg-gray-200"
+                            >
+                              替换
+                            </button>
+                            <button
+                              onClick={() => handleRemoveImage(index)}
+                              className="px-3 py-1.5 bg-red-500 rounded-lg text-sm font-medium text-white active:bg-red-600"
+                            >
+                              删除
+                            </button>
+                          </div>
+                          {/* 移动端：底部操作条 */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 rounded-b-lg flex md:hidden">
+                            <button
+                              onClick={() => handleReplaceImage(index)}
+                              className="flex-1 py-2 text-center text-sm text-white active:bg-white/20"
+                            >
+                              替换图片
+                            </button>
+                            <button
+                              onClick={() => handleRemoveImage(index)}
+                              className="flex-1 py-2 text-center text-sm text-red-300 active:bg-white/20 border-l border-white/20"
+                            >
+                              删除图片
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        <button
+                          onClick={() => handleReplaceImage(index)}
+                          className="mt-3 w-full h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:border-primary-400 hover:text-primary-500 transition-colors"
+                        >
+                          <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                          <span className="text-xs">添加图片</span>
+                        </button>
                       )}
                     </div>
                   ))}
