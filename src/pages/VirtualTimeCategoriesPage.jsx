@@ -1,6 +1,6 @@
 /**
- * 虚拟时光目录管理页面
- * 支持添加、编辑、删除虚拟时光的一级分类和二级内容项
+ * 未来宝宝目录管理页面
+ * 支持添加、编辑、删除未来宝宝的一级分类和二级内容项
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -215,7 +215,7 @@ export function VirtualTimeCategoriesPage() {
     loadCategories();
   };
   
-  // 打开虚拟时光预览
+  // 打开未来宝宝预览
   const handlePreview = (category) => {
     navigate('/virtual', { state: { categoryId: category.id } });
   };
@@ -228,7 +228,7 @@ export function VirtualTimeCategoriesPage() {
           <button onClick={() => navigate(-1)} className="p-2 -ml-2">
             <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </button>
-          <h1 className="flex-1 text-center font-bold text-gray-800 dark:text-white pr-10">虚拟时光自定义</h1>
+          <h1 className="flex-1 text-center font-bold text-gray-800 dark:text-white pr-10">未来宝宝自定义</h1>
         </div>
       </header>
       

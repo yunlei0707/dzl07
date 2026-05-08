@@ -26,13 +26,13 @@ export function FloatingButton() {
               bot_id: '7636350042466418731',
             },
             componentProps: {
-              title: '虚拟时光AI助手',
+              title: '未来宝宝AI助手',
             },
             // UI配置 - 自定义底部文案
             ui: {
               footer: {
                 isShow: true,
-                expressionText: '虚拟时光AI助手-由Coze提供技术支持',
+                expressionText: '未来宝宝AI助手-由Coze提供技术支持',
                 linkvars: {}
               }
             }

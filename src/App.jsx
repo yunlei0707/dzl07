@@ -217,7 +217,7 @@ function AppContent() {
             handleRecordLink(record).then(linkedResult => {
               // 如果有联动结果，给个轻提示
               if (linkedResult) {
-                showToast('✨ 已生成虚拟时光回响', 'success');
+                showToast('✨ 已生成未来宝宝回响', 'success');
               }
             });
             
@@ -423,7 +423,7 @@ function AppRoutes() {
         }
       />
       
-      {/* 虚拟时光详情页 */}
+      {/* 未来宝宝详情页 */}
       <Route
         path="/virtual/topic/:topicId"
         element={
@@ -433,7 +433,7 @@ function AppRoutes() {
         }
       />
       
-      {/* 虚拟时光目录管理 */}
+      {/* 未来宝宝目录管理 */}
       <Route
         path="/virtual-time-categories"
         element={

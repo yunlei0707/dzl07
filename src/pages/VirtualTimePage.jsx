@@ -1,5 +1,5 @@
 /**
- * 虚拟时光页面 - AI生成内容专题展示
+ * 未来宝宝页面 - AI生成内容专题展示
  * 支持点击内容项全屏展示和分享，双账号支持
  */
 
@@ -60,10 +60,10 @@ export function VirtualTimePage() {
   // 检查是否为系统账号
   const isSystemAccount = v2AccountInfo?.isSystem === true;
   
-  // 同步宝宝名称到虚拟时光显示
+  // 同步宝宝名称到未来宝宝显示
   const babyName = v2AccountInfo?.nickname || v2AccountInfo?.name || currentBaby?.nickname || currentBaby?.name || '宝宝';
   
-  // 添加虚拟时光
+  // 添加未来宝宝
   const handleAddVirtualTime = useCallback(() => {
     if (isSystemAccount) {
       showToast('系统账号不可添加', 'error');
@@ -88,7 +88,7 @@ export function VirtualTimePage() {
     }
   }, [isSystemAccount, newVirtualTime, showToast]);
   
-  // 删除虚拟时光
+  // 删除未来宝宝
   const handleDeleteVirtualTime = useCallback((itemId) => {
     if (isSystemAccount) {
       showToast('系统账号不可删除', 'error');
@@ -225,7 +225,7 @@ export function VirtualTimePage() {
                 )}
               </div>
               <h1 className="text-xl font-bold">
-                {v2AccountInfo?.identityName || currentUser?.name || "✨ 虚拟时光"}
+                {v2AccountInfo?.identityName || currentUser?.name || "✨ 未来宝宝"}
               </h1>
             </div>
           </div>

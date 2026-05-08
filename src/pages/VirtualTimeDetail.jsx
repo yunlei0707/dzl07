@@ -1,5 +1,5 @@
 /**
- * 虚拟时光详情页
+ * 未来宝宝详情页
  * 展示单个专题的详细内容，支持添加用户内容
  */
 
@@ -169,7 +169,7 @@ export function VirtualTimeDetail() {
         <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
           <div style="font-size: 48px;">${item.emoji || '📝'}</div>
           <div>
-            <div style="font-size: 14px; opacity: 0.9;">虚拟时光 · ${topic.title}</div>
+            <div style="font-size: 14px; opacity: 0.9;">未来宝宝 · ${topic.title}</div>
             <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">${item.title}</div>
           </div>
         </div>
@@ -257,7 +257,7 @@ export function VirtualTimeDetail() {
           
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-5 h-5" />
-            <span className="text-sm font-medium">虚拟时光</span>
+            <span className="text-sm font-medium">未来宝宝</span>
           </div>
           
           <h1 className="text-2xl font-bold mb-2">{topic.title}</h1>
