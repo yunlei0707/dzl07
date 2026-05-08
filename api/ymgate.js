@@ -1,5 +1,5 @@
 // 一门APP在线网关代理 - Vercel Edge Function
-// 完全模拟Nginx反向代理行为
+// 完全模拟Nginx反向代理行为，并修复重定向Location头
 
 export const config = {
   runtime: 'edge',
@@ -25,11 +25,8 @@ export default async function handler(request) {
   const xYmUser = `u${userId}.${userSecret}`;
 
   // 构建目标URL
-  // Edge Function收到的路径是 /api/ymgate 或 /api/ymgate/xxx
-  // 需要转换为 /ymgate 或 /ymgate/xxx 再拼到网关地址
   const url = new URL(request.url);
   let gatewayPath = url.pathname;
-  // 把 /api/ymgate 前缀替换为 /ymgate
   if (gatewayPath.startsWith('/api/ymgate')) {
     gatewayPath = gatewayPath.replace('/api/ymgate', '/ymgate');
   }
@@ -39,7 +36,6 @@ export default async function handler(request) {
   const headers = new Headers();
   headers.set('X-Ym-User', xYmUser);
   
-  // 复制客户端请求头
   const excludeHeaders = ['host', 'content-length', 'connection', 'transfer-encoding'];
   for (const [key, value] of request.headers.entries()) {
     const lowerKey = key.toLowerCase();
@@ -52,7 +48,7 @@ export default async function handler(request) {
     const fetchOptions = {
       method: request.method,
       headers: headers,
-      redirect: 'manual',
+      redirect: 'manual',  // 不自动跟随重定向
     };
 
     if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
@@ -71,7 +67,7 @@ export default async function handler(request) {
       }
     }
 
-    // 单独处理Set-Cookie（Fetch API的entries()会跳过此头）
+    // 单独处理Set-Cookie
     if (typeof response.headers.getSetCookie === 'function') {
       const cookies = response.headers.getSetCookie();
       if (cookies && cookies.length > 0) {
@@ -81,8 +77,21 @@ export default async function handler(request) {
       }
     }
 
-    // 调试头
-    responseHeaders.set('X-Proxy-Version', 'edge-v4');
+    // 关键修复：处理302重定向的Location头
+    // 一门网关的302 Location可能是相对路径如 /ymgate/download/xxx
+    // APP会基于我们的域名拼接，导致请求 new.ylmyyh.com/ymgate/download/xxx
+    // 被Vercel的catch-all拦截返回index.html（"跳转到系统首页"）
+    // 解决方案：将相对路径的Location改写为一门网关的绝对路径
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      if (location) {
+        // 如果Location是相对路径（不以http开头），改写为一门网关的绝对路径
+        if (!location.startsWith('http')) {
+          const absoluteLocation = `http://gate.open.yimenyun.com${location}`;
+          responseHeaders.set('location', absoluteLocation);
+        }
+      }
+    }
 
     const body = await response.arrayBuffer();
 
