@@ -418,10 +418,10 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => onStatClick({ type: 'profile', baby: displayBaby })}
             >
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">
                 {stats.age.totalDays}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">成长天数</p>
+              <p className="text-xs text-gray-400 mt-1">成长天数</p>
             </div>
           </div>
           )}
@@ -476,7 +476,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
                     style={{ width: `${(stats.videoMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
-                <span className="text-sm text-gray-500 w-8 font-medium">{stats.videoMoments}</span>
+                <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.videoMoments}</span>
               </div>
             </div>
             
@@ -516,7 +516,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
                     style={{ width: `${(stats.audioMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
-                <span className="text-sm text-gray-500 w-8 font-medium">{stats.audioMoments}</span>
+                <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.audioMoments}</span>
               </div>
             </div>
           </div>

@@ -255,7 +255,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                         语音日记
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-400">
                       {formatTime2(audio.duration)}
                     </span>
                   </div>

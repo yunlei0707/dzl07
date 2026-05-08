@@ -164,7 +164,7 @@ export const BabyHeader = memo(function BabyHeader({ onEditBaby, isSystemAccount
           ) : null}
           
           <div className="flex items-center justify-between mt-0.5 flex-wrap gap-1">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               {displayInfo.name} 
               {displayInfo.birthDate ? (
                 <> · 生日 {new Date(displayInfo.birthDate).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}</>

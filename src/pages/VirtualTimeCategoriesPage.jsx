@@ -263,7 +263,7 @@ export function VirtualTimeCategoriesPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  <p className="text-xs text-gray-400 dark:text-gray-400 truncate">
                     {category.description || `${category.items?.length || 0} 个内容项`}
                   </p>
                 </div>

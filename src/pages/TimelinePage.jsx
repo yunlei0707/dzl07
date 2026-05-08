@@ -417,7 +417,7 @@ export function TimelinePage({
                   <span>👶</span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">
+              <h1 className="text-lg font-bold dark:text-white">
                 {v2AccountInfo?.identityName || currentUser?.name || "📅 时光轴"}
               </h1>
             </div>
@@ -620,7 +620,7 @@ export function TimelinePage({
                     <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                       {group.relativeDisplay || `${group.year}年${group.month}月`}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       {group.moments.length}条记录
                     </span>
                   </div>

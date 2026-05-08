@@ -649,7 +649,7 @@ export function ProfilePage(
                 <User className="w-5 h-5" />
               )}
             </div>
-            <h1 className="text-xl font-bold">
+            <h1 className="text-lg font-bold dark:text-white">
               {v2AccountInfo?.identityName || currentUser?.name || "我的"}
             </h1>
             <div className="flex-1" />
@@ -683,7 +683,7 @@ export function ProfilePage(
               <Palette className="w-5 h-5 text-primary-500" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">主题设置</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">自定义应用颜色主题</p>
+                <p className="text-xs text-gray-400 dark:text-gray-400">自定义应用颜色主题</p>
               </div>
             </button>
 
@@ -753,7 +753,7 @@ export function ProfilePage(
             onClick={() => setShowDataManagement(!showDataManagement)}
             className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
           >
-            <p className="text-base font-medium text-gray-500">数据管理</p>
+            <p className="text-xs font-medium text-gray-400">数据管理</p>
             <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showDataManagement ? 'rotate-180' : ''}`} />
           </button>
           {showDataManagement && (
@@ -881,7 +881,7 @@ export function ProfilePage(
               <Info className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
                 <span className="font-medium dark:text-white">版本信息</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">当前版本 v2.42.0</p>
+                <p className="text-xs text-gray-400 dark:text-gray-400">当前版本 v2.42.0</p>
               </div>
             </div>
           </div>
@@ -930,7 +930,7 @@ export function ProfilePage(
                   />
                   <div>
                     <p className="font-medium dark:text-white">合并导入</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">保留现有数据，只添加新内容</p>
+                    <p className="text-xs text-gray-400">保留现有数据，只添加新内容</p>
                   </div>
                 </label>
                 <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -945,7 +945,7 @@ export function ProfilePage(
                   />
                   <div>
                     <p className="font-medium dark:text-white">覆盖导入</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">删除现有数据，完全替换</p>
+                    <p className="text-xs text-gray-400">删除现有数据，完全替换</p>
                   </div>
                 </label>
               </div>

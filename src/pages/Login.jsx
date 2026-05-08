@@ -140,7 +140,7 @@ export function LoginPage({ onLogin }) {
 
         {/* 角色选择 */}
         <div className="flex-1">
-          <h2 className="text-center text-lg font-semibold text-gray-700 mb-6">请选择您的身份</h2>
+          <h2 className="text-center text-base font-semibold text-gray-700 mb-6">请选择您的身份</h2>
           
           <div className="grid grid-cols-3 gap-4 mb-8">
             {FAMILY_ROLES.map((role) => (
