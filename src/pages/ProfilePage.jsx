@@ -25,6 +25,7 @@ import
 import 
 { getCurrentV2Account, getCurrentBabyInfo, isSystemAccount as checkIsSystemAccount, addMomentToCurrentAccount } from '../utils/dbV2';
 import { isInApp, exportToFile, importFromFile } from '../utils/jsBridge';
+import { sampleTemplates, ageGroups, getBabyAgeGroup, getTypeEmoji, getMoodEmoji, getWeatherEmoji } from '../data/sampleTemplates';
 
 // 主题预设配置
 const THEME_PRESETS = [
@@ -109,9 +110,16 @@ export function ProfilePage(
   const [importText, setImportText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   
-  // 导入示例数据
+  // 导入示例数据 - 模板选择流程
   const [isImportingSample, setIsImportingSample] = useState(false);
   const [showTagGroup, setShowTagGroup] = useState(false);
+  
+  // 示例数据模板选择流程状态
+  const [sampleStep, setSampleStep] = useState(null); // null | 'age' | 'template' | 'edit'
+  const [selectedAge, setSelectedAge] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [editedMoments, setEditedMoments] = useState([]); // 编辑中的记录列表
+  const [editingContent, setEditingContent] = useState(null); // 当前编辑的记录ID
   
   // v2 账号系统状态
   const [v2AccountInfo, setV2AccountInfo] = useState(null);
@@ -150,9 +158,44 @@ export function ProfilePage(
     return Array(32).fill(0).map(() => Array(6).fill(0).map(() => Math.random() * 255));
   }, []);
   
-  // 导入示例数据
-  const handleImportSampleData = useCallback(async () => {
-    if (!currentBaby || isImportingSample) return;
+  // 导入示例数据 - 启动模板选择流程
+  const handleImportSampleData = useCallback(() => {
+    if (!currentBaby && !hasV2Baby) return;
+    // 根据宝宝生日计算推荐月龄
+    const babyBirthDate = v2AccountInfo?.accountData?.birthDate || currentBaby?.birthDate;
+    const recommendedAge = getBabyAgeGroup(babyBirthDate);
+    setSelectedAge(recommendedAge);
+    setSampleStep('age');
+  }, [currentBaby, hasV2Baby, v2AccountInfo]);
+
+  // 选择月龄
+  const handleSelectAge = useCallback((age) => {
+    setSelectedAge(age);
+    setSelectedTemplate(null);
+    setSampleStep('template');
+  }, []);
+
+  // 选择模板
+  const handleSelectTemplate = useCallback((template) => {
+    setSelectedTemplate(template);
+    // 深拷贝模板数据用于编辑
+    setEditedMoments(template.moments.map(m => ({ ...m })));
+    setSampleStep('edit');
+  }, []);
+
+  // 删除记录
+  const handleDeleteMoment = useCallback((index) => {
+    setEditedMoments(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // 更新记录内容
+  const handleUpdateContent = useCallback((index, content) => {
+    setEditedMoments(prev => prev.map((m, i) => i === index ? { ...m, content } : m));
+  }, []);
+
+  // 执行导入
+  const executeImport = useCallback(async () => {
+    if (!editedMoments.length || isImportingSample) return;
     
     setIsImportingSample(true);
     try {
@@ -160,139 +203,32 @@ export function ProfilePage(
       const babyInfo = getCurrentBabyInfo();
       const isV2 = !!babyInfo;
       
-      if (isV2) {
-        // v2 账号：添加到 v2 系统
-        const date1 = new Date(now);
-        date1.setMonth(date1.getMonth() - 3);
-        addMomentToCurrentAccount({
-          type: 'photo',
-          date: date1.toISOString(),
-          content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
-          photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
-          mood: 'happy',
-          weather: 'sunny',
-          milestone: 'first',
-          milestoneLabel: '第一次翻身',
-        });
-
-        const date2 = new Date(now);
-        date2.setMonth(date2.getMonth() - 2);
-        addMomentToCurrentAccount({
-          type: 'video',
-          date: date2.toISOString(),
-          content: '今天学会了爬行，追着球球跑得好开心呀！',
-          videos: [{
-            url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
-            duration: 10
-          }],
-          mood: 'excited',
-          weather: 'cloudy',
-          milestone: 'growth',
-          milestoneLabel: '学会爬行',
-        });
-
-        const date3 = new Date(now);
-        date3.setMonth(date3.getMonth() - 1);
-        addMomentToCurrentAccount({
-          type: 'audio',
-          date: date3.toISOString(),
-          content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
-          audios: [{
-            url: 'https://www.w3schools.com/html/horse.ogg',
-            duration: 8,
-            waveform: generateWaveform(),
-          }],
-          mood: 'touched',
-          weather: 'sunny',
-          milestone: 'growth',
-          milestoneLabel: '学会说话',
-        });
-
-        const date4 = new Date(now);
-        date4.setDate(date4.getDate() - 14);
-        addMomentToCurrentAccount({
-          type: 'diary',
-          date: date4.toISOString(),
-          content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
-          mood: 'happy',
-          weather: 'windy',
-          milestone: 'daily',
-          milestoneLabel: '户外活动',
-        });
+      for (const moment of editedMoments) {
+        const date = new Date(now.getTime() - moment.daysAgo * 24 * 60 * 60 * 1000);
+        const data = { 
+          ...moment, 
+          date: date.toISOString(),
+          photos: moment.photos ? [...moment.photos] : undefined,
+          videos: moment.videos ? [...moment.videos] : undefined,
+          audios: moment.audios ? [...moment.audios] : undefined,
+        };
+        delete data.daysAgo;
         
-        // 刷新 v2 数据
-        const account = getCurrentV2Account();
-        setV2AccountInfo(account?.identityData || null);
-      } else {
-        // 非 v2 系统：添加到 IndexedDB
-        const date1 = new Date(now);
-        date1.setMonth(date1.getMonth() - 3);
-        await addMoment({
-          babyId: currentBaby.id,
-          type: 'photo',
-          date: date1.toISOString(),
-          content: '今天第一次尝试翻身，虽然只翻了一半，但已经超级棒了！',
-          photos: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400'],
-          mood: 'happy',
-          weather: 'sunny',
-          milestone: 'first',
-          milestoneLabel: '第一次翻身',
-        });
-
-        const date2 = new Date(now);
-        date2.setMonth(date2.getMonth() - 2);
-        await addMoment({
-          babyId: currentBaby.id,
-          type: 'video',
-          date: date2.toISOString(),
-          content: '今天学会了爬行，追着球球跑得好开心呀！',
-          videos: [{
-            url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-            cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400',
-            duration: 10
-          }],
-          mood: 'excited',
-          weather: 'cloudy',
-          milestone: 'growth',
-          milestoneLabel: '学会爬行',
-        });
-
-        const date3 = new Date(now);
-        date3.setMonth(date3.getMonth() - 1);
-        await addMoment({
-          babyId: currentBaby.id,
-          type: 'audio',
-          date: date3.toISOString(),
-          content: '今天第一次叫妈妈，虽然发音还不太标准，但真的好甜~',
-          audios: [{
-            url: 'https://www.w3schools.com/html/horse.ogg',
-            duration: 8,
-            waveform: generateWaveform(),
-          }],
-          mood: 'touched',
-          weather: 'sunny',
-          milestone: 'growth',
-          milestoneLabel: '学会说话',
-        });
-
-        const date4 = new Date(now);
-        date4.setDate(date4.getDate() - 14);
-        await addMoment({
-          babyId: currentBaby.id,
-          type: 'diary',
-          date: date4.toISOString(),
-          content: '今天带豆芽去公园玩，她对花花草草特别感兴趣，一直在摸小树叶。看见小狗狗就激动得不行，一定要追着跑。希望下周天气好，可以再去一次！',
-          mood: 'happy',
-          weather: 'windy',
-          milestone: 'daily',
-          milestoneLabel: '户外活动',
-        });
-        
-        await refreshMoments(currentBaby.id);
+        if (isV2) {
+          addMomentToCurrentAccount(data);
+        } else {
+          await addMoment({ babyId: currentBaby.id, ...data });
+        }
       }
       
-      showToast('已导入4条示例数据，正在刷新...', 'success');
+      showToast(`已导入${editedMoments.length}条示例数据，正在刷新...`, 'success');
+      
+      // 重置状态
+      setSampleStep(null);
+      setSelectedAge(null);
+      setSelectedTemplate(null);
+      setEditedMoments([]);
+      
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('导入示例数据失败:', error);
@@ -300,7 +236,29 @@ export function ProfilePage(
     } finally {
       setIsImportingSample(false);
     }
-  }, [currentBaby, isImportingSample, generateWaveform, refreshMoments, showToast]);
+  }, [editedMoments, isImportingSample, currentBaby, showToast]);
+
+  // 重置模板选择流程
+  const resetSampleSelection = useCallback(() => {
+    setSampleStep(null);
+    setSelectedAge(null);
+    setSelectedTemplate(null);
+    setEditedMoments([]);
+    setEditingContent(null);
+  }, []);
+
+  // 步骤返回
+  const handleSampleStepBack = useCallback(() => {
+    if (sampleStep === 'edit') {
+      setSampleStep('template');
+      setEditedMoments([]);
+    } else if (sampleStep === 'template') {
+      setSampleStep('age');
+      setSelectedTemplate(null);
+    } else {
+      resetSampleSelection();
+    }
+  }, [sampleStep, resetSampleSelection]);
 
   // 下拉刷新状态
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -814,7 +772,7 @@ export function ProfilePage(
             <span className="font-medium dark:text-white">导入示例数据</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               
-{isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
+{isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、日记'}
             </p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -1485,6 +1443,195 @@ export function ProfilePage(
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      
+      
+{/* 示例数据模板选择面板 */}
+      {sampleStep && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center animate-fadeIn"
+          onClick={() => resetSampleSelection()}
+        >
+          <div 
+            className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-t-3xl max-h-[85vh] flex flex-col animate-slideUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 标题栏 */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+              <button
+                onClick={handleSampleStepBack}
+                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-500 rotate-180" />
+              </button>
+              <h3 className="font-bold dark:text-white">
+                {sampleStep === 'age' && '选择宝宝月龄'}
+                {sampleStep === 'template' && '选择模板'}
+                {sampleStep === 'edit' && '编辑预览'}
+              </h3>
+              <button
+                onClick={resetSampleSelection}
+                className="p-2 -mr-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            {/* 内容区域 */}
+            <div className="flex-1 overflow-y-auto p-4">
+              
+              {/* Step 1: 选择月龄 */}
+              {sampleStep === 'age' && (
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(ageGroups).map(([key, age]) => {
+                    const isRecommended = key === selectedAge;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleSelectAge(key)}
+                        className={`relative p-4 rounded-xl border-2 transition-all ${
+                          isRecommended 
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' 
+                            : 'border-gray-100 dark:border-gray-700 hover:border-primary-200'
+                        }`}
+                      >
+                        {isRecommended && (
+                          <span className="absolute -top-2 -right-2 px-2 py-0.5 text-xs bg-primary-500 text-white rounded-full">
+                            推荐
+                          </span>
+                        )}
+                        <div className="text-lg font-bold text-gray-800 dark:text-white">
+                          {age.name}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {age.range}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {/* Step 2: 选择模板 */}
+              {sampleStep === 'template' && selectedAge && (
+                <div className="space-y-3">
+                  {sampleTemplates[selectedAge]?.map((template, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSelectTemplate(template)}
+                      className="w-full p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-medium dark:text-white">{template.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            {template.description}
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-full whitespace-nowrap">
+                          {template.moments.length}条记录
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Step 3: 编辑预览 */}
+              {sampleStep === 'edit' && (
+                <div className="space-y-4">
+                  {editedMoments.map((moment, index) => (
+                    <div 
+                      key={index}
+                      className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 relative"
+                    >
+                      {/* 删除按钮 */}
+                      <button
+                        onClick={() => handleDeleteMoment(index)}
+                        className="absolute top-3 right-3 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                      
+                      {/* 类型标签 */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-full">
+                          {getTypeEmoji(moment.type)} {moment.type === 'photo' ? '照片' : moment.type === 'video' ? '视频' : moment.type === 'audio' ? '语音' : '日记'}
+                        </span>
+                      </div>
+                      
+                      {/* 内容编辑 */}
+                      {editingContent === index ? (
+                        <textarea
+                          value={moment.content}
+                          onChange={(e) => handleUpdateContent(index, e.target.value)}
+                          onBlur={() => setEditingContent(null)}
+                          autoFocus
+                          className="w-full min-h-[80px] p-3 text-sm bg-white dark:bg-gray-800 border border-primary-300 dark:border-primary-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                        />
+                      ) : (
+                        <div 
+                          onClick={() => setEditingContent(index)}
+                          className="min-h-[60px] p-3 text-sm bg-white dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors dark:text-white"
+                        >
+                          {moment.content}
+                        </div>
+                      )}
+                      
+                      {/* 底部信息 */}
+                      <div className="flex items-center gap-3 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                        <span>{getMoodEmoji(moment.mood)}</span>
+                        <span>{getWeatherEmoji(moment.weather)}</span>
+                        <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
+                          {moment.milestoneLabel}
+                        </span>
+                        <span className="ml-auto text-xs">
+                          {moment.daysAgo}天前
+                        </span>
+                      </div>
+                      
+                      {/* 照片预览 */}
+                      {moment.photos && moment.photos[0] && (
+                        <div className="mt-3 rounded-lg overflow-hidden">
+                          <img 
+                            src={moment.photos[0]} 
+                            alt="" 
+                            className="w-full h-32 object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {editedMoments.length === 0 && (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      已删除所有记录
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* 底部操作栏 */}
+            {sampleStep === 'edit' && (
+              <div className="p-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+                <button
+                  onClick={handleSampleStepBack}
+                  className="flex-1 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium"
+                >
+                  返回重选
+                </button>
+                <button
+                  onClick={executeImport}
+                  disabled={editedMoments.length === 0 || isImportingSample}
+                  className="flex-1 py-3 bg-primary-500 text-white rounded-xl font-medium disabled:opacity-50"
+                >
+                  {isImportingSample ? '导入中...' : `确认导入${editedMoments.length > 0 ? `(${editedMoments.length}条)` : ''}`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
