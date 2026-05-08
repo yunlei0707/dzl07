@@ -7,9 +7,12 @@ export default async function handler(req, res) {
   const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
   const xYmUser = `u${userId}.${userSecret}`;
 
-  // 构建目标URL - 注意：网关使用 http 协议和 /ymgate 路径
-  const path = req.url.replace(/^\/ymgate/, '') || '/';
-  const targetUrl = `http://gate.open.yimenyun.com/ymgate${path === '/' ? '' : path}`;
+  // 构建目标URL - 网关使用 http 协议和 /ymgate 路径
+  // 移除 /ymgate 前缀，保留剩余路径
+  const urlPath = req.url.replace(/^\/ymgate/, '') || '/';
+  const targetUrl = `http://gate.open.yimenyun.com/ymgate${urlPath === '/' ? '' : urlPath}`;
+
+  console.log('网关代理请求:', { targetUrl, method: req.method });
 
   // 构建转发请求头
   const headers = {
@@ -17,11 +20,11 @@ export default async function handler(req, res) {
     'Content-Type': req.headers['content-type'] || 'application/json',
   };
 
-  // 复制其他必要的请求头（除了host）
-  const excludeHeaders = ['host', 'content-length'];
-  Object.keys(req.headers).forEach(key => {
+  // 复制其他必要的请求头（除了host和content-length）
+  const excludeHeaders = ['host', 'content-length', 'connection'];
+  Object.entries(req.headers).forEach(([key, value]) => {
     if (!excludeHeaders.includes(key.toLowerCase()) && !headers[key]) {
-      headers[key] = req.headers[key];
+      headers[key] = value;
     }
   });
 
