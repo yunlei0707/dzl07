@@ -26,11 +26,11 @@ import {
 
 // 类型筛选选项
 const typeFilters = [
-  { value: '', label: '类型' },
-  { value: 'photo', label: '📷 照片' },
-  { value: 'video', label: '🎬 视频' },
-  { value: 'diary', label: '📝 日记' },
-  { value: 'audio', label: '🎙️ 语音' },
+  { value: '', label: '全部' },
+  { value: 'photo', label: '照片' },
+  { value: 'video', label: '视频' },
+  { value: 'diary', label: '日记' },
+  { value: 'audio', label: '语音' },
 ];
 
 export function TimelinePage({ 
@@ -480,32 +480,42 @@ export function TimelinePage({
         >
           <div className="w-full max-w-md bg-gradient-to-b from-primary-50 to-amber-50 rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col animate-scale-in relative">
             {/* 头部 */}
-            <div className="bg-gradient-to-r from-primary-200 to-amber-200 px-4 py-3 flex items-center justify-between relative">
+            <div className="bg-gradient-to-r from-primary-200 to-amber-200 px-4 py-3 relative">
               {/* 装饰线 */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-amber-400 to-primary-400"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🕰️</span>
-                <h3 className="font-bold text-gray-800">
-                  往年今日
-                </h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🕰️</span>
+                  <h3 className="font-bold text-gray-800">
+                    往年今日
+                  </h3>
+                  {/* 年份标签 */}
+                  <span className="ml-1 px-2 py-0.5 bg-white/50 rounded-full text-xs text-primary-600 font-medium">
+                    {sameDayMoments.length > 0 && sameDayMoments[0].date 
+                      ? `${sameDayMoments[0].date.split('-')[0]}年的今天` 
+                      : new Date().getFullYear() - 1 + '年的今天'}
+                  </span>
+                </div>
+                <button 
+                  onClick={closeSameDayModal}
+                  className="p-1.5 rounded-full hover:bg-white/30 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
               </div>
-              <button 
-                onClick={closeSameDayModal}
-                className="p-1.5 rounded-full hover:bg-white/30 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-700" />
-              </button>
             </div>
             
             {/* 内容区 */}
             <div className="flex-1 overflow-y-auto p-4">
               {sameDayMoments.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-5xl mb-4">🌸</div>
-                  <p className="text-gray-600 mb-2">
-                    去年今天没有记录
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-primary-100 to-amber-100 rounded-full flex items-center justify-center">
+                    <span className="text-4xl">🌟</span>
+                  </div>
+                  <p className="text-primary-600 font-medium mb-2">
+                    去年今天还没有记录
                   </p>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-500 text-sm">
                     继续创造美好的回忆吧~
                   </p>
                 </div>
@@ -514,7 +524,7 @@ export function TimelinePage({
                   {sameDayMoments.map(moment => (
                     <div 
                       key={moment.id}
-                      className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-primary-100/50"
                       onClick={() => handlePhotoClick(moment)}
                     >
                       <MomentCard
@@ -528,12 +538,12 @@ export function TimelinePage({
             </div>
             
             {/* 底部关闭按钮 */}
-            <div className="p-4 border-t border-primary-100/50">
+            <div className="p-4 border-t border-primary-200/50">
               <button
                 onClick={closeSameDayModal}
                 className="w-full py-2.5 bg-gradient-to-r from-primary-500 to-amber-400 text-white font-medium rounded-xl hover:opacity-90 transition-opacity shadow-md"
               >
-                关闭
+                继续今天的回忆 ✨
               </button>
             </div>
           </div>
@@ -545,49 +555,52 @@ export function TimelinePage({
         {/* 筛选器卡片 */}
         <div className="card mb-4">
           {/* 类型筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
+            <span className="text-xs text-gray-400 flex-shrink-0">类型</span>
             {typeFilters.map(filter => (
               <button
                 key={filter.value}
                 onClick={() => setSelectedType(filter.value)}
-                className={`px-2 py-1 text-sm whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                   selectedType === filter.value
-                    ? 'text-primary-500 font-medium'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'bg-primary-100 text-primary-600 font-medium'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
                 {filter.label}
               </button>
             ))}
           </div>
-          
+
           {/* 心情筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-2">
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar mt-2">
+            <span className="text-xs text-gray-400 flex-shrink-0">心情</span>
             {moodFilters.map(filter => (
               <button
                 key={filter.value}
                 onClick={() => setSelectedMood(filter.value)}
-                className={`px-2 py-1 text-sm whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                   selectedMood === filter.value
-                    ? 'text-amber-500 font-medium'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'bg-amber-100 text-amber-600 font-medium'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
                 {filter.label}
               </button>
             ))}
           </div>
-          
+
           {/* 里程碑筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-2">
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar mt-2">
+            <span className="text-xs text-gray-400 flex-shrink-0">里程碑</span>
             {milestoneFilters.map(filter => (
               <button
                 key={filter.value}
                 onClick={() => setSelectedMilestone(filter.value)}
-                className={`px-2 py-1 text-sm whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                   selectedMilestone === filter.value
-                    ? 'text-purple-500 font-medium'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'bg-purple-100 text-purple-600 font-medium'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
                 {filter.label}

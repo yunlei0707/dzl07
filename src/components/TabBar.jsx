@@ -22,16 +22,16 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
       className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
       {/* 圆形图标容器和SDK按钮大小保持一致 */}
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
         isActive ? 'bg-primary-500 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700'
       }`}>
         {isEmoji ? (
-          <span className={`text-base transition-transform ${isActive ? 'scale-110' : ''}`}>
+          <span className={`text-sm transition-transform ${isActive ? 'scale-110' : ''}`}>
             {tab.icon}
           </span>
         ) : (
           <tab.icon 
-            className={`w-6 h-6 transition-transform ${isActive ? 'scale-110' : ''}`} 
+            className={`w-4 h-4 transition-transform ${isActive ? 'scale-110' : ''}`} 
             strokeWidth={isActive ? 2.5 : 2} 
           />
         )}
