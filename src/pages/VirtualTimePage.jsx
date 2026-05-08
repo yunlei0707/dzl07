@@ -206,7 +206,7 @@ export function VirtualTimePage() {
     <div className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900">
       <header className="bg-gradient-to-b from-[#FFF8F0] to-white safe-top">
         <div className="px-4 pt-4 pb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm">
