@@ -3,7 +3,7 @@
  * ✅ 稳定极简版本 - 只保留核心功能，确保构建通过
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './store/AppContext';
 import { TabBar } from './components/TabBar';
@@ -265,16 +265,19 @@ function AppContent() {
   };
 
   // 渲染当前页面
+  const handleAddMoment = useCallback(() => setShowMomentForm(true), []);
+  const handleEditMoment = useCallback((moment) => {
+    setEditingMoment(moment);
+    setShowMomentForm(true);
+  }, []);
+
   const renderPage = () => {
     switch (activeTab) {
       case 'timeline':
         return (
           <TimelinePage
-            onAddMoment={() => setShowMomentForm(true)}
-            onEditMoment={(moment) => {
-              setEditingMoment(moment);
-              setShowMomentForm(true);
-            }}
+            onAddMoment={handleAddMoment}
+            onEditMoment={handleEditMoment}
             onAddBaby={handleAddBaby}
           />
         );
