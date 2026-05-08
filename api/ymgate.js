@@ -28,9 +28,11 @@ export default async function handler(req, res) {
 
   try {
     // 构建fetch请求配置
+    // redirect: 'manual' 不自动跟随重定向，原样返回给APP客户端
     const fetchOptions = {
       method: req.method || 'GET',
       headers: headers,
+      redirect: 'manual',
     };
 
     // 如果有请求体，则添加
@@ -41,17 +43,21 @@ export default async function handler(req, res) {
     // 发起请求到目标网关
     const response = await fetch(targetUrl, fetchOptions);
 
-    // 获取响应内容
-    const text = await response.text();
+    // 原样返回状态码（包括301/302重定向）
+    res.statusCode = response.status;
 
-    // 设置响应头
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
+    // 原样转发所有响应头，包括Location重定向地址
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
     });
 
-    // 返回响应内容
-    res.status(response.status).send(text);
+    // 如果是重定向响应，不读body直接返回空
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      res.end();
+    } else {
+      const text = await response.text();
+      res.end(text);
+    }
 
   } catch (error) {
     console.error('网关代理错误:', error);
