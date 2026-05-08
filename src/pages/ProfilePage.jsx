@@ -625,12 +625,20 @@ export function ProfilePage(
       
       
 {/* 头部 - 左上角展示账号头像和名称，参考成长数据页面 */}
-      <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
+      <header className="bg-gradient-to-b from-primary-50 to-white safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             
-            {/* 账号头像显示在左上角（只展示登录身份） */}
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+            {/* 账号头像显示在左上角（点击可编辑宝宝信息） */}
+            <div 
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm cursor-pointer hover:opacity-80 active:scale-95 transition-all"
+              onClick={() => {
+                const babyInfo = v2AccountInfo || currentBaby;
+                if (babyInfo) {
+                  onEditBaby(babyInfo);
+                }
+              }}
+            >
               {v2AccountInfo?.accountData?.avatar ? (
                 v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                   <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
@@ -647,17 +655,26 @@ export function ProfilePage(
                 <User className="w-5 h-5" />
               )}
             </div>
-            <h1 className="text-xl font-bold">
+            <h1 
+              className="text-xl font-bold cursor-pointer hover:text-primary-500 transition-colors"
+              onClick={() => {
+                const babyInfo = v2AccountInfo || currentBaby;
+                if (babyInfo) {
+                  onEditBaby(babyInfo);
+                }
+              }}
+            >
               {v2AccountInfo?.identityName || currentUser?.name || "我的"}
+              <span className="ml-1 text-xs text-primary-400">✏️</span>
             </h1>
             <div className="flex-1" />
             {/* 给宝宝的信按钮 */}
             <button
               onClick={onOpenCapsules}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/25 hover:bg-white/40 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-100 hover:bg-primary-200 active:scale-95 transition-all"
             >
               <span className="text-sm">💌</span>
-              <span className="text-xs font-medium text-white">给宝宝的信</span>
+              <span className="text-xs font-medium text-primary-600">给宝宝的信</span>
             </button>
           </div>
           
@@ -665,23 +682,6 @@ export function ProfilePage(
           <BabyHeader />
         </div>
       </header>
-      
-      {/* 编辑宝宝信息入口 */}
-      <div className="px-4 mt-2">
-        <button
-          onClick={() => {
-            // 获取当前宝宝信息并调用编辑
-            const babyInfo = v2AccountInfo || currentBaby;
-            if (babyInfo) {
-              onEditBaby(babyInfo);
-            }
-          }}
-          className="w-full py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm flex items-center justify-center gap-2 text-primary-500 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors"
-        >
-          <Edit3 className="w-5 h-5" />
-          <span className="font-medium">编辑宝宝信息</span>
-        </button>
-      </div>
       
       {/* 功能菜单 - 分组结构 */}
       <div className="mt-4">

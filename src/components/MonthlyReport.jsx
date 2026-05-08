@@ -233,21 +233,21 @@ export function GrowthReport({ onClose }) {
         onClick={e => e.stopPropagation()}
       >
         {/* 头部 - 主色深浅渐变 */}
-        <div className="bg-gradient-to-r from-primary-400 to-primary-500 px-4 py-3 flex items-center justify-between">
-          <h2 className="font-bold text-lg text-white flex items-center gap-2">
+        <div className="bg-gradient-to-r from-primary-200 to-primary-300 px-4 py-3 flex items-center justify-between">
+          <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             宝宝成长档案
           </h2>
           <div className="flex items-center gap-1">
             <button 
               onClick={handleMuteToggle}
-              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm hover:bg-white/30 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-sm hover:bg-white/70 transition-colors"
             >
               {bgmMuted ? '🔇' : '🔊'}
             </button>
             <button 
               onClick={handleClose}
-              className="p-2 -mr-2 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+              className="p-2 -mr-2 text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>

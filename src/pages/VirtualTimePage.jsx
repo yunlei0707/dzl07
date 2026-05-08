@@ -204,12 +204,12 @@ export function VirtualTimePage() {
 
   return (
     <div className="min-h-screen pb-20 bg-cream-50 dark:bg-gray-900">
-      <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
+      <header className="bg-gradient-to-b from-primary-200 to-primary-100 safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-lg overflow-hidden shadow-sm">
                 {v2AccountInfo?.accountData?.avatar ? (
                   v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                     <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
@@ -226,36 +226,25 @@ export function VirtualTimePage() {
                   <span>✨</span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">
+              <h1 className="text-xl font-bold text-gray-800">
                 {v2AccountInfo?.identityName || currentUser?.name || "✨ 未来宝宝"}
               </h1>
             </div>
             {/* 来自宝宝的信按钮 */}
             <button
               onClick={() => setShowBabyLetter(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/25 hover:bg-white/40 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-500 text-white hover:bg-primary-600 active:scale-95 transition-all shadow-sm"
             >
               <span className="text-sm">📩</span>
-              <span className="text-xs font-medium text-white">来自宝宝的信</span>
+              <span className="text-xs font-medium">来自宝宝的信</span>
             </button>
           </div>
           
           <BabyHeader />
-          
-          <p className="text-white/80 text-sm mt-2">
-            想象{babyName}未来的美好时光
-          </p>
         </div>
       </header>
 
       <main className="px-4 -mt-4 max-w-lg mx-auto">
-
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 mb-4 border border-amber-100 dark:border-amber-800">
-          <p className="text-amber-800 dark:text-amber-200 text-sm flex items-start gap-2">
-            <span className="text-lg">💫</span>
-            <span>这里是AI想象的未来时光，内容仅供参考娱乐，希望能给您带来温暖和感动~</span>
-          </p>
-        </div>
 
         {/* AI 生成内容区域 */}
         <div className="space-y-4">

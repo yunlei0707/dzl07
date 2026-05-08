@@ -207,22 +207,22 @@ export function BabyLetter({
         className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50 rounded-2xl shadow-2xl overflow-hidden animate-scale-in relative"
         onClick={e => e.stopPropagation()}
       >
-        {/* 头部 - 深红褐暖调 */}
-        <div className="bg-gradient-to-r from-[#DC143C] via-[#B22222] to-[#8B0000] px-4 py-3 flex items-center justify-between">
+        {/* 头部 - 暖粉色调 */}
+        <div className="bg-gradient-to-r from-primary-200 to-primary-300 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl">💌</span>
-            <span className="text-white/80 text-sm">来自宝宝的信</span>
+            <span className="text-gray-700 text-sm">来自宝宝的信</span>
           </div>
           <div className="flex items-center gap-1">
             <button 
               onClick={handleMuteToggle}
-              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm hover:bg-white/30 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-sm hover:bg-white/70 transition-colors"
             >
               {bgmMuted ? '🔇' : '🔊'}
             </button>
             <button
               onClick={handleClose}
-              className="p-2 -mr-2 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+              className="p-2 -mr-2 text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>

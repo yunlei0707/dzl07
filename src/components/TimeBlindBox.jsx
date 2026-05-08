@@ -195,24 +195,24 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
             onClick={e => e.stopPropagation()}
           >
             {/* 头部 - 紫色渐变 */}
-            <div className="bg-gradient-to-r from-purple-400 to-purple-500 px-4 py-3 flex items-center justify-between relative">
+            <div className="bg-gradient-to-r from-purple-200 to-purple-300 px-4 py-3 flex items-center justify-between relative">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🎁</span>
                 <div>
                   <p className="text-white/80 text-xs">✨ 时光盲盒</p>
-                  <p className="text-white font-bold text-lg mt-0.5">{formatFullDate(selectedMoment.date || selectedMoment.createdAt)}</p>
+                  <p className="text-purple-700 font-bold text-lg mt-0.5">{formatFullDate(selectedMoment.date || selectedMoment.createdAt)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button 
                   onClick={handleMuteToggle}
-                  className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm hover:bg-white/30 transition-colors"
+                  className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-sm hover:bg-white/70 transition-colors"
                 >
                   {bgmMuted ? '🔇' : '🔊'}
                 </button>
                 <button
                   onClick={handleClose}
-                  className="p-2 -mr-2 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+                  className="p-2 -mr-2 text-purple-600 hover:text-purple-800 hover:bg-white/50 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>

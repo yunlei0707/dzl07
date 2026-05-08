@@ -315,12 +315,12 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
       )}
       
       {/* 头部 - 优化：左上角显示头像 */}
-      <header className="bg-gradient-to-b from-primary-400 to-primary-500 text-white safe-top">
+      <header className="bg-gradient-to-b from-primary-100 to-primary-50 safe-top">
         <div className="px-4 pt-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm">
                 {v2AccountInfo?.accountData?.avatar ? (
                   v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                     <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
