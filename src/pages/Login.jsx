@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Baby, Camera, X, User, Users, Smile, Eye } from 'lucide-react';
+import { Heart, Baby, Camera, X, User, Users, Smile, Eye, Plus } from 'lucide-react';
 
 // 亲属角色配置
 const FAMILY_ROLES = [
@@ -19,19 +19,43 @@ const FAMILY_ROLES = [
   { id: 'guest', name: '访客参观', icon: '👀', color: 'from-gray-400 to-gray-500', welcome: '欢迎您来参观' },
 ];
 
+// 自定义身份可选图标
+const CUSTOM_ICONS = ['🧑', '👤', '❤️', '🌟', '🦸', '🧙', '👨‍🦰', '👩‍🦰', '🧑‍🦱', '👩‍🦳', '🧓', '👦', '👧', '🧒', '💏', '👪', '🐱', '🐶', '🦁', '🐼'];
+
 export function LoginPage({ onLogin }) {
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(null);
   const [customBg, setCustomBg] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCustomIdentity, setShowCustomIdentity] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customIcon, setCustomIcon] = useState('🧑');
 
   // 从 localStorage 恢复状态
   useEffect(() => {
     const savedRole = localStorage.getItem('selectedFamilyRole');
     const savedBg = localStorage.getItem('customBackground');
     if (savedRole) {
+      // 先查预设角色
       const role = FAMILY_ROLES.find(r => r.id === savedRole);
-      if (role) setSelectedRole(role);
+      if (role) {
+        setSelectedRole(role);
+      } else if (savedRole === 'custom') {
+        // 恢复自定义角色
+        const savedCustomName = localStorage.getItem('customIdentityName');
+        const savedCustomIcon = localStorage.getItem('customIdentityIcon');
+        if (savedCustomName) {
+          setSelectedRole({
+            id: 'custom',
+            name: savedCustomName,
+            icon: savedCustomIcon || '🧑',
+            color: 'from-teal-400 to-teal-500',
+            welcome: `欢迎${savedCustomName}光临`,
+          });
+          setCustomName(savedCustomName);
+          setCustomIcon(savedCustomIcon || '🧑');
+        }
+      }
     }
     if (savedBg) {
       setCustomBg(savedBg);
@@ -143,6 +167,18 @@ export function LoginPage({ onLogin }) {
                 <span className="text-sm font-medium text-gray-700">{role.name}</span>
               </button>
             ))}
+            {/* 自定义身份卡片 */}
+            <button
+              onClick={() => setShowCustomIdentity(true)}
+              className={`flex flex-col items-center p-4 rounded-2xl transition-all duration-200 border-2 border-dashed ${
+                selectedRole?.id === 'custom'
+                  ? 'bg-white shadow-lg scale-105 ring-2 ring-offset-2 ring-teal-500 border-teal-300'
+                  : 'bg-white bg-opacity-40 hover:bg-opacity-80 hover:shadow-md border-gray-300'
+              }`}
+            >
+              <span className="text-3xl mb-2">{selectedRole?.id === 'custom' ? selectedRole.icon : '✏️'}</span>
+              <span className="text-sm font-medium text-gray-700">{selectedRole?.id === 'custom' ? selectedRole.name : '自定义'}</span>
+            </button>
           </div>
 
           {/* 自定义背景上传 */}
@@ -189,6 +225,89 @@ export function LoginPage({ onLogin }) {
           用爱记录宝宝的每一次成长
         </div>
       </div>
+
+      {/* 自定义身份弹窗 */}
+      {showCustomIdentity && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800">自定义身份</h3>
+              <button onClick={() => setShowCustomIdentity(false)} className="p-1 hover:bg-gray-100 rounded-full">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* 选择图标 */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-600 mb-2 block">选择图标</label>
+              <div className="flex flex-wrap gap-2">
+                {CUSTOM_ICONS.map((icon) => (
+                  <button
+                    key={icon}
+                    onClick={() => setCustomIcon(icon)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+                      customIcon === icon
+                        ? 'bg-teal-100 ring-2 ring-teal-500 scale-110'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 输入名称 */}
+            <div className="mb-5">
+              <label className="text-sm font-medium text-gray-600 mb-2 block">身份名称</label>
+              <input
+                type="text"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="输入您的身份名称，如：干妈、哥哥..."
+                maxLength={8}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-200 outline-none transition-all text-gray-800 placeholder:text-gray-400"
+              />
+              <p className="text-xs text-gray-400 mt-1">最多8个字</p>
+            </div>
+
+            {/* 预览 */}
+            {customName && (
+              <div className="mb-4 p-3 bg-teal-50 rounded-xl flex items-center gap-3">
+                <span className="text-2xl">{customIcon}</span>
+                <span className="font-medium text-teal-700">{customName}</span>
+              </div>
+            )}
+
+            {/* 确认按钮 */}
+            <button
+              onClick={() => {
+                if (!customName.trim()) return;
+                const customRole = {
+                  id: 'custom',
+                  name: customName.trim(),
+                  icon: customIcon,
+                  color: 'from-teal-400 to-teal-500',
+                  welcome: `欢迎${customName.trim()}光临`,
+                };
+                setSelectedRole(customRole);
+                localStorage.setItem('selectedFamilyRole', 'custom');
+                localStorage.setItem('customIdentityName', customName.trim());
+                localStorage.setItem('customIdentityIcon', customIcon);
+                setShowCustomIdentity(false);
+              }}
+              disabled={!customName.trim()}
+              className={`w-full py-3 rounded-xl font-semibold transition-all ${
+                customName.trim()
+                  ? 'bg-teal-500 text-white hover:bg-teal-600 active:scale-98'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              确认选择
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
