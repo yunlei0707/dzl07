@@ -12,8 +12,7 @@ import { isInApp } from '../utils/jsBridge';
 const formatDate = (dateStr) => {
   const d = new Date(dateStr);
   const now = new Date();
-  const diffMs = now - d;
-  const diffDays = Math.floor(diffMs / 86400000);
+  const diffDays = Math.floor((now - d) / 86400000);
   
   if (diffDays === 0) return '今天';
   if (diffDays === 1) return '昨天';
@@ -58,21 +57,14 @@ const weightedRandom = (moments) => {
   // 计算权重
   const weighted = moments.map(m => {
     let weight = 1;
-    
-    // 照片记录权重x3
     if (m.type === 'photo' || (m.photos && m.photos.length > 0)) weight *= 3;
-    // 语音记录权重x2
     if (m.type === 'audio') weight *= 2;
-    // 里程碑权重x2
     if (m.milestone) weight *= 2;
-    // 时间越久越容易被选中
     const ageDays = Math.floor((now - new Date(m.date || m.createdAt)) / 86400000);
     weight *= (1 + ageDays / 365);
-    
     return { moment: m, weight };
   });
   
-  // 加权随机
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
   let random = Math.random() * totalWeight;
   
@@ -84,88 +76,138 @@ const weightedRandom = (moments) => {
   return weighted[weighted.length - 1].moment;
 };
 
-export function TimeBlindBox({ moments, onOpen }) {
+export function TimeBlindBox({ moments }) {
   const [showCard, setShowCard] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState(null);
   const [isShaking, setIsShaking] = useState(false);
-  const shakeTimerRef = useRef(null);
+  
+  // 用ref避免闭包陷阱 —— 关键修复！
+  const momentsRef = useRef(moments);
+  const showCardRef = useRef(showCard);
   const lastShakeRef = useRef(0);
-  const accelStopRef = useRef(null);
+  const lastAccRef = useRef({ x: 0, y: 0, z: 0 });
+  const accelStartedRef = useRef(false);
 
-  // 上一帧加速度值（用于计算变化量）
-  const lastAccRef = useRef({ x: 0, y: 0, z: 0, time: 0 });
+  // 同步最新状态到ref
+  useEffect(() => {
+    momentsRef.current = moments;
+  }, [moments]);
+  useEffect(() => {
+    showCardRef.current = showCard;
+  }, [showCard]);
 
-  // 摇一摇检测 - APP环境
-  const startAppAccelerometer = useCallback(() => {
-    if (!isInApp()) return false;
+  // 摇一摇触发开盲盒 —— 通过ref读取最新状态
+  const triggerShake = useCallback(() => {
+    const currentMoments = momentsRef.current;
+    const currentShowCard = showCardRef.current;
     
-    try {
-      const jsBridge = window.jsBridge;
-      if (!jsBridge?.accelerometer || typeof jsBridge.accelerometer.start !== 'function') {
-        console.log('[TimeBlindBox] APP环境但accelerometer不可用');
-        return false;
-      }
-
-      // 检查是否支持
-      if (typeof jsBridge.accelerometer.support === 'function') {
-        jsBridge.accelerometer.support((supported) => {
-          if (!supported) {
-            console.log('[TimeBlindBox] 加速度计不支持');
-            return;
-          }
-        });
-      }
-
-      // 用变化量检测摇晃，和shake.js原理一致
-      // 静止时x+y+z ≈ 10（重力），摇动时变化量会很大
-      const SHAKE_THRESHOLD = 3.0; // 变化量阈值（g），约3倍重力加速度变化
-      
-      jsBridge.accelerometer.start(function(x, y, z) {
-        const last = lastAccRef.current;
-        const now = Date.now();
-        
-        // 计算与上一帧的变化量
-        const deltaX = Math.abs(x - last.x);
-        const deltaY = Math.abs(y - last.y);
-        const deltaZ = Math.abs(z - last.z);
-        
-        // 任意两个轴变化超过阈值即为摇晃
-        if ((deltaX > SHAKE_THRESHOLD && deltaY > SHAKE_THRESHOLD) ||
-            (deltaX > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD) ||
-            (deltaY > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD)) {
-          if (now - lastShakeRef.current > 3000) {
-            lastShakeRef.current = now;
-            console.log('[TimeBlindBox] APP摇一摇触发, delta:', deltaX.toFixed(2), deltaY.toFixed(2), deltaZ.toFixed(2));
-            handleShake();
-          }
-        }
-        
-        lastAccRef.current = { x, y, z, time: now };
-      });
-
-      // 保存停止函数
-      accelStopRef.current = () => {
-        try {
-          if (typeof jsBridge.accelerometer.stop === 'function') {
-            jsBridge.accelerometer.stop();
-          }
-        } catch (e) {
-          console.log('[TimeBlindBox] stop accelerometer error:', e);
-        }
-      };
-      
-      return true;
-    } catch (e) {
-      console.log('[TimeBlindBox] accelerometer error:', e);
-      return false;
-    }
+    console.log('[TimeBlindBox] triggerShake called, moments:', currentMoments?.length, 'showCard:', currentShowCard);
+    
+    if (!currentMoments || currentMoments.length === 0) return;
+    if (currentShowCard) return;
+    
+    setIsShaking(true);
+    setTimeout(() => {
+      const selected = weightedRandom(currentMoments);
+      setSelectedMoment(selected);
+      setShowCard(true);
+      setIsShaking(false);
+    }, 600);
   }, []);
 
-  // 摇一摇检测 - 浏览器环境
+  // APP环境：等jsBridge.ready后启动加速度计
   useEffect(() => {
-    if (isInApp()) return; // APP环境用jsBridge
+    if (!isInApp()) return;
+    if (accelStartedRef.current) return;
+    
+    const startAccel = () => {
+      const jsBridge = window.jsBridge;
+      if (!jsBridge?.accelerometer) {
+        console.log('[TimeBlindBox] jsBridge.accelerometer 不存在');
+        return;
+      }
+      if (typeof jsBridge.accelerometer.start !== 'function') {
+        console.log('[TimeBlindBox] accelerometer.start 不是函数');
+        return;
+      }
 
-    const SHAKE_THRESHOLD = 3.0;
+      // 先检查支持
+      if (typeof jsBridge.accelerometer.support === 'function') {
+        jsBridge.accelerometer.support((supported) => {
+          console.log('[TimeBlindBox] 加速度计支持:', supported);
+          if (!supported) return;
+          doStart(jsBridge);
+        });
+      } else {
+        // 没有support方法，直接尝试start
+        doStart(jsBridge);
+      }
+    };
+
+    const doStart = (jsBridge) => {
+      const SHAKE_THRESHOLD = 2.5; // 变化量阈值（g）
+      
+      try {
+        jsBridge.accelerometer.start(function(x, y, z) {
+          const last = lastAccRef.current;
+          
+          const deltaX = Math.abs(x - last.x);
+          const deltaY = Math.abs(y - last.y);
+          const deltaZ = Math.abs(z - last.z);
+          
+          // 任意两个轴变化超过阈值
+          if ((deltaX > SHAKE_THRESHOLD && deltaY > SHAKE_THRESHOLD) ||
+              (deltaX > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD) ||
+              (deltaY > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD)) {
+            const now = Date.now();
+            if (now - lastShakeRef.current > 3000) {
+              lastShakeRef.current = now;
+              console.log('[TimeBlindBox] 🎉 APP摇一摇触发! delta:', 
+                deltaX.toFixed(1), deltaY.toFixed(1), deltaZ.toFixed(1));
+              triggerShake();
+            }
+          }
+          
+          lastAccRef.current = { x, y, z };
+        });
+
+        accelStartedRef.current = true;
+        console.log('[TimeBlindBox] ✅ 加速度计已启动');
+      } catch (e) {
+        console.log('[TimeBlindBox] ❌ 加速度计启动失败:', e);
+      }
+    };
+
+    // 等jsBridge ready后再启动
+    if (window.jsBridge && typeof window.jsBridge.ready === 'function') {
+      window.jsBridge.ready(() => {
+        console.log('[TimeBlindBox] jsBridge ready, 启动加速度计');
+        startAccel();
+      });
+    } else {
+      // jsBridge还没加载，延迟重试
+      console.log('[TimeBlindBox] jsBridge未就绪，延迟启动');
+      const timer = setTimeout(startAccel, 2000);
+      return () => clearTimeout(timer);
+    }
+
+    // 组件卸载时停止
+    return () => {
+      if (accelStartedRef.current && window.jsBridge?.accelerometer?.stop) {
+        try {
+          window.jsBridge.accelerometer.stop();
+          accelStartedRef.current = false;
+          console.log('[TimeBlindBox] 加速度计已停止');
+        } catch (e) {}
+      }
+    };
+  }, [triggerShake]);
+
+  // 浏览器环境：DeviceMotionEvent
+  useEffect(() => {
+    if (isInApp()) return;
+
+    const SHAKE_THRESHOLD = 2.5;
     const browserLastAcc = { x: 0, y: 0, z: 0 };
 
     const handleMotion = (e) => {
@@ -186,8 +228,8 @@ export function TimeBlindBox({ moments, onOpen }) {
         const now = Date.now();
         if (now - lastShakeRef.current > 3000) {
           lastShakeRef.current = now;
-          console.log('[TimeBlindBox] 浏览器摇一摇触发, delta:', deltaX.toFixed(2), deltaY.toFixed(2), deltaZ.toFixed(2));
-          handleShake();
+          console.log('[TimeBlindBox] 🎉 浏览器摇一摇触发!');
+          triggerShake();
         }
       }
       
@@ -196,7 +238,6 @@ export function TimeBlindBox({ moments, onOpen }) {
       browserLastAcc.z = z;
     };
 
-    // iOS 13+ 需要请求权限
     if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
       DeviceMotionEvent.requestPermission().then(state => {
         if (state === 'granted') {
@@ -210,40 +251,12 @@ export function TimeBlindBox({ moments, onOpen }) {
     return () => {
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, []);
-
-  // APP环境启动加速度计
-  useEffect(() => {
-    startAppAccelerometer();
-    return () => {
-      if (accelStopRef.current) {
-        accelStopRef.current();
-        accelStopRef.current = null;
-      }
-    };
-  }, []);
-
-  // 摇一摇/点击触发开盲盒
-  const handleShake = useCallback(() => {
-    if (!moments || moments.length === 0) return;
-    if (showCard) return; // 已经开了一个
-    
-    setIsShaking(true);
-    
-    // 模拟摇晃动画
-    setTimeout(() => {
-      const selected = weightedRandom(moments);
-      setSelectedMoment(selected);
-      setShowCard(true);
-      setIsShaking(false);
-    }, 600);
-  }, [moments, showCard]);
+  }, [triggerShake]);
 
   // 点击按钮开盲盒
   const handleClick = useCallback(() => {
-    if (!moments || moments.length === 0) return;
-    handleShake();
-  }, [moments, handleShake]);
+    triggerShake();
+  }, [triggerShake]);
 
   // 再来一次
   const handleAgain = useCallback(() => {
@@ -365,7 +378,6 @@ export function TimeBlindBox({ moments, onOpen }) {
                 </p>
               )}
 
-              {/* 无内容提示 */}
               {!selectedMoment.content && (!selectedMoment.photos || selectedMoment.photos.length === 0) && (
                 <p className="text-gray-400 text-sm italic">这条记录没有文字描述</p>
               )}
