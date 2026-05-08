@@ -776,47 +776,43 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         <div className="flex gap-2">
           <button
             onClick={() => setType('photo')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-colors text-sm ${
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-colors text-sm font-medium ${
               type === 'photo' 
                 ? 'bg-primary-500 text-white' 
                 : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
-            <Image className="w-4 h-4" />
-            <span>照片</span>
+            📷 照片
           </button>
           <button
             onClick={() => setType('video')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-colors text-sm ${
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-colors text-sm font-medium ${
               type === 'video' 
                 ? 'bg-primary-500 text-white' 
                 : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
-            <Video className="w-4 h-4" />
-            <span>视频</span>
+            🎬 视频
           </button>
           <button
             onClick={() => setType('audio')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-colors text-sm ${
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-colors text-sm font-medium ${
               type === 'audio' 
                 ? 'bg-primary-500 text-white' 
                 : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
-            <Mic className="w-4 h-4" />
-            <span>语音</span>
+            🎤 语音
           </button>
           <button
             onClick={() => setType('diary')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-colors text-sm ${
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-colors text-sm font-medium ${
               type === 'diary' 
                 ? 'bg-primary-500 text-white' 
                 : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>日记</span>
+            ✏️ 日记
           </button>
         </div>
         
