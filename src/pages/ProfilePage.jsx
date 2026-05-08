@@ -627,7 +627,7 @@ export function ProfilePage(
 {/* 头部 - 左上角展示账号头像和名称，参考成长数据页面 */}
       <header className="bg-gradient-to-b from-primary-50 to-white safe-top">
         <div className="px-4 pt-4 pb-6">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
             {/* 账号头像显示在左上角 */}
             <div 
