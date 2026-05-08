@@ -7,29 +7,29 @@ export default async function handler(req, res) {
   const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
   const xYmUser = `u${userId}.${userSecret}`;
 
-  // 构建目标URL - 保留完整路径，一门网关要求 /ymgate 路径
-  // req.url 可能是 /ymgate 或 /ymgate/xxx，直接拼接到网关地址
-  const targetUrl = `http://gate.open.yimenyun.com${req.url}`;
+  // 构建目标URL - 网关使用 http 协议和 /ymgate 路径
+  const urlPath = req.url?.replace(/^\/ymgate/, '') || '/';
+  const targetUrl = `http://gate.open.yimenyun.com/ymgate${urlPath === '/' ? '' : urlPath}`;
 
-  console.log('网关代理请求:', { targetUrl, method: req.method });
+  console.log('网关代理请求:', { targetUrl, method: req.method, url: req.url });
 
   // 构建转发请求头
-  const headers = {
-    'X-Ym-User': xYmUser,
-    'Content-Type': req.headers['content-type'] || 'application/json',
-  };
-
+  const headers = new Headers();
+  headers.set('X-Ym-User', xYmUser);
+  headers.set('Content-Type', req.headers['content-type'] || 'application/json');
+  
   // 复制其他必要的请求头
   const excludeHeaders = ['host', 'content-length', 'connection'];
-  Object.entries(req.headers).forEach(([key, value]) => {
-    if (!excludeHeaders.includes(key.toLowerCase()) && !headers[key]) {
-      headers[key] = value;
+  Object.entries(req.headers || {}).forEach(([key, value]) => {
+    if (!excludeHeaders.includes(key.toLowerCase()) && !headers.has(key)) {
+      headers.set(key, value);
     }
   });
 
   try {
+    // 构建fetch请求配置
     const fetchOptions = {
-      method: req.method,
+      method: req.method || 'GET',
       headers: headers,
     };
 
@@ -38,25 +38,24 @@ export default async function handler(req, res) {
       fetchOptions.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
 
-    // 发起请求到目标网关（使用http协议）
+    // 发起请求到目标网关
     const response = await fetch(targetUrl, fetchOptions);
 
     // 获取响应内容
     const text = await response.text();
 
     // 设置响应头
-    res.statusCode = response.status;
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
     });
 
     // 返回响应内容
-    res.send(text);
+    res.status(response.status).send(text);
 
   } catch (error) {
     console.error('网关代理错误:', error);
-    res.statusCode = 500;
-    res.json({ 
+    res.status(500).json({ 
       code: 500, 
       message: '网关代理请求失败',
       error: error.message 

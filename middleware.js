@@ -1,10 +1,15 @@
-// Edge Middleware 处理 /ymgate 路由
+// Edge Middleware 处理所有请求
 export const config = {
-  matcher: ['/ymgate/:path*'],
+  matcher: ['/ymgate/:path*', '/ymgate'],
 };
 
 export default async function middleware(request) {
   const url = new URL(request.url);
+  
+  // 只处理 /ymgate 路由
+  if (!url.pathname.startsWith('/ymgate')) {
+    return fetch(request);
+  }
   
   // 获取用户ID和密钥
   const userId = '495126';
@@ -15,27 +20,19 @@ export default async function middleware(request) {
   const path = url.pathname.replace(/^\/ymgate/, '') || '/';
   const targetUrl = `http://gate.open.yimenyun.com/ymgate${path === '/' ? '' : path}${url.search}`;
   
-  console.log('Edge网关请求:', { targetUrl, method: request.method });
-  
   // 构建请求头
   const headers = new Headers();
   headers.set('X-Ym-User', xYmUser);
   headers.set('Content-Type', request.headers.get('content-type') || 'application/json');
+  headers.set('User-Agent', request.headers.get('user-agent') || '');
+  headers.set('Accept', request.headers.get('accept') || '*/*');
   
-  // 复制其他必要的请求头
-  const excludeHeaders = ['host', 'content-length', 'connection'];
-  request.headers.forEach((value, key) => {
-    if (!excludeHeaders.includes(key.toLowerCase())) {
-      headers.set(key, value);
-    }
-  });
-  
+  // 转发请求到目标网关
   try {
-    // 转发请求到目标网关
     const response = await fetch(targetUrl, {
       method: request.method,
       headers: headers,
-      body: ['POST', 'PUT', 'PATCH'].includes(request.method) ? await request.text() : undefined,
+      body: ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) ? await request.text() : undefined,
     });
     
     // 获取响应
@@ -44,17 +41,21 @@ export default async function middleware(request) {
     // 返回响应
     return new Response(text, {
       status: response.status,
-      headers: response.headers,
+      headers: {
+        'Content-Type': response.headers.get('content-type') || 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      },
     });
   } catch (error) {
     console.error('网关代理错误:', error);
     return new Response(JSON.stringify({
       code: 500,
-      message: '网关代理请求失败',
-      error: error.message
+      message: '网关代理请求失败: ' + error.message
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
