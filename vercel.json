@@ -4,18 +4,18 @@
   "installCommand": "npm install",
   "framework": "vite",
   "functions": {
-    "api/ymgate.js": {
+    "ymgate.js": {
       "runtime": "nodejs18.x"
     }
   },
   "routes": [
     {
       "src": "/ymgate",
-      "dest": "/api/ymgate"
+      "dest": "/ymgate"
     },
     {
       "src": "/ymgate/(.*)",
-      "dest": "/api/ymgate"
+      "dest": "/ymgate"
     },
     {
       "src": "/(.*)",
