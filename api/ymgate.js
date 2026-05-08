@@ -1,5 +1,41 @@
 // 一门APP在线网关代理 - Vercel Serverless Function
-// 完全模拟Nginx反向代理行为：proxy_pass + proxy_set_header X-Ym-User
+// 使用Node.js原生http模块，完全模拟Nginx反向代理行为
+// 避免Fetch API对Set-Cookie等头的限制
+
+import http from 'http';
+
+function proxyRequest(targetUrl, method, reqHeaders, body) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(targetUrl);
+    const options = {
+      hostname: url.hostname,
+      port: url.port || 80,
+      path: url.pathname + url.search,
+      method: method,
+      headers: reqHeaders,
+    };
+    
+    const proxyReq = http.request(options, (proxyRes) => {
+      const chunks = [];
+      proxyRes.on('data', chunk => chunks.push(chunk));
+      proxyRes.on('end', () => {
+        resolve({
+          statusCode: proxyRes.statusCode,
+          headers: proxyRes.headers,  // 原始headers，包含Set-Cookie
+          body: Buffer.concat(chunks),
+        });
+      });
+    });
+    
+    proxyReq.on('error', reject);
+    proxyReq.setTimeout(10000, () => {
+      proxyReq.destroy();
+      reject(new Error('请求超时'));
+    });
+    if (body) proxyReq.write(body);
+    proxyReq.end();
+  });
+}
 
 export default async function handler(req, res) {
   // 处理OPTIONS预检请求
@@ -18,12 +54,13 @@ export default async function handler(req, res) {
   const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
   const xYmUser = `u${userId}.${userSecret}`;
 
-  // 构建目标URL - 完全模拟Nginx proxy_pass行为
+  // 构建目标URL
   const targetUrl = `http://gate.open.yimenyun.com${req.url}`;
 
-  // 构建转发请求头 - 模拟 proxy_set_header
-  const headers = {};
-  headers['X-Ym-User'] = xYmUser;
+  // 构建转发请求头 - 模拟Nginx proxy_set_header
+  const headers = {
+    'X-Ym-User': xYmUser,
+  };
   
   // 复制客户端请求头（排除不需要的）
   const excludeHeaders = ['host', 'content-length', 'connection', 'transfer-encoding'];
@@ -35,43 +72,33 @@ export default async function handler(req, res) {
   });
 
   try {
-    const fetchOptions = {
-      method: req.method || 'GET',
-      headers: headers,
-      redirect: 'manual',  // 不自动跟随重定向，原样返回给APP
-    };
-
-    // 如果有请求体，则添加
+    // 获取请求体
+    let body = null;
     if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
-      fetchOptions.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
 
-    // 发起请求到目标网关
-    const response = await fetch(targetUrl, fetchOptions);
+    // 使用http模块发起请求（不走Fetch API，避免头限制）
+    const result = await proxyRequest(targetUrl, req.method || 'GET', headers, body);
 
     // 原样返回状态码（包括3xx重定向）
-    res.statusCode = response.status;
+    res.statusCode = result.statusCode;
 
-    // 原样转发所有响应头
-    // 注意：Set-Cookie 是Fetch API的"禁止响应头"，forEach遍历不到
-    // 需要用 getSetCookie() 单独获取
-    const rawHeaders = response.headers;
-    rawHeaders.forEach((value, key) => {
+    // 原样转发所有响应头（http模块返回原始headers，无Fetch API限制）
+    Object.entries(result.headers).forEach(([key, value]) => {
       const lowerKey = key.toLowerCase();
       if (!['transfer-encoding', 'connection'].includes(lowerKey)) {
-        res.setHeader(key, value);
+        // Set-Cookie可能是数组，需要特殊处理
+        if (lowerKey === 'set-cookie' && Array.isArray(value)) {
+          res.setHeader(key, value);
+        } else {
+          res.setHeader(key, value);
+        }
       }
     });
 
-    // 单独处理 Set-Cookie（Fetch API forEach会跳过此头）
-    const cookies = rawHeaders.getSetCookie?.() || [];
-    if (cookies.length > 0) {
-      res.setHeader('Set-Cookie', cookies);
-    }
-
-    // 返回响应内容
-    const buffer = await response.arrayBuffer();
-    res.end(Buffer.from(buffer));
+    // 原样返回响应内容
+    res.end(result.body);
 
   } catch (error) {
     console.error('网关代理错误:', error);
