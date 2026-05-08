@@ -480,14 +480,14 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               </div>
             </div>
             
-            {/* 日记记录 */}
+            {/* 文字记录 */}
             <div 
               className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => onStatClick({ type: 'filter', filterType: 'diary' })}
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">📝</span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">日记记录</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">文字记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">

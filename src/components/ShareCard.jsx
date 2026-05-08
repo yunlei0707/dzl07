@@ -169,7 +169,7 @@ export function ShareCard({
                       <span>{moodIcons[mood] || '😊'}</span>
                       <span className="flex items-center gap-1">
                         {getTypeIcon()}
-                        {type === 'photo' ? '照片' : type === 'video' ? '视频' : type === 'audio' ? '语音' : '日记'}
+                        {type === 'photo' ? '照片' : type === 'video' ? '视频' : type === 'audio' ? '语音' : '文字'}
                       </span>
                     </div>
                     <span>{formatDate(date)}</span>

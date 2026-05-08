@@ -763,7 +763,7 @@ export function ProfilePage(
               <div className="flex-1 text-left">
                 <span className="text-sm text-gray-700 dark:text-white">导入示例数据</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、日记'}
+                  {isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、文字'}
                 </p>
               </div>
             </button>
@@ -1529,7 +1529,7 @@ export function ProfilePage(
                       {/* 类型标签 */}
                       <div className="flex items-center gap-2 mb-3">
                         <span className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-full">
-                          {getTypeEmoji(moment.type)} {moment.type === 'photo' ? '照片' : moment.type === 'video' ? '视频' : moment.type === 'audio' ? '语音' : '日记'}
+                          {getTypeEmoji(moment.type)} {moment.type === 'photo' ? '照片' : moment.type === 'video' ? '视频' : moment.type === 'audio' ? '语音' : '文字'}
                         </span>
                       </div>
                       

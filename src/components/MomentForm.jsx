@@ -812,7 +812,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                 : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
-            ✏️ 日记
+            ✏️ 文字
           </button>
         </div>
         
@@ -1044,7 +1044,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         {/* 内容输入 */}
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-            {type === 'photo' ? '说说感想' : type === 'video' ? '视频描述' : type === 'audio' ? '语音备注' : '日记内容'}
+            {type === 'photo' ? '说说感想' : type === 'video' ? '视频描述' : type === 'audio' ? '语音备注' : '文字内容'}
           </label>
           <textarea
             value={content}

@@ -298,7 +298,7 @@ export function GrowthReport({ onClose }) {
                     <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl p-3 text-center">
                       <FileText className="w-5 h-5 mx-auto mb-1 text-amber-600" />
                       <p className="text-xl font-bold text-gray-800">{stats.diaryCount}</p>
-                      <p className="text-xs text-gray-600">日记</p>
+                      <p className="text-xs text-gray-600">文字</p>
                     </div>
                     <div className="bg-gradient-to-br from-amber-200 to-warm-200 rounded-xl p-3 text-center">
                       <Mic className="w-5 h-5 mx-auto mb-1 text-amber-600" />

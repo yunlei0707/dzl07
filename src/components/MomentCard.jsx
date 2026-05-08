@@ -252,7 +252,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                     <div className="flex items-center gap-1.5">
                       <Mic className="w-4 h-4 text-primary-500" />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                        语音日记
+                        语音文字
                       </span>
                     </div>
                     <span className="text-xs text-gray-400">

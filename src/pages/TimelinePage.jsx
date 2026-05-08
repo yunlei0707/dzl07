@@ -29,7 +29,7 @@ const typeFilters = [
   { value: '', label: '全部' },
   { value: 'photo', label: '照片' },
   { value: 'video', label: '视频' },
-  { value: 'diary', label: '日记' },
+  { value: 'diary', label: '文字' },
   { value: 'audio', label: '语音' },
 ];
 
