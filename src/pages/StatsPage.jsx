@@ -294,7 +294,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               {v2BabyInfo?.nickname || v2BabyInfo?.name || currentUser?.name || "📊 成长数据"}
             </h1>
             <div className="flex-1" />
-            <TimeBlindBox moments={hasV2Baby ? v2Moments.filter(m => !m.isDeleted) : (moments || [])} />
+            <TimeBlindBox moments={hasV2Baby ? v2Moments.filter(m => !m.isDeleted) : (moments || [])} babyName={v2BabyInfo?.nickname || v2BabyInfo?.name || displayBaby?.name || '宝宝'} />
           </div>
           
           {/* 账号切换器 */}
