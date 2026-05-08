@@ -184,14 +184,14 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
         <span className="text-base font-medium text-gray-700">时光盲盒</span>
       </button>
 
-      {/* 盲盒卡片弹窗 - 底部抽屉 */}
+      {/* 盲盒卡片弹窗 - 居中弹窗 */}
       {showCard && selectedMoment && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-end"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
           onClick={handleClose}
         >
           <div 
-            className="w-full bg-white dark:bg-gray-800 rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col animate-slide-up"
+            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl max-h-[80vh] overflow-hidden flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             {/* 头部 - 紫色渐变 */}
