@@ -1,6 +1,6 @@
 /**
  * 时光轴页面
- * ✅ 性能优化版本：虚拟滚动 + 懒加载 + 分页加载
+ * ✅ 性能优化版本：懒加载 + 分页加载
  * ✅ 双账号支持：账号切换和数据隔离
  */
 
@@ -23,46 +23,6 @@ import {
   getCurrentBabyInfo,
   deleteLinkedContentByRecordId
 } from '../utils/dbV2';
-
-// ==================== 虚拟滚动优化 ====================
-// 虚拟列表项高度估计
-const ESTIMATED_ITEM_HEIGHT = 300;
-// 视口外预渲染数量
-const BUFFER_SIZE = 5;
-
-// 虚拟列表HOC：只渲染可见区域的卡片
-function withVirtualList(Component) {
-  return function VirtualListWrapper({ index, ...props }) {
-    const [isVisible, setIsVisible] = useState(false);
-    const itemRef = useRef(null);
-
-    useEffect(() => {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          setIsVisible(entries[0].isIntersecting);
-        },
-        { rootMargin: `${BUFFER_SIZE * ESTIMATED_ITEM_HEIGHT}px` }
-      );
-
-      if (itemRef.current) {
-        observer.observe(itemRef.current);
-      }
-
-      return () => observer.disconnect();
-    }, []);
-
-    return (
-      <div ref={itemRef}>
-        {isVisible ? <Component {...props} /> : (
-          <div style={{ height: ESTIMATED_ITEM_HEIGHT }} className="bg-transparent" />
-        )}
-      </div>
-    );
-  };
-}
-
-// 应用虚拟滚动优化
-const VirtualMomentCard = withVirtualList(MomentCard);
 
 // 类型筛选选项
 const typeFilters = [
@@ -102,7 +62,11 @@ export function TimelinePage({
       const isSystem = checkIsSystemAccount();
       const babyInfo = getCurrentBabyInfo();
       
-      setV2Moments(timeline);
+      // 只在数据真正变化时才更新，避免不必要的重渲染
+      setV2Moments(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(timeline)) return prev;
+        return timeline;
+      });
       setIsSystemAccount(isSystem);
       setHasV2Baby(!!babyInfo);
       setV2AccountInfo(account || null);
@@ -112,8 +76,8 @@ export function TimelinePage({
     
     // 监听 localStorage 变化
     window.addEventListener('storage', updateV2Info);
-    // 轮询更新（检测添加动态等操作）
-    const interval = setInterval(updateV2Info, 300);
+    // 轮询更新（检测添加动态等操作），改为5秒减少频繁渲染
+    const interval = setInterval(updateV2Info, 5000);
     
     // 监听自定义事件（添加动态后主动刷新）
     const handleMomentAdded = () => updateV2Info();
@@ -658,14 +622,13 @@ export function TimelinePage({
                   </div>
                 </div>
                 
-                {/* 动态列表 - 虚拟滚动优化 */}
+                {/* 动态列表 */}
                 <div className="ml-10">
-                  {group.moments.map((moment, index) => (
+                  {group.moments.map((moment) => (
                     <div key={moment.id} className="relative">
                       <div className="absolute -left-8 top-4 w-3 h-3 rounded-full bg-white border-2 border-primary-400 shadow-sm" />
                       
-                      <VirtualMomentCard
-                        index={index}
+                      <MomentCard
                         moment={moment}
                         onEdit={onEditMoment}
                         onDelete={handleDeleteMoment}
