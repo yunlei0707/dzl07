@@ -12,7 +12,7 @@ import
 import 
 { 
   Moon, Sun, Download, Upload, Trash2, ChevronRight, Heart, LogOut, User, 
-  Palette, Tag, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database,
+  Palette, Tag, Tags, Edit3, Plus, X, Check, Image, Users, Trophy, Sparkles, Copy, Check as CheckIcon, Settings, ChevronDown, Database,
   HelpCircle, Shield, FileText, Info
 } from 'lucide-react';
 import 
@@ -722,50 +722,72 @@ export function ProfilePage(
         </button>
         
         
-{/* 里程碑自定义 */}
-        <button
-          onClick=
+{/* 标签自定义 分组 */}
+        <div className="space-y-3">
+          <div className="px-1 flex items-center gap-2">
+            <Tags className="w-4 h-4 text-primary-500" />
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">标签自定义</span>
+          </div>
+
+          {/* 里程碑标签自定义 */}
+          <button
+            onClick=
 {() => 
 {
-            setEditingMilestone(null);
-            setMilestoneForm(
+              setEditingMilestone(null);
+              setMilestoneForm(
 { label: '', emoji: '⭐', color: '#FF7B70' });
-            setShowMilestoneModal(true);
-          }}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-            <Tag className="w-5 h-5 text-yellow-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">里程碑自定义（时光轴）</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">管理您的专属成长里程碑</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        
-{/* 自定义心情标签 */}
-        <button
-          onClick=
+              setShowMilestoneModal(true);
+            }}
+            className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+              <Tag className="w-5 h-5 text-yellow-500" />
+            </div>
+            <div className="flex-1 text-left">
+              <span className="font-medium dark:text-white">里程碑标签自定义</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">管理您的专属成长里程碑</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+          
+          {/* 心情标签自定义 */}
+          <button
+            onClick=
 {() => 
 {
-            setEditingMood(null);
-            setMoodForm(
+              setEditingMood(null);
+              setMoodForm(
 { label: '', emoji: '😊' });
-            setShowMoodModal(true);
-          }}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-purple-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">心情标签管理（时光轴）</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">添加和管理自定义心情标签</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
+              setShowMoodModal(true);
+            }}
+            className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+            </div>
+            <div className="flex-1 text-left">
+              <span className="font-medium dark:text-white">心情标签自定义</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">添加和管理自定义心情标签</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+
+          {/* 虚拟时光标签自定义 */}
+          <button
+            onClick={() => navigate('/virtual-time-categories')}
+            className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-green-500" />
+            </div>
+            <div className="flex-1 text-left">
+              <span className="font-medium dark:text-white">虚拟时光标签自定义</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">管理虚拟时光分类和内容项</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
         
         
 {/* 导入示例数据 */}
@@ -780,29 +802,11 @@ export function ProfilePage(
             <Database className="w-5 h-5 text-blue-500" />
           </div>
           <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">导入数据示例（我的宝宝）</span>
+            <span className="font-medium dark:text-white">导入示例数据</span>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               
 {isImportingSample ? '导入中...' : '添加照片、视频、语音、日记示例'}
             </p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </button>
-        
-        
-{/* 退出登录 */}
-        
-        {/* 虚拟时光自定义 */}
-        <button
-          onClick={() => navigate('/virtual-time-categories')}
-          className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-green-500" />
-          </div>
-          <div className="flex-1 text-left">
-            <span className="font-medium dark:text-white">虚拟时光自定义</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">管理虚拟时光分类和内容项</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
