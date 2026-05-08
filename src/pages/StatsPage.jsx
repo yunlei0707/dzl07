@@ -388,7 +388,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {stats.totalMoments}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">成长记录</p>
+              <p className="text-xs text-gray-400 mt-1">成长记录</p>
             </div>
             
             {/* 珍贵照片 */}
@@ -399,7 +399,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               <p className="text-3xl font-bold text-warm-600 dark:text-warm-400">
                 {stats.photoCount}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">珍贵照片</p>
+              <p className="text-xs text-gray-400 mt-1">珍贵照片</p>
             </div>
             
             {/* 重要里程碑 */}
@@ -410,7 +410,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                 {stats.milestoneCount}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">重要里程碑</p>
+              <p className="text-xs text-gray-400 mt-1">重要里程碑</p>
             </div>
             
             {/* 成长天数 */}
@@ -447,7 +447,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">📷</span>
-                <span className="text-gray-700 dark:text-gray-300">照片记录</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">照片记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -467,7 +467,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎬</span>
-                <span className="text-gray-700 dark:text-gray-300">视频记录</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">视频记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -487,7 +487,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">📝</span>
-                <span className="text-gray-700 dark:text-gray-300">日记记录</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">日记记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -507,7 +507,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
             >
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎙️</span>
-                <span className="text-gray-700 dark:text-gray-300">语音记录</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">语音记录</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -544,7 +544,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
               >
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{ms.emoji}</span>
-                  <span className="text-gray-700 dark:text-gray-300">{ms.label}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{ms.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -562,7 +562,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
                   <div key={opt.id} className="flex items-center justify-between rounded-lg p-1 -m-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{opt.emoji}</span>
-                      <span className="text-gray-400">{opt.label}</span>
+                      <span className="text-sm text-gray-400">{opt.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -584,16 +584,12 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport }) 
           style={{ animationDelay: '0.4s' }}
           onClick={() => onOpenMonthlyReport?.()}
         >
-          <div className="flex items-center gap-3 text-primary-500">
-            <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold">宝宝成长档案</h3>
-              <p className="text-xs text-gray-500">查看成长档案</p>
-            </div>
-            <span className="text-xs text-gray-400">→</span>
-          </div>
+          <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2 cursor-pointer hover:text-gray-600">
+            <BookOpen className="w-5 h-5 text-primary-500" />
+            宝宝成长档案
+            <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+          </h3>
+          <p className="text-xs text-gray-400 mt-1">查看成长档案</p>
         </div>
       </main>
     </div>
