@@ -515,10 +515,10 @@ export function TimelinePage({
               <button
                 key={filter.value}
                 onClick={() => setSelectedType(filter.value)}
-                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                className={`px-2 py-1 text-sm whitespace-nowrap transition-colors ${
                   selectedType === filter.value
-                    ? 'bg-primary-500 text-white font-medium'
-                    : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600'
+                    ? 'text-primary-500 font-medium'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {filter.label}
@@ -527,15 +527,15 @@ export function TimelinePage({
           </div>
           
           {/* 心情筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-3">
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-2">
             {moodFilters.map(filter => (
               <button
                 key={filter.value}
                 onClick={() => setSelectedMood(filter.value)}
-                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                className={`px-2 py-1 text-sm whitespace-nowrap transition-colors ${
                   selectedMood === filter.value
-                    ? 'bg-warm-500 text-white font-medium'
-                    : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600'
+                    ? 'text-amber-500 font-medium'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {filter.label}
@@ -544,15 +544,15 @@ export function TimelinePage({
           </div>
           
           {/* 里程碑筛选 */}
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-3">
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-2">
             {milestoneFilters.map(filter => (
               <button
                 key={filter.value}
                 onClick={() => setSelectedMilestone(filter.value)}
-                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                className={`px-2 py-1 text-sm whitespace-nowrap transition-colors ${
                   selectedMilestone === filter.value
-                    ? 'bg-purple-500 text-white font-medium'
-                    : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600'
+                    ? 'text-purple-500 font-medium'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {filter.label}
