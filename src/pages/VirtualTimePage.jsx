@@ -230,6 +230,7 @@ export function VirtualTimePage() {
                 {v2AccountInfo?.identityName || currentUser?.name || "✨ 未来宝宝"}
               </h1>
             </div>
+            <div className="flex items-center gap-2">
             {/* 来自宝宝的信按钮 */}
             <button
               onClick={() => setShowBabyLetter(true)}
@@ -238,6 +239,7 @@ export function VirtualTimePage() {
               <Mail className="w-4 h-4 text-gray-600" />
               <span className="text-base font-medium text-gray-700">来自宝宝的信</span>
             </button>
+            </div>
           </div>
           
           <BabyHeader />
