@@ -258,6 +258,8 @@ function AppContent() {
       
       setShowCapsuleForm(false);
       setEditingCapsule(null);
+      // 刷新胶囊列表
+      refreshCapsules(currentBaby?.id);
       
     } catch (error) {
       showToast('保存失败: ' + error.message, 'error');
