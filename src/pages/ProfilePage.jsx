@@ -649,7 +649,7 @@ export function ProfilePage(
                 <User className="w-5 h-5" />
               )}
             </div>
-            <h1 className="text-lg font-bold dark:text-white">
+            <h1 className="text-base font-medium text-gray-600 dark:text-gray-300">
               {v2AccountInfo?.identityName || currentUser?.name || "我的"}
             </h1>
             <div className="flex-1" />
@@ -669,20 +669,20 @@ export function ProfilePage(
       </header>
       
       {/* 功能菜单 - 分组结构 */}
-      <div className="mt-4">
-
+      <main className="px-4 -mt-4 max-w-lg mx-auto space-y-4">
+        
         {/* 个性化分组 */}
-        <div className="px-4">
-          <p className="text-xs font-medium text-gray-400 mb-2 px-1">个性化</p>
+        <div>
+          <p className="text-sm font-medium text-gray-500 mb-2 px-1">个性化</p>
           <div className="space-y-2">
             {/* 主题设置 */}
             <button
               onClick={() => setShowThemeModal(true)}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
               <Palette className="w-5 h-5 text-primary-500" />
               <div className="flex-1 text-left">
-                <span className="font-medium dark:text-white">主题设置</span>
+                <span className="text-sm dark:text-white">主题设置</span>
                 <p className="text-xs text-gray-400 dark:text-gray-400">自定义应用颜色主题</p>
               </div>
             </button>
@@ -690,11 +690,11 @@ export function ProfilePage(
             {/* 标签自定义 */}
             <button
               onClick={() => setShowTagGroup(!showTagGroup)}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
               <Tags className="w-5 h-5 text-amber-500" />
               <div className="flex-1 text-left">
-                <span className="font-medium dark:text-white">标签自定义</span>
+                <span className="text-sm dark:text-white">标签自定义</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">管理里程碑、心情、虚拟时光标签</p>
               </div>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showTagGroup ? 'rotate-180' : ''}`} />
@@ -709,11 +709,11 @@ export function ProfilePage(
                     setMilestoneForm({ label: '', emoji: '⭐', color: '#FF7B70' });
                     setShowMilestoneModal(true);
                   }}
-                  className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <span className="text-sm text-primary-500">⭐</span>
                   <div className="flex-1 text-left">
-                    <span className="font-medium text-sm dark:text-white">里程碑标签自定义</span>
+                    <span className="text-sm dark:text-white">里程碑标签自定义</span>
                   </div>
                 </button>
 
@@ -724,7 +724,7 @@ export function ProfilePage(
                     setMoodForm({ label: '', emoji: '😊' });
                     setShowMoodModal(true);
                   }}
-                  className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <span className="text-sm text-amber-500">😊</span>
                   <div className="flex-1 text-left">
@@ -735,7 +735,7 @@ export function ProfilePage(
                 {/* 虚拟时光标签自定义 */}
                 <button
                   onClick={() => navigate('/virtual-time-categories')}
-                  className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <span className="text-sm text-gray-400">✨</span>
                   <div className="flex-1 text-left">
@@ -827,12 +827,12 @@ export function ProfilePage(
         </div>
 
         {/* 其他分组 - 可折叠 */}
-        <div className="px-4 mt-4">
+        <div>
           <button
             onClick={() => setShowOther(!showOther)}
             className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
           >
-            <p className="text-xs font-medium text-gray-400">其他</p>
+            <p className="text-sm font-medium text-gray-500">其他</p>
             <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showOther ? 'rotate-180' : ''}`} />
           </button>
           {showOther && (
@@ -870,7 +870,7 @@ export function ProfilePage(
             >
               <FileText className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
-                <span className="font-medium dark:text-white">用户协议</span>
+                <span className="text-sm dark:text-white">用户协议</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">使用条款与免责声明</p>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -889,16 +889,14 @@ export function ProfilePage(
         </div>
 
         {/* 退出登录 - 独立 */}
-        <div className="px-4 mt-6 mb-4">
-          <button
-            onClick={handleLogout}
-            className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
-            <LogOut className="w-5 h-5 text-red-400" />
-            <span className="font-medium text-red-500 dark:text-red-400">退出登录</span>
-          </button>
-        </div>
-      </div>
+        <button
+          onClick={handleLogout}
+          className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        >
+          <LogOut className="w-5 h-5 text-red-400" />
+          <span className="font-medium text-red-500 dark:text-red-400">退出登录</span>
+        </button>
+      </main>
       
       
 {/* 底部标语 */}

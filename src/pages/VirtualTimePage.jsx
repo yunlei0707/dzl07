@@ -226,7 +226,7 @@ export function VirtualTimePage() {
                   <span>✨</span>
                 )}
               </div>
-              <h1 className="text-xl font-bold text-gray-800">
+              <h1 className="text-base font-medium text-gray-600 dark:text-gray-300">
                 {v2AccountInfo?.identityName || currentUser?.name || "✨ 未来宝宝"}
               </h1>
             </div>
@@ -244,14 +244,14 @@ export function VirtualTimePage() {
         </div>
       </header>
 
-      <main className="px-4 -mt-4 max-w-lg mx-auto">
+      <main className="px-4 -mt-4 max-w-lg mx-auto space-y-4">
 
         {/* 专题卡片列表 */}
-        <div className="space-y-4">
-          {virtualTimeTopics.map((topic) => (
-            <TopicCard key={topic.id} topic={topic} />
-          ))}
-        </div>
+        {virtualTimeTopics.map((topic) => (
+          <div key={topic.id} className="card">
+            <TopicCard topic={topic} />
+          </div>
+        ))}
 
         <div className="h-8" />
       </main>

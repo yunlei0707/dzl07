@@ -19,7 +19,7 @@ const TabButton = memo(({ tab, isActive, onTabChange }) => {
   return (
     <button
       onClick={() => onTabChange(tab.id)}
-      className={`flex flex-col items-center justify-between pt-0 pb-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
+      className={`flex flex-col items-center justify-between pt-2 pb-1 flex-1 h-full transition-colors ${isActive ? 'text-primary-500' : 'text-gray-400 dark:text-gray-500'}`}
     >
       {/* 圆形图标容器和SDK按钮大小保持一致 */}
       <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${

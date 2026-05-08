@@ -505,9 +505,10 @@ export function TimelinePage({
         </div>
       )}
       
-      {/* 筛选器 - 水平滚动 */}
-      <div className="px-4 mt-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 space-y-2">
+      {/* 筛选器 - 统一main容器 */}
+      <main className="px-4 -mt-4 max-w-lg mx-auto">
+        {/* 筛选器卡片 */}
+        <div className="card mb-4">
           {/* 类型筛选 */}
           <div className="flex gap-2 overflow-x-auto hide-scrollbar">
             {typeFilters.map(filter => (
@@ -557,13 +558,11 @@ export function TimelinePage({
                 {filter.label}
               </button>
             ))}
-
           </div>
         </div>
-      </div>
-      
-      {/* 时光轴内容 */}
-      <main className="px-4 -mt-4 max-w-lg mx-auto">
+        
+        {/* 时光轴内容 */}
+        <div className="space-y-4">
         {/* 筛选结果统计 */}
         {hasActiveFilters && (
           <div className="mb-4 text-center">
@@ -575,8 +574,8 @@ export function TimelinePage({
         )}
         
         {groupedMoments.length === 0 ? (
-          <div className="text-center py-12 animate-fade-in">
-            <div className="w-24 h-24 mx-auto mb-4 bg-cream-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+          <div className="card text-center py-12 animate-fade-in">
+            <div className="w-24 h-24 mx-auto mb-4 bg-cream-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
               <Calendar className="w-12 h-12 text-gray-300" />
             </div>
             <p className="text-gray-500 dark:text-gray-400 mb-2">
@@ -646,6 +645,7 @@ export function TimelinePage({
             ))}
           </div>
         )}
+        </div>
       </main>
       
       {/* 照片查看器 */}
