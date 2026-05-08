@@ -7,9 +7,9 @@ export default async function handler(req, res) {
   const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
   const xYmUser = `u${userId}.${userSecret}`;
 
-  // 构建目标URL（去掉/ymgate前缀，保留剩余路径）
+  // 构建目标URL - 注意：网关使用 http 协议和 /ymgate 路径
   const path = req.url.replace(/^\/ymgate/, '') || '/';
-  const targetUrl = `https://gate.open.yimenyun.com${path}`;
+  const targetUrl = `http://gate.open.yimenyun.com/ymgate${path === '/' ? '' : path}`;
 
   // 构建转发请求头
   const headers = {
