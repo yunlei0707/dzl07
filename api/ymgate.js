@@ -25,8 +25,15 @@ export default async function handler(request) {
   const xYmUser = `u${userId}.${userSecret}`;
 
   // 构建目标URL
+  // Edge Function收到的路径是 /api/ymgate 或 /api/ymgate/xxx
+  // 需要转换为 /ymgate 或 /ymgate/xxx 再拼到网关地址
   const url = new URL(request.url);
-  const targetUrl = `http://gate.open.yimenyun.com${url.pathname}${url.search}`;
+  let gatewayPath = url.pathname;
+  // 把 /api/ymgate 前缀替换为 /ymgate
+  if (gatewayPath.startsWith('/api/ymgate')) {
+    gatewayPath = gatewayPath.replace('/api/ymgate', '/ymgate');
+  }
+  const targetUrl = `http://gate.open.yimenyun.com${gatewayPath}${url.search}`;
 
   // 构建转发请求头
   const headers = new Headers();
@@ -57,7 +64,6 @@ export default async function handler(request) {
     // 构建响应头
     const responseHeaders = new Headers();
     
-    // 遍历所有响应头（Set-Cookie在entries()中会被跳过，需要单独处理）
     for (const [key, value] of response.headers.entries()) {
       const lowerKey = key.toLowerCase();
       if (!['transfer-encoding', 'connection'].includes(lowerKey)) {
@@ -65,8 +71,7 @@ export default async function handler(request) {
       }
     }
 
-    // 单独处理Set-Cookie
-    // 方法1：getSetCookie()
+    // 单独处理Set-Cookie（Fetch API的entries()会跳过此头）
     if (typeof response.headers.getSetCookie === 'function') {
       const cookies = response.headers.getSetCookie();
       if (cookies && cookies.length > 0) {
@@ -75,16 +80,9 @@ export default async function handler(request) {
         }
       }
     }
-    // 方法2：直接get
-    else {
-      const cookieStr = response.headers.get('set-cookie');
-      if (cookieStr) {
-        responseHeaders.set('set-cookie', cookieStr);
-      }
-    }
 
-    // 添加调试头，确认代码版本
-    responseHeaders.set('X-Proxy-Version', 'edge-v3');
+    // 调试头
+    responseHeaders.set('X-Proxy-Version', 'edge-v4');
 
     const body = await response.arrayBuffer();
 
