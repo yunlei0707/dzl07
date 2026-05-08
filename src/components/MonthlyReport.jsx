@@ -225,11 +225,11 @@ export function GrowthReport({ onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end"
+      className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col"
       onClick={handleClose}
     >
       <div 
-        className="w-full bg-gradient-to-b from-cream-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-t-3xl max-h-[95vh] overflow-hidden flex flex-col animate-slide-up"
+        className="flex-1 flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* 头部 - 主色深浅渐变 */}

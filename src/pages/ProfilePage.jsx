@@ -631,7 +631,7 @@ export function ProfilePage(
             
             {/* 账号头像显示在左上角 */}
             <div 
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm"
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm"
             >
               {v2AccountInfo?.accountData?.avatar ? (
                 v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
@@ -669,7 +669,7 @@ export function ProfilePage(
       </header>
       
       {/* 功能菜单 - 分组结构 */}
-      <main className="px-4 -mt-4 max-w-lg mx-auto space-y-4">
+      <main className="px-4 -mt-4 max-w-lg mx-auto space-y-3">
         
         {/* 个性化分组 */}
         <div>
@@ -747,17 +747,10 @@ export function ProfilePage(
           </div>
         </div>
 
-        {/* 数据管理分组 - 可折叠 */}
-        <div className="px-4 mt-4">
-          <button
-            onClick={() => setShowDataManagement(!showDataManagement)}
-            className="w-full flex items-center justify-between cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors mb-2 px-1"
-          >
-            <p className="text-sm font-medium text-gray-500">数据管理</p>
-            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showDataManagement ? 'rotate-180' : ''}`} />
-          </button>
-          {showDataManagement && (
-            <div className="space-y-2">
+        {/* 数据管理分组 */}
+        <div className="mt-4">
+          <p className="text-sm font-medium text-gray-500 mb-2 px-1">数据管理</p>
+          <div className="space-y-2">
             {/* 导入示例数据 */}
             <button
               onClick={handleImportSampleData}
@@ -823,7 +816,6 @@ export function ProfilePage(
               </div>
             </button>
           </div>
-          )}
         </div>
 
         {/* 其他分组 - 可折叠 */}
@@ -900,7 +892,7 @@ export function ProfilePage(
       
       
 {/* 底部标语 */}
-      <div className="text-center py-8 text-sm text-gray-400">
+      <div className="text-center pb-4 pt-2 text-sm text-gray-400">
         <Heart className="w-4 h-4 inline mx-1 text-red-400" />
         用心记录每一个成长瞬间
       </div>

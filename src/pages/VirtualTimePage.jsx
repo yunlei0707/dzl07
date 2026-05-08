@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Share2 } from 'lucide-react';
+import { Sparkles, Share2, Mail } from 'lucide-react';
 import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
 import { ShareCard } from '../components/ShareCard';
@@ -185,7 +185,7 @@ export function VirtualTimePage() {
     return (
       <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center flex-shrink-0">
             <span className="text-xl">{topic.coverEmoji}</span>
           </div>
           <div className="flex-1">
@@ -209,7 +209,7 @@ export function VirtualTimePage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-300 to-primary-400 flex items-center justify-center text-lg overflow-hidden shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-200 to-primary-300 flex items-center justify-center text-lg overflow-hidden shadow-sm">
                 {v2AccountInfo?.accountData?.avatar ? (
                   v2AccountInfo.accountData.avatar.startsWith('data:') || v2AccountInfo.accountData.avatar.startsWith('http') ? (
                     <img src={v2AccountInfo.accountData.avatar} alt="" className="w-full h-full object-cover" />
@@ -233,9 +233,9 @@ export function VirtualTimePage() {
             {/* 来自宝宝的信按钮 */}
             <button
               onClick={() => setShowBabyLetter(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
             >
-              <span className="text-sm">📩</span>
+              <Mail className="w-4 h-4 text-gray-600" />
               <span className="text-base font-medium text-gray-700">来自宝宝的信</span>
             </button>
           </div>
