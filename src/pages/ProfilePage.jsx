@@ -815,6 +815,16 @@ export function ProfilePage(
                 <p className="text-xs text-gray-500 dark:text-gray-400">谨慎操作，将清除所有本地数据</p>
               </div>
             </button>
+            {/* 退出登录 */}
+            <button
+              onClick={handleLogout}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <LogOut className="w-5 h-5 text-red-400" />
+              <div className="flex-1 text-left">
+                <span className="text-sm text-red-500 dark:text-red-400">退出登录</span>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -880,14 +890,7 @@ export function ProfilePage(
           )}
         </div>
 
-        {/* 退出登录 - 独立 */}
-        <button
-          onClick={handleLogout}
-          className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        >
-          <LogOut className="w-5 h-5 text-red-400" />
-          <span className="font-medium text-red-500 dark:text-red-400">退出登录</span>
-        </button>
+
       </main>
       
       
