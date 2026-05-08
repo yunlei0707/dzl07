@@ -92,6 +92,9 @@ export function TimeBlindBox({ moments, onOpen }) {
   const lastShakeRef = useRef(0);
   const accelStopRef = useRef(null);
 
+  // 上一帧加速度值（用于计算变化量）
+  const lastAccRef = useRef({ x: 0, y: 0, z: 0, time: 0 });
+
   // 摇一摇检测 - APP环境
   const startAppAccelerometer = useCallback(() => {
     if (!isInApp()) return false;
@@ -113,17 +116,31 @@ export function TimeBlindBox({ moments, onOpen }) {
         });
       }
 
-      const SHAKE_THRESHOLD = 15;
+      // 用变化量检测摇晃，和shake.js原理一致
+      // 静止时x+y+z ≈ 10（重力），摇动时变化量会很大
+      const SHAKE_THRESHOLD = 3.0; // 变化量阈值（g），约3倍重力加速度变化
       
       jsBridge.accelerometer.start(function(x, y, z) {
-        const force = Math.abs(x) + Math.abs(y) + Math.abs(z);
+        const last = lastAccRef.current;
         const now = Date.now();
         
-        if (force > SHAKE_THRESHOLD && now - lastShakeRef.current > 3000) {
-          lastShakeRef.current = now;
-          console.log('[TimeBlindBox] APP摇一摇触发, force:', force);
-          handleShake();
+        // 计算与上一帧的变化量
+        const deltaX = Math.abs(x - last.x);
+        const deltaY = Math.abs(y - last.y);
+        const deltaZ = Math.abs(z - last.z);
+        
+        // 任意两个轴变化超过阈值即为摇晃
+        if ((deltaX > SHAKE_THRESHOLD && deltaY > SHAKE_THRESHOLD) ||
+            (deltaX > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD) ||
+            (deltaY > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD)) {
+          if (now - lastShakeRef.current > 3000) {
+            lastShakeRef.current = now;
+            console.log('[TimeBlindBox] APP摇一摇触发, delta:', deltaX.toFixed(2), deltaY.toFixed(2), deltaZ.toFixed(2));
+            handleShake();
+          }
         }
+        
+        lastAccRef.current = { x, y, z, time: now };
       });
 
       // 保存停止函数
@@ -148,18 +165,35 @@ export function TimeBlindBox({ moments, onOpen }) {
   useEffect(() => {
     if (isInApp()) return; // APP环境用jsBridge
 
+    const SHAKE_THRESHOLD = 3.0;
+    const browserLastAcc = { x: 0, y: 0, z: 0 };
+
     const handleMotion = (e) => {
       const acc = e.accelerationIncludingGravity;
       if (!acc) return;
       
-      const force = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
-      const now = Date.now();
+      const x = acc.x || 0;
+      const y = acc.y || 0;
+      const z = acc.z || 0;
       
-      if (force > 25 && now - lastShakeRef.current > 3000) {
-        lastShakeRef.current = now;
-        console.log('[TimeBlindBox] 浏览器摇一摇触发, force:', force);
-        handleShake();
+      const deltaX = Math.abs(x - browserLastAcc.x);
+      const deltaY = Math.abs(y - browserLastAcc.y);
+      const deltaZ = Math.abs(z - browserLastAcc.z);
+      
+      if ((deltaX > SHAKE_THRESHOLD && deltaY > SHAKE_THRESHOLD) ||
+          (deltaX > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD) ||
+          (deltaY > SHAKE_THRESHOLD && deltaZ > SHAKE_THRESHOLD)) {
+        const now = Date.now();
+        if (now - lastShakeRef.current > 3000) {
+          lastShakeRef.current = now;
+          console.log('[TimeBlindBox] 浏览器摇一摇触发, delta:', deltaX.toFixed(2), deltaY.toFixed(2), deltaZ.toFixed(2));
+          handleShake();
+        }
       }
+      
+      browserLastAcc.x = x;
+      browserLastAcc.y = y;
+      browserLastAcc.z = z;
     };
 
     // iOS 13+ 需要请求权限
