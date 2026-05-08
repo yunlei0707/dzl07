@@ -10,6 +10,7 @@ import { virtualTimeTopics } from '../data/virtualTimeData';
 import { useApp } from '../store/AppContext';
 import { ShareCard } from '../components/ShareCard';
 import { BabyHeader } from '../components/BabyHeader';
+import { BabyLetter } from '../components/BabyLetter';
 import { 
   getCurrentV2Account, 
   getCurrentBabyInfo, 
@@ -28,6 +29,7 @@ export function VirtualTimePage() {
   const [fullscreenItem, setFullscreenItem] = useState(null);
   const [copied, setCopied] = useState(false);
   const [sharingItem, setSharingItem] = useState(null);
+  const [showBabyLetter, setShowBabyLetter] = useState(false);
   
   // v2 账号系统状态
   const [v2AccountInfo, setV2AccountInfo] = useState(null);
@@ -228,6 +230,14 @@ export function VirtualTimePage() {
                 {v2AccountInfo?.identityName || currentUser?.name || "✨ 未来宝宝"}
               </h1>
             </div>
+            {/* 来自宝宝的信按钮 */}
+            <button
+              onClick={() => setShowBabyLetter(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/25 hover:bg-white/40 active:scale-95 transition-all"
+            >
+              <span className="text-sm">📩</span>
+              <span className="text-xs font-medium text-white">来自宝宝的信</span>
+            </button>
           </div>
           
           <BabyHeader />
@@ -271,6 +281,15 @@ export function VirtualTimePage() {
         babyName={currentBaby?.name}
         type="diary"
         mood={sharingItem?.mood}
+      />
+      
+      {/* 来自宝宝的信弹窗 */}
+      <BabyLetter
+        visible={showBabyLetter}
+        onClose={() => setShowBabyLetter(false)}
+        virtualTimeRecords={v2VirtualTime}
+        babyName={babyName}
+        parentName={v2AccountInfo?.identityName || currentUser?.name || '妈妈'}
       />
     </div>
   );
