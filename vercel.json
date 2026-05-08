@@ -2,20 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": null,
-  "functions": {
-    "ymgate.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/ymgate",
-      "destination": "/ymgate.js"
+      "destination": "/api/ymgate"
     },
     {
       "source": "/ymgate/(.*)",
-      "destination": "/ymgate.js"
+      "destination": "/api/ymgate"
     },
     {
       "source": "/(.*)",

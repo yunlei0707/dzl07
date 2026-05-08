@@ -7,28 +7,29 @@ export default async function handler(req, res) {
   const userSecret = process.env.YM_USER_SECRET || 'TNvPWnZHeSQFdyyRzcNV2QzAfj2lwgLkwUbR3eKqPK9JkRu5';
   const xYmUser = `u${userId}.${userSecret}`;
 
-  // 构建目标URL（去掉/ymgate前缀，保留剩余路径）
-  const path = req.url.replace(/^\/ymgate/, '') || '/';
-  const targetUrl = `https://gate.open.yimenyun.com${path}`;
+  // 构建目标URL - 网关使用 http 协议和 /ymgate 路径
+  const urlPath = req.url?.replace(/^\/ymgate/, '') || '/';
+  const targetUrl = `http://gate.open.yimenyun.com/ymgate${urlPath === '/' ? '' : urlPath}`;
+
+  console.log('网关代理请求:', { targetUrl, method: req.method, url: req.url });
 
   // 构建转发请求头
-  const headers = {
-    'X-Ym-User': xYmUser,
-    'Content-Type': req.headers['content-type'] || 'application/json',
-  };
-
-  // 复制其他必要的请求头（除了host）
-  const excludeHeaders = ['host', 'content-length'];
-  Object.keys(req.headers).forEach(key => {
-    if (!excludeHeaders.includes(key.toLowerCase()) && !headers[key]) {
-      headers[key] = req.headers[key];
+  const headers = new Headers();
+  headers.set('X-Ym-User', xYmUser);
+  headers.set('Content-Type', req.headers['content-type'] || 'application/json');
+  
+  // 复制其他必要的请求头
+  const excludeHeaders = ['host', 'content-length', 'connection'];
+  Object.entries(req.headers || {}).forEach(([key, value]) => {
+    if (!excludeHeaders.includes(key.toLowerCase()) && !headers.has(key)) {
+      headers.set(key, value);
     }
   });
 
   try {
     // 构建fetch请求配置
     const fetchOptions = {
-      method: req.method,
+      method: req.method || 'GET',
       headers: headers,
     };
 
@@ -44,18 +45,17 @@ export default async function handler(req, res) {
     const text = await response.text();
 
     // 设置响应头
-    res.statusCode = response.status;
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
     });
 
     // 返回响应内容
-    res.send(text);
+    res.status(response.status).send(text);
 
   } catch (error) {
     console.error('网关代理错误:', error);
-    res.statusCode = 500;
-    res.json({ 
+    res.status(500).json({ 
       code: 500, 
       message: '网关代理请求失败',
       error: error.message 
