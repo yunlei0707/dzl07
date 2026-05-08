@@ -234,7 +234,7 @@ export function VirtualTimePage() {
             {/* 来自宝宝的信按钮 */}
             <button
               onClick={() => setShowBabyLetter(true)}
-              className="flex items-center gap-1.5 px-3 py-0.5 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
+              className="flex items-center gap-1.5 px-3 py-0 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
             >
               <Mail className="w-4 h-4 text-gray-600" />
               <span className="text-base font-medium text-gray-700">来自宝宝的信</span>
