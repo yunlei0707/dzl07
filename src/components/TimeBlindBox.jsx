@@ -5,9 +5,10 @@
  * 支持生成分享图片（html2canvas）
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { X, Download, Image as ImageIcon } from 'lucide-react';
+import { playBGM, stopBGM, toggleMute, isBGMMuted, loadMutePreference } from '../utils/bgm';
 
 // 格式化日期显示
 const formatDate = (dateStr) => {
@@ -87,9 +88,16 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
   const [selectedMoment, setSelectedMoment] = useState(null);
   const [shareImage, setShareImage] = useState(null);
   const [generating, setGenerating] = useState(false);
+  const [bgmMuted, setBgmMuted] = useState(false);
   const shareCardRef = useRef(null);
 
-  // 点击按钮开盲盒
+  // 加载静音偏好
+  useEffect(() => {
+    loadMutePreference();
+    setBgmMuted(isBGMMuted());
+  }, []);
+
+  // 点击按钮开盲盒并播放BGM
   const handleClick = useCallback(() => {
     if (!moments || moments.length === 0) return;
     if (showCard) return;
@@ -98,6 +106,7 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
     setSelectedMoment(selected);
     setShowCard(true);
     setShareImage(null);
+    playBGM('blindbox');
   }, [moments, showCard]);
 
   // 再来一次
@@ -112,11 +121,18 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
     }, 300);
   }, [moments]);
 
-  // 关闭弹窗
+  // 关闭弹窗并停止BGM
   const handleClose = useCallback(() => {
+    stopBGM();
     setShowCard(false);
     setSelectedMoment(null);
     setShareImage(null);
+  }, []);
+
+  // 静音切换
+  const handleMuteToggle = useCallback(() => {
+    const muted = toggleMute();
+    setBgmMuted(muted);
   }, []);
 
   // 生成分享图片
@@ -168,40 +184,54 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
         <span className="text-xs font-medium text-white">时光盲盒</span>
       </button>
 
-      {/* 盲盒卡片弹窗 */}
+      {/* 盲盒卡片弹窗 - 底部抽屉 */}
       {showCard && selectedMoment && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-6 animate-fade-in"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-end"
           onClick={handleClose}
         >
           <div 
-            className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-scale-in"
+            className="w-full bg-white dark:bg-gray-800 rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
-            {/* 关闭按钮 - 右上角X */}
-            <button
-              onClick={handleClose}
-              className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-black/30 flex items-center justify-center text-white hover:bg-black/50 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {/* 头部 - 紫色渐变 */}
+            <div className="bg-gradient-to-r from-purple-400 to-purple-500 px-4 py-3 flex items-center justify-between relative">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎁</span>
+                <div>
+                  <p className="text-white/80 text-xs">✨ 时光盲盒</p>
+                  <p className="text-white font-bold text-lg mt-0.5">{formatFullDate(selectedMoment.date || selectedMoment.createdAt)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={handleMuteToggle}
+                  className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm hover:bg-white/30 transition-colors"
+                >
+                  {bgmMuted ? '🔇' : '🔊'}
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="p-2 -mr-2 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
 
             {/* 用于截图的卡片区域 */}
-            <div ref={shareCardRef}>
-              {/* 卡片头部 */}
-              <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 px-5 py-4 relative">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/80 text-xs">✨ 时光盲盒</p>
-                    <p className="text-white font-bold text-lg mt-0.5">{formatFullDate(selectedMoment.date || selectedMoment.createdAt)}</p>
-                  </div>
-                  <div className="text-white/60 text-xs">{formatDate(selectedMoment.date || selectedMoment.createdAt)}</div>
-                </div>
-                {selectedMoment.milestone && selectedMoment.milestoneLabel && (
-                  <div className="mt-2">
-                    <span className="inline-block bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
-                      🏆 {selectedMoment.milestoneLabel}
-                    </span>
+            <div ref={shareCardRef} className="flex-1 overflow-y-auto hide-scrollbar">
+              {/* 内容 */}
+              <div className="p-4">
+                {/* 心情和里程碑 */}
+                {(selectedMoment.milestone || selectedMoment.mood) && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">{moodIcons[selectedMoment.mood] || '👶'}</span>
+                    {selectedMoment.milestoneLabel && (
+                      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-sm">
+                        🎯 {selectedMoment.milestoneLabel}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

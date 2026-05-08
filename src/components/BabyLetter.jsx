@@ -3,9 +3,10 @@
  * 从未来宝宝记录中随机抽取，以宝宝第一人称口吻写给妈妈/爸爸的信
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { X, RefreshCw, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { playBGM, stopBGM, toggleMute, isBGMMuted, loadMutePreference } from '../utils/bgm';
 
 // 随机选择一个未来年份（15-35年后）
 const getRandomFutureYear = () => {
@@ -121,12 +122,36 @@ export function BabyLetter({
   const [isOpened, setIsOpened] = useState(false);
   const [shareImage, setShareImage] = useState(null);
   const [generating, setGenerating] = useState(false);
+  const [bgmMuted, setBgmMuted] = useState(false);
   const letterRef = useRef(null);
   const cardRef = useRef(null);
 
-  // 打开信封动画
+  // 加载静音偏好
+  useEffect(() => {
+    if (visible) {
+      loadMutePreference();
+      setBgmMuted(isBGMMuted());
+    }
+  }, [visible]);
+
+  // 打开信封动画并播放BGM
   const handleOpen = useCallback(() => {
     setIsOpened(true);
+    playBGM('letter');
+  }, []);
+
+  // 关闭时重置状态并停止BGM
+  const handleClose = useCallback(() => {
+    stopBGM();
+    setIsOpened(false);
+    setShareImage(null);
+    onClose();
+  }, [onClose]);
+
+  // 静音切换
+  const handleMuteToggle = useCallback(() => {
+    const muted = toggleMute();
+    setBgmMuted(muted);
   }, []);
 
   // 再来一封
@@ -169,33 +194,40 @@ export function BabyLetter({
     link.click();
   };
 
-  // 关闭时重置状态
-  const handleClose = useCallback(() => {
-    setIsOpened(false);
-    setShareImage(null);
-    onClose();
-  }, [onClose]);
-
   if (!visible) return null;
 
   const hasRecords = virtualTimeRecords && virtualTimeRecords.length > 0;
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-6 animate-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in"
       onClick={handleClose}
     >
       <div 
-        className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50 rounded-3xl shadow-2xl overflow-hidden animate-scale-in relative"
+        className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50 rounded-2xl shadow-2xl overflow-hidden animate-scale-in relative"
         onClick={e => e.stopPropagation()}
       >
-        {/* 关闭按钮 */}
-        <button
-          onClick={handleClose}
-          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-500 hover:bg-white hover:text-gray-700 transition-colors shadow-sm"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        {/* 头部 - 深红褐暖调 */}
+        <div className="bg-gradient-to-r from-[#DC143C] via-[#B22222] to-[#8B0000] px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">💌</span>
+            <span className="text-white/80 text-sm">来自宝宝的信</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={handleMuteToggle}
+              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm hover:bg-white/30 transition-colors"
+            >
+              {bgmMuted ? '🔇' : '🔊'}
+            </button>
+            <button
+              onClick={handleClose}
+              className="p-2 -mr-2 text-white/80 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
         {!isOpened ? (
           /* ===== 未打开的信封 ===== */
