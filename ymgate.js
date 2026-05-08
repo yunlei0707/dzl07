@@ -11,14 +11,6 @@ export default async function handler(req, res) {
   const urlPath = req.url?.replace(/^\/ymgate/, '') || '/';
   const targetUrl = `http://gate.open.yimenyun.com/ymgate${urlPath === '/' ? '' : urlPath}`;
 
-  // 调试信息
-  console.log('=== 网关代理请求 ===');
-  console.log('原始URL:', req.url);
-  console.log('处理后路径:', urlPath);
-  console.log('目标URL:', targetUrl);
-  console.log('方法:', req.method);
-  console.log('Headers:', JSON.stringify(req.headers));
-
   // 构建转发请求头
   const headers = new Headers();
   headers.set('X-Ym-User', xYmUser);
@@ -33,19 +25,14 @@ export default async function handler(req, res) {
   });
 
   try {
-    console.log('开始请求网关...');
-    
     // 发起请求到目标网关
     const response = await fetch(targetUrl, {
       method: req.method || 'GET',
       headers: headers,
     });
 
-    console.log('网关响应状态:', response.status);
-    
     // 获取响应内容
     const text = await response.text();
-    console.log('网关响应内容:', text.substring(0, 200));
 
     // 设置响应头
     res.setHeader('Content-Type', response.headers.get('content-type') || 'text/plain; charset=utf-8');
@@ -58,8 +45,7 @@ export default async function handler(req, res) {
     res.status(500).json({ 
       code: 500, 
       message: '网关代理请求失败',
-      error: error.message,
-      stack: error.stack
+      error: error.message
     });
   }
 }
