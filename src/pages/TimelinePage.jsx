@@ -264,6 +264,12 @@ export function TimelinePage({
     onClearFilters?.();
   };
   
+  // 关闭往年今日弹窗
+  const closeSameDayModal = () => {
+    setShowSameDay(false);
+    setSameDayMoments([]);
+  };
+
   // 检查往年今日
   const checkSameDayLastYear = async () => {
     if (!currentBaby && !hasV2Baby) {
@@ -271,16 +277,12 @@ export function TimelinePage({
       return;
     }
     
-    if (!showSameDay) {
-      setShowSameDay(true);
-      try {
-        const sameDay = await getMomentsOnSameDayLastYear(currentBaby?.id);
-        setSameDayMoments(sameDay);
-      } catch (error) {
-        showToast('获取失败', 'error');
-      }
-    } else {
-      setShowSameDay(false);
+    setShowSameDay(true);
+    try {
+      const sameDay = await getMomentsOnSameDayLastYear(currentBaby?.id);
+      setSameDayMoments(sameDay);
+    } catch (error) {
+      showToast('获取失败', 'error');
     }
   };
 
@@ -470,36 +472,69 @@ export function TimelinePage({
         </div>
       </header>
       
-      {/* 往年今日折叠面板 - 就地展开 */}
+      {/* 往年今日居中弹窗 */}
       {showSameDay && (
-        <div className="px-4 py-3 bg-cream-50 dark:bg-gray-800/50 animate-slide-up">
-          <div className="max-w-lg mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-card overflow-hidden">
-              <div className="p-4 border-b border-cream-100 dark:border-gray-700">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🕰️</span>
-                  <h3 className="font-bold text-gray-800 dark:text-white">
-                    往年今日
-                  </h3>
-                </div>
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in"
+          onClick={(e) => e.target === e.currentTarget && closeSameDayModal()}
+        >
+          <div className="w-full max-w-md bg-gradient-to-b from-primary-50 to-amber-50 rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col animate-scale-in relative">
+            {/* 头部 */}
+            <div className="bg-gradient-to-r from-primary-200 to-amber-200 px-4 py-3 flex items-center justify-between relative">
+              {/* 装饰线 */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-amber-400 to-primary-400"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🕰️</span>
+                <h3 className="font-bold text-gray-800">
+                  往年今日
+                </h3>
               </div>
-              <div className="p-4">
-                {sameDayMoments.length === 0 ? (
-                  <p className="text-center text-gray-500 py-6">
-                    去年今天没有记录，继续创造回忆吧~
+              <button 
+                onClick={closeSameDayModal}
+                className="p-1.5 rounded-full hover:bg-white/30 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
+            
+            {/* 内容区 */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {sameDayMoments.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-5xl mb-4">🌸</div>
+                  <p className="text-gray-600 mb-2">
+                    去年今天没有记录
                   </p>
-                ) : (
-                  <div className="space-y-4">
-                    {sameDayMoments.map(moment => (
+                  <p className="text-gray-400 text-sm">
+                    继续创造美好的回忆吧~
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sameDayMoments.map(moment => (
+                    <div 
+                      key={moment.id}
+                      className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handlePhotoClick(moment)}
+                    >
                       <MomentCard
-                        key={moment.id}
                         moment={moment}
                         onClick={handlePhotoClick}
                       />
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* 底部关闭按钮 */}
+            <div className="p-4 border-t border-primary-100/50">
+              <button
+                onClick={closeSameDayModal}
+                className="w-full py-2.5 bg-gradient-to-r from-primary-500 to-amber-400 text-white font-medium rounded-xl hover:opacity-90 transition-opacity shadow-md"
+              >
+                关闭
+              </button>
             </div>
           </div>
         </div>

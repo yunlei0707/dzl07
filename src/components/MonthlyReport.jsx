@@ -14,7 +14,6 @@ import {
   isSystemAccount as checkIsSystemAccount 
 } from '../utils/dbV2';
 import html2canvas from 'html2canvas';
-import { playBGM, stopBGM, toggleMute, isBGMMuted, loadMutePreference } from '../utils/bgm';
 
 export function GrowthReport({ onClose }) {
   const { currentBaby, showToast } = useApp();
@@ -31,7 +30,6 @@ export function GrowthReport({ onClose }) {
   // 分享功能
   const [shareImage, setShareImage] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [bgmMuted, setBgmMuted] = useState(false);
   const shareCardRef = useRef(null);
   
   // 时间范围选项
@@ -78,9 +76,6 @@ export function GrowthReport({ onClose }) {
         setStats(data);
         // 数据加载完成后播放BGM
         if (data && data.totalMoments > 0) {
-          loadMutePreference();
-          setBgmMuted(isBGMMuted());
-          playBGM('report');
         }
       } catch (error) {
         console.error('加载成长档案失败:', error);
@@ -93,11 +88,7 @@ export function GrowthReport({ onClose }) {
     loadData();
   }, [currentBaby, range]);
   
-  // 静音切换
-  const handleMuteToggle = useCallback(() => {
-    const muted = toggleMute();
-    setBgmMuted(muted);
-  }, []);
+  // 静音切换, []);
   
   // 宝宝名字
   const babyName = v2BabyInfo?.nickname || v2BabyInfo?.name || currentBaby?.nickname || currentBaby?.name || '宝宝';
@@ -188,7 +179,6 @@ export function GrowthReport({ onClose }) {
   
   // 关闭弹窗
   const handleClose = useCallback(() => {
-    stopBGM();
     setShareImage(null);
     onClose();
   }, [onClose]);
@@ -239,12 +229,6 @@ export function GrowthReport({ onClose }) {
             宝宝成长档案
           </h2>
           <div className="flex items-center gap-1">
-            <button 
-              onClick={handleMuteToggle}
-              className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-sm hover:bg-white/70 transition-colors"
-            >
-              {bgmMuted ? '🔇' : '🔊'}
-            </button>
             <button 
               onClick={handleClose}
               className="p-2 -mr-2 text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-full transition-colors"

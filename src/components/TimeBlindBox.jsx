@@ -8,7 +8,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { X, Download, Image as ImageIcon, Gift } from 'lucide-react';
-import { playBGM, stopBGM, toggleMute, isBGMMuted, loadMutePreference } from '../utils/bgm';
 
 // 格式化日期显示
 const formatDate = (dateStr) => {
@@ -88,13 +87,10 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
   const [selectedMoment, setSelectedMoment] = useState(null);
   const [shareImage, setShareImage] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [bgmMuted, setBgmMuted] = useState(false);
   const shareCardRef = useRef(null);
 
   // 加载静音偏好
   useEffect(() => {
-    loadMutePreference();
-    setBgmMuted(isBGMMuted());
   }, []);
 
   // 点击按钮开盲盒并播放BGM
@@ -106,7 +102,6 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
     setSelectedMoment(selected);
     setShowCard(true);
     setShareImage(null);
-    playBGM('blindbox');
   }, [moments, showCard]);
 
   // 再来一次
@@ -123,17 +118,12 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
 
   // 关闭弹窗并停止BGM
   const handleClose = useCallback(() => {
-    stopBGM();
     setShowCard(false);
     setSelectedMoment(null);
     setShareImage(null);
   }, []);
 
-  // 静音切换
-  const handleMuteToggle = useCallback(() => {
-    const muted = toggleMute();
-    setBgmMuted(muted);
-  }, []);
+  // 静音切换, []);
 
   // 生成分享图片
   const generateShareImage = async () => {
@@ -204,12 +194,6 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button 
-                  onClick={handleMuteToggle}
-                  className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-sm hover:bg-white/70 transition-colors"
-                >
-                  {bgmMuted ? '🔇' : '🔊'}
-                </button>
                 <button
                   onClick={handleClose}
                   className="p-2 -mr-2 text-purple-600 hover:text-purple-800 hover:bg-white/50 rounded-full transition-colors"

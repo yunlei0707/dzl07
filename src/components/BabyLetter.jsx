@@ -6,7 +6,6 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { X, RefreshCw, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { playBGM, stopBGM, toggleMute, isBGMMuted, loadMutePreference } from '../utils/bgm';
 
 // 随机选择一个未来年份（15-35年后）
 const getRandomFutureYear = () => {
@@ -122,37 +121,28 @@ export function BabyLetter({
   const [isOpened, setIsOpened] = useState(false);
   const [shareImage, setShareImage] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [bgmMuted, setBgmMuted] = useState(false);
   const letterRef = useRef(null);
   const cardRef = useRef(null);
 
   // 加载静音偏好
   useEffect(() => {
     if (visible) {
-      loadMutePreference();
-      setBgmMuted(isBGMMuted());
     }
   }, [visible]);
 
   // 打开信封动画并播放BGM
   const handleOpen = useCallback(() => {
     setIsOpened(true);
-    playBGM('letter');
   }, []);
 
   // 关闭时重置状态并停止BGM
   const handleClose = useCallback(() => {
-    stopBGM();
     setIsOpened(false);
     setShareImage(null);
     onClose();
   }, [onClose]);
 
-  // 静音切换
-  const handleMuteToggle = useCallback(() => {
-    const muted = toggleMute();
-    setBgmMuted(muted);
-  }, []);
+  // 静音切换, []);
 
   // 再来一封
   const handleRefresh = useCallback(() => {
@@ -214,12 +204,6 @@ export function BabyLetter({
             <span className="text-gray-700 text-sm">来自宝宝的信</span>
           </div>
           <div className="flex items-center gap-1">
-            <button 
-              onClick={handleMuteToggle}
-              className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-sm hover:bg-white/70 transition-colors"
-            >
-              {bgmMuted ? '🔇' : '🔊'}
-            </button>
             <button
               onClick={handleClose}
               className="p-2 -mr-2 text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-full transition-colors"
