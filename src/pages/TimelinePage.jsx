@@ -95,10 +95,13 @@ export function TimelinePage({
   const milestoneFilters = useMemo(() => {
     const allMilestones = getAllMilestones();
     return [
-      { value: '', label: '全部' },
+      { value: '', label: '全部', emoji: '✨', color: '#8B5CF6', shortLabel: '全部' },
       ...allMilestones.map(m => ({
         value: m.id,
-        label: m.label
+        label: m.label,
+        emoji: m.emoji,
+        color: m.color || '#8B5CF6',
+        shortLabel: m.shortLabel || m.label
       }))
     ];
   }, [getAllMilestones]);
@@ -515,41 +518,70 @@ export function TimelinePage({
             </div>
           </div>
 
-          {/* 名场面筛选 */}
+          {/* 名场面筛选 - 横向滚动卡片式标签 */}
           <div className="mt-2">
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2 mb-2">
               <span className="text-xs text-gray-400 flex-shrink-0">名场面</span>
-              <button
-                onClick={() => setSelectedMilestone('')}
-                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
-                  selectedMilestone === ''
-                    ? 'bg-purple-500 text-white font-medium'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                全部
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {milestoneFilters.filter(f => f.value !== '').map(filter => {
-                const isSelected = selectedMilestone === filter.value;
-                const emoji = filter.emoji || '⭐';
-                const displayLabel = isSelected ? filter.label : (filter.shortLabel || filter.label);
-                return (
-                  <button
-                    key={filter.value}
-                    onClick={() => setSelectedMilestone(filter.value)}
-                    className={`flex items-center gap-1 py-1.5 px-2 rounded-lg transition-all ${
-                      isSelected
-                        ? 'bg-purple-500 text-white shadow-sm'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className={`text-sm ${isSelected ? 'scale-110' : ''}`}>{emoji}</span>
-                    <span className="text-xs truncate">{displayLabel}</span>
-                  </button>
-                );
-              })}
+              <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+                {milestoneFilters.map(filter => {
+                  const isSelected = selectedMilestone === filter.value;
+                  const color = filter.color || '#8B5CF6';
+                  const emoji = filter.emoji || '✨';
+                  const displayLabel = isSelected ? filter.label : (filter.shortLabel || filter.label);
+                  
+                  // 计算浅色背景（用于未选中状态）
+                  const hexToRgb = (hex) => {
+                    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return result ? {
+                      r: parseInt(result[1], 16),
+                      g: parseInt(result[2], 16),
+                      b: parseInt(result[3], 16)
+                    } : { r: 139, g: 92, b: 246 };
+                  };
+                  const rgb = hexToRgb(color);
+                  const lightBg = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`;
+                  const darkBg = color;
+                  
+                  return (
+                    <button
+                      key={filter.value}
+                      onClick={() => setSelectedMilestone(filter.value)}
+                      className={`
+                        relative flex items-center gap-1.5 px-3 py-2 rounded-full 
+                        transition-all duration-200 flex-shrink-0
+                        ${isSelected 
+                          ? 'scale-[1.05] shadow-md -translate-y-0.5' 
+                          : 'hover:scale-[1.02]'
+                        }
+                      `}
+                      style={{
+                        backgroundColor: isSelected ? darkBg : 'white',
+                        borderWidth: '1px',
+                        borderColor: isSelected ? darkBg : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`,
+                      }}
+                    >
+                      {/* 底部色条指示器 */}
+                      <div 
+                        className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full transition-colors"
+                        style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.8)' : color }}
+                      />
+                      
+                      {/* Emoji */}
+                      <span className={`text-sm transition-transform ${isSelected ? 'scale-110' : ''}`}>
+                        {emoji}
+                      </span>
+                      
+                      {/* 文字 */}
+                      <span 
+                        className={`text-xs font-medium whitespace-nowrap transition-colors`}
+                        style={{ color: isSelected ? 'white' : color }}
+                      >
+                        {displayLabel}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

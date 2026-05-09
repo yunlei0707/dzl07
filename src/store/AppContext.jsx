@@ -43,15 +43,15 @@ const DEFAULT_MOODS = [
 
 // 预设名场面（不可删除）
 const DEFAULT_MILESTONES = [
-  { id: 'first', label: '第一次', emoji: '🥇', shortLabel: '第一次' },
-  { id: 'homeboss', label: '窝里横外面怂', emoji: '🏠', shortLabel: '窝里横' },
-  { id: 'sensory', label: '感官挑战', emoji: '🧸', shortLabel: '感官挑战' },
-  { id: 'itemfriend', label: '我的小物品朋友', emoji: '🎒', shortLabel: '小物品' },
-  { id: 'littleboss', label: '小大人训话', emoji: '📢', shortLabel: '小大人' },
-  { id: 'ithink', label: '我想...', emoji: '💭', shortLabel: '我想' },
-  { id: 'nonsense', label: '胡说八道', emoji: '🤪', shortLabel: '胡说八道' },
-  { id: 'sleepmuseum', label: '睡姿博物馆', emoji: '😴', shortLabel: '睡姿' },
-  { id: 'cuteemoji', label: '超萌表情包', emoji: '🥺', shortLabel: '表情包' },
+  { id: 'first', label: '第一次', emoji: '🥇', shortLabel: '第一次', color: '#F59E0B' },
+  { id: 'homeboss', label: '窝里横外面怂', emoji: '🏠', shortLabel: '窝里横', color: '#EF4444' },
+  { id: 'sensory', label: '感官挑战', emoji: '🧸', shortLabel: '感官挑战', color: '#06B6D4' },
+  { id: 'itemfriend', label: '我的小物品朋友', emoji: '🎒', shortLabel: '小物品', color: '#22C55E' },
+  { id: 'littleboss', label: '小大人训话', emoji: '📢', shortLabel: '小大人', color: '#F97316' },
+  { id: 'ithink', label: '我想...', emoji: '💭', shortLabel: '我想', color: '#3B82F6' },
+  { id: 'nonsense', label: '胡说八道', emoji: '🤪', shortLabel: '胡说八道', color: '#8B5CF6' },
+  { id: 'sleepmuseum', label: '睡姿博物馆', emoji: '😴', shortLabel: '睡姿', color: '#6366F1' },
+  { id: 'cuteemoji', label: '超萌表情包', emoji: '🥺', shortLabel: '表情包', color: '#EC4899' },
 ];
 
 /**

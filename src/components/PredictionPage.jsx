@@ -6,8 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Sparkles, RefreshCw } from 'lucide-react';
 import { 
-  babyPredictions, 
-  predictionsByMonth, 
+  getPredictionsByMonthAge,
   predictionTypes 
 } from '../data/babyPredictions';
 import { getCurrentBabyInfo } from '../utils/dbV2';
@@ -45,7 +44,7 @@ function generatePredictionsForMonth(monthAge, babyId, existingPredictions = [])
     return existingPredictions;
   }
   
-  const monthPredictions = predictionsByMonth[monthAge] || [];
+  const monthPredictions = getPredictionsByMonthAge(monthAge);
   if (monthPredictions.length === 0) return [];
   
   // 用月龄和宝宝ID作为种子，确保同一宝宝同月龄看到一样
@@ -192,17 +191,6 @@ export function PredictionPage({ onClose }) {
   
   // 生成新预言
   const handleGenerate = useCallback(() => {
-    // 检查是否已有该月龄的预言（换一组时重新生成）
-    const storageKey = `babyPredictions_${babyId}`;
-    let existing = [];
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const all = JSON.parse(stored);
-        existing = all.filter(p => p.monthAge === selectedMonth);
-      }
-    } catch {}
-    
     // 从预言池中随机抽取3条（换一组时传空数组以强制重新生成）
     const newPredictions = generatePredictionsForMonth(selectedMonth, babyId, []);
     
@@ -214,10 +202,10 @@ export function PredictionPage({ onClose }) {
     // 保存到localStorage
     try {
       const storageKey = `babyPredictions_${babyId}`;
-      const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const allExisting = JSON.parse(localStorage.getItem(storageKey) || '[]');
       
       // 移除该月龄的旧预言
-      const filtered = existing.filter(p => p.monthAge !== selectedMonth);
+      const filtered = allExisting.filter(p => p.monthAge !== selectedMonth);
       
       // 添加新预言
       const updated = [...filtered, ...newPredictions];
