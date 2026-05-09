@@ -104,7 +104,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [showGrowthOverview, setShowGrowthOverview] = useState(true);
   const [showMilestoneStats, setShowMilestoneStats] = useState(false);
   const [showRecordTypes, setShowRecordTypes] = useState(false);
-  const [showGrowthRecords, setShowGrowthRecords] = useState(true);
+  const [showGrowthRecords, setShowGrowthRecords] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const touchStartY = useRef(0);
