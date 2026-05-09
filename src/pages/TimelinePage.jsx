@@ -516,32 +516,40 @@ export function TimelinePage({
           </div>
 
           {/* 名场面筛选 */}
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs text-gray-400 flex-shrink-0">名场面</span>
-            <button
-              onClick={() => setSelectedMilestone('')}
-              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
-                selectedMilestone === ''
-                  ? 'bg-purple-100 text-purple-600 font-medium'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              全部
-            </button>
-            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
-              {milestoneFilters.filter(f => f.value !== '').map(filter => (
-                <button
-                  key={filter.value}
-                  onClick={() => setSelectedMilestone(filter.value)}
-                  className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
-                    selectedMilestone === filter.value
-                      ? 'bg-purple-100 text-purple-600 font-medium'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
+          <div className="mt-2">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs text-gray-400 flex-shrink-0">名场面</span>
+              <button
+                onClick={() => setSelectedMilestone('')}
+                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
+                  selectedMilestone === ''
+                    ? 'bg-purple-500 text-white font-medium'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                全部
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {milestoneFilters.filter(f => f.value !== '').map(filter => {
+                const isSelected = selectedMilestone === filter.value;
+                const emoji = filter.emoji || '⭐';
+                const displayLabel = isSelected ? filter.label : (filter.shortLabel || filter.label);
+                return (
+                  <button
+                    key={filter.value}
+                    onClick={() => setSelectedMilestone(filter.value)}
+                    className={`flex items-center gap-1 py-1.5 px-2 rounded-lg transition-all ${
+                      isSelected
+                        ? 'bg-purple-500 text-white shadow-sm'
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span className={`text-sm ${isSelected ? 'scale-110' : ''}`}>{emoji}</span>
+                    <span className="text-xs truncate">{displayLabel}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

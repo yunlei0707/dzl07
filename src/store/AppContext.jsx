@@ -49,6 +49,9 @@ const DEFAULT_MILESTONES = [
   { id: 'itemfriend', label: '我的小物品朋友', emoji: '🎒', shortLabel: '小物品' },
   { id: 'littleboss', label: '小大人训话', emoji: '📢', shortLabel: '小大人' },
   { id: 'ithink', label: '我想...', emoji: '💭', shortLabel: '我想' },
+  { id: 'nonsense', label: '胡说八道', emoji: '🤪', shortLabel: '胡说八道' },
+  { id: 'sleepmuseum', label: '睡姿博物馆', emoji: '😴', shortLabel: '睡姿' },
+  { id: 'cuteemoji', label: '超萌表情包', emoji: '🥺', shortLabel: '表情包' },
 ];
 
 /**
