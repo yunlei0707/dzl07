@@ -72,7 +72,16 @@ function RoutePersistence({ children }) {
 function AppContent() {
   const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies, currentUser, refreshGrowthRecords } = useApp();
   
-  const [activeTab, setActiveTab] = useState('timeline');
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return ['timeline', 'stats', 'virtual', 'profile'].includes(hash) ? hash : 'timeline';
+  });
+  
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    window.location.hash = tab;
+  };
+  
   const [showMomentForm, setShowMomentForm] = useState(false);
   const [showCapsuleForm, setShowCapsuleForm] = useState(false);
   const [showBabyForm, setShowBabyForm] = useState(false);
@@ -347,7 +356,7 @@ function AppContent() {
       {renderPage()}
       
       {/* 底部导航 */}
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
       
       {/* Toast 提示 */}
       <Toast />

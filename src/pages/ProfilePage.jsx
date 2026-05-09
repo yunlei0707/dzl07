@@ -807,10 +807,10 @@ export function ProfilePage(
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
-            {/* 清除缓存 */}
+            {/* 清除缓存 - 已锁定，等用户确认后启用 */}
             <button
-              onClick={() => setShowClearConfirm(true)}
-              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              disabled
+              className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex items-center gap-3 opacity-50 cursor-not-allowed"
             >
               <RotateCcw className="w-5 h-5 text-gray-400" />
               <div className="flex-1 text-left">
