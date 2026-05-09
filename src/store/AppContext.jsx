@@ -251,6 +251,15 @@ export function AppProvider({ children }) {
     if (id) {
       const records = await getGrowthRecordsByBaby(id);
       setGrowthRecords(records);
+    } else {
+      // v2系统：从localStorage获取当前账号ID
+      try {
+        const v2Account = JSON.parse(localStorage.getItem('currentAccountId') || 'null');
+        if (v2Account) {
+          const records = await getGrowthRecordsByBaby(v2Account);
+          setGrowthRecords(records);
+        }
+      } catch (e) {}
     }
   }, [currentBaby]);
 

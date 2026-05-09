@@ -341,7 +341,7 @@ function AppContent() {
       setShowGrowthForm(false);
       setEditingGrowthRecord(null);
       // 刷新成长记录列表
-      refreshGrowthRecords(currentBaby?.id);
+      refreshGrowthRecords(babyId);
       
     } catch (error) {
       console.error('[GrowthRecord] Save error:', error); showToast('保存失败: ' + error.message, 'error');
@@ -421,7 +421,7 @@ function AppContent() {
       {showMomentForm && (
         <MomentForm
           moment={editingMoment}
-          babyId={currentBaby?.id || "user"}
+          babyId={currentBaby?.id || getCurrentBabyInfo()?.id || "user"}
           onSave={handleSaveMoment}
           onCancel={() => {
             setShowMomentForm(false);
@@ -446,7 +446,7 @@ function AppContent() {
       {showCapsuleForm && (
         <CapsuleForm
           capsule={editingCapsule}
-          babyId={currentBaby?.id || "user"}
+          babyId={currentBaby?.id || getCurrentBabyInfo()?.id || "user"}
           onSave={handleSaveCapsule}
           onCancel={() => {
             setShowCapsuleForm(false);
@@ -459,7 +459,7 @@ function AppContent() {
       {showGrowthForm && (
         <GrowthRecordForm
           record={editingGrowthRecord}
-          babyId={currentBaby?.id || "user"}
+          babyId={currentBaby?.id || getCurrentBabyInfo()?.id || "user"}
           onSave={handleSaveGrowthRecord}
           onCancel={() => {
             setShowGrowthForm(false);
