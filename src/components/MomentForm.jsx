@@ -1076,20 +1076,64 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
             心情
           </label>
-          <div className="flex gap-2">
-            {moodOptions.map(option => (
-              <button
-                key={option.value}
-                onClick={() => setMood(mood === option.value ? '' : option.value)}
-                className={`px-3 py-2 rounded-xl text-sm transition-colors ${
-                  mood === option.value
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                {option.emoji} {option.label}
-              </button>
-            ))}
+          <div className="space-y-2">
+            {/* 开心 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 w-8 flex-shrink-0">开心</span>
+              <div className="flex flex-wrap gap-2">
+                {moodOptions.filter(o => o.score >= 2).map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setMood(mood === option.value ? '' : option.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      mood === option.value
+                        ? 'bg-green-500 text-white'
+                        : 'bg-green-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {option.emoji} {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* 平静 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 w-8 flex-shrink-0">平静</span>
+              <div className="flex flex-wrap gap-2">
+                {moodOptions.filter(o => o.score >= -1 && o.score <= 1).map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setMood(mood === option.value ? '' : option.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      mood === option.value
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-blue-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {option.emoji} {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* 不开心 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 w-8 flex-shrink-0">低落</span>
+              <div className="flex flex-wrap gap-2">
+                {moodOptions.filter(o => o.score <= -2).map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setMood(mood === option.value ? '' : option.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      mood === option.value
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-orange-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {option.emoji} {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         
