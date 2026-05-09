@@ -1137,9 +1137,18 @@ function MoodCurveChart({ points, moodOptions }) {
   // X轴标签（均匀分布）
   const labelCount = Math.min(points.length, 5);
   const labelIndices = [];
-  for (let i = 0; i < labelCount; i++) {
-    labelIndices.push(Math.round((i * (points.length - 1)) / (labelCount - 1)));
+  if (labelCount > 1) {
+    for (let i = 0; i < labelCount; i++) {
+      labelIndices.push(Math.round((i * (points.length - 1)) / (labelCount - 1)));
+    }
+  } else if (points.length === 1) {
+    labelIndices.push(0);
   }
+
+
+
+
+
   
   return (
     <div className="relative">
