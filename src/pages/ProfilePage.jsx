@@ -625,11 +625,8 @@ export function ProfilePage(
       
       
 {/* 头部 - 左上角展示账号头像和名称，参考成长数据页面 */}
-      <header className="bg-gradient-to-b from-primary-50 to-white safe-top relative overflow-hidden">
-        <div className="px-4 pt-4 pb-6 relative z-10">
-        {/* 装饰光晕 */}
-        <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary-200/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-warm-200/20 rounded-full blur-3xl" />
+      <header className="bg-gradient-to-b from-primary-100/60 via-primary-50/40 to-white safe-top">
+        <div className="px-4 pt-4 pb-6">
       
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
