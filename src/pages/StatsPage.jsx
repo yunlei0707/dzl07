@@ -606,10 +606,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
           <p className="text-xs text-gray-400 mt-1">查看成长档案</p>
         </div>
         
-        {/* 身体成长区块 - DEBUG */}
-        <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-2 mb-2 text-xs font-mono">
-          DEBUG: growthRecords={growthRecords.length} | v2BabyId={v2BabyInfo?.id || 'null'} | currentBabyId={currentBaby?.id || 'null'}
-        </div>
         {/* 身体成长区块 */}
         <div className="card animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <h3 
