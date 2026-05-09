@@ -11,8 +11,9 @@ import { MomentCard } from '../components/MomentCard';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { ShareCard } from '../components/ShareCard';
 import { groupByYearAndMonth } from '../utils/dateUtils';
-import { getMomentsOnSameDayLastYear, deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
-import { Plus, Calendar, Clock, X, ChevronDown, Lock, Trash2, AlertTriangle } from 'lucide-react';
+import { deleteMoment, getMomentsByBaby, addMoment, initDB } from '../utils/db';
+import { PredictionPage } from '../components/PredictionPage';
+import { Plus, Calendar, X, ChevronDown, Lock, Trash2, AlertTriangle } from 'lucide-react';
 import { 
   getCurrentV2Account, 
   getCurrentTimeline, 
@@ -118,8 +119,7 @@ export function TimelinePage({
   const [selectedMilestone, setSelectedMilestone] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
-  const [showSameDay, setShowSameDay] = useState(false);
-  const [sameDayMoments, setSameDayMoments] = useState([]);
+  const [showPrediction, setShowPrediction] = useState(false);
   const [sharingMoment, setSharingMoment] = useState(null);
 
   
@@ -264,28 +264,6 @@ export function TimelinePage({
     onClearFilters?.();
   };
   
-  // 关闭往年今日弹窗
-  const closeSameDayModal = () => {
-    setShowSameDay(false);
-    setSameDayMoments([]);
-  };
-
-  // 检查往年今日
-  const checkSameDayLastYear = async () => {
-    if (!currentBaby && !hasV2Baby) {
-      showToast('请先创建宝宝档案', 'error');
-      return;
-    }
-    
-    setShowSameDay(true);
-    try {
-      const sameDay = await getMomentsOnSameDayLastYear(currentBaby?.id);
-      setSameDayMoments(sameDay);
-    } catch (error) {
-      showToast('获取失败', 'error');
-    }
-  };
-
   // 删除动态 - 显示确认弹窗
   const handleDeleteMoment = useCallback((momentId) => {
     if (isSystemAccount) {
@@ -425,13 +403,13 @@ export function TimelinePage({
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              {/* 往年今日按钮 */}
+              {/* 神预言按钮 */}
               <button
-                onClick={checkSameDayLastYear}
-                className="flex items-center gap-1.5 px-3 py-0 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
+                onClick={() => setShowPrediction(true)}
+                className="flex items-center gap-1.5 px-3 py-0 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
               >
-                <Clock className="w-4 h-4 text-amber-500" />
-                <span className="text-base font-medium text-gray-700">往年今日</span>
+                <span className="text-lg">✨</span>
+                <span className="text-base font-medium text-gray-700">神预言</span>
               </button>
             </div>
           </div>
@@ -472,84 +450,6 @@ export function TimelinePage({
           )}
         </div>
       </header>
-      
-      {/* 往年今日居中弹窗 */}
-      {showSameDay && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in"
-          onClick={(e) => e.target === e.currentTarget && closeSameDayModal()}
-        >
-          <div className="w-full max-w-md bg-gradient-to-b from-primary-50 to-amber-50 rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col animate-scale-in relative">
-            {/* 头部 */}
-            <div className="bg-gradient-to-r from-primary-200 to-amber-200 px-4 py-3 relative">
-              {/* 装饰线 */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-amber-400 to-primary-400"></div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🕰️</span>
-                  <h3 className="font-bold text-gray-800">
-                    往年今日
-                  </h3>
-                  {/* 年份标签 */}
-                  <span className="ml-1 px-2 py-0.5 bg-white/50 rounded-full text-xs text-primary-600 font-medium">
-                    {sameDayMoments.length > 0 && sameDayMoments[0].date 
-                      ? `${sameDayMoments[0].date.split('-')[0]}年的今天` 
-                      : new Date().getFullYear() - 1 + '年的今天'}
-                  </span>
-                </div>
-                <button 
-                  onClick={closeSameDayModal}
-                  className="p-1.5 rounded-full hover:bg-white/30 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-700" />
-                </button>
-              </div>
-            </div>
-            
-            {/* 内容区 */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {sameDayMoments.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-primary-100 to-amber-100 rounded-full flex items-center justify-center">
-                    <span className="text-4xl">🌟</span>
-                  </div>
-                  <p className="text-primary-600 font-medium mb-2">
-                    去年今天还没有记录
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    继续创造美好的回忆吧~
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sameDayMoments.map(moment => (
-                    <div 
-                      key={moment.id}
-                      className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-primary-100/50"
-                      onClick={() => handlePhotoClick(moment)}
-                    >
-                      <MomentCard
-                        moment={moment}
-                        onClick={handlePhotoClick}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* 底部关闭按钮 */}
-            <div className="p-4 border-t border-primary-200/50">
-              <button
-                onClick={closeSameDayModal}
-                className="w-full py-2.5 bg-gradient-to-r from-primary-500 to-amber-400 text-white font-medium rounded-xl hover:opacity-90 transition-opacity shadow-md"
-              >
-                继续今天的回忆 ✨
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       
       {/* 筛选器 - 统一main容器 */}
       <main className="px-4 -mt-4 max-w-lg mx-auto">
@@ -822,6 +722,10 @@ export function TimelinePage({
         </div>
       )}
       
+      {/* 神预言全屏页面 */}
+      {showPrediction && (
+        <PredictionPage onClose={() => setShowPrediction(false)} />
+      )}
 
     </div>
   );
