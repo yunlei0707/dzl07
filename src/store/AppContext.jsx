@@ -247,19 +247,31 @@ export function AppProvider({ children }) {
 
   // 刷新成长记录
   const refreshGrowthRecords = useCallback(async (babyId) => {
-    const id = babyId || currentBaby?.id;
-    if (id) {
-      const records = await getGrowthRecordsByBaby(id);
-      setGrowthRecords(records);
-    } else {
-      // v2系统：从localStorage获取当前账号ID
+    let id = babyId || currentBaby?.id;
+    if (!id) {
+      // v2系统：从getCurrentBabyInfo获取
       try {
-        const v2Account = JSON.parse(localStorage.getItem('currentAccountId') || 'null');
-        if (v2Account) {
-          const records = await getGrowthRecordsByBaby(v2Account);
-          setGrowthRecords(records);
+        const babyInfo = JSON.parse(localStorage.getItem('baby-timeline-v2') || '{}');
+        const identity = localStorage.getItem('currentIdentity');
+        if (identity && babyInfo[identity]) {
+          const accId = babyInfo[identity].currentAccountId;
+          if (accId) id = accId;
         }
       } catch (e) {}
+    }
+    console.log('[AppContext] refreshGrowthRecords, id:', id);
+    if (id) {
+      const records = await getGrowthRecordsByBaby(id);
+      console.log('[AppContext] growthRecords loaded:', records.length, records);
+      setGrowthRecords(records);
+    } else {
+      console.log('[AppContext] refreshGrowthRecords: no babyId found');
+      // 最后尝试直接查所有记录
+      try {
+        const allRecords = await getGrowthRecordsByBaby('user');
+        console.log('[AppContext] fallback user records:', allRecords.length);
+        if (allRecords.length > 0) setGrowthRecords(allRecords);
+      } catch(e) {}
     }
   }, [currentBaby]);
 

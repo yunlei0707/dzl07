@@ -23,14 +23,13 @@ import { RecycleBin } from './components/RecycleBin';
 
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
-import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby, addGrowthRecord, updateGrowthRecord, getLatestGrowthRecord } from './utils/db';
+import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby, addGrowthRecord, updateGrowthRecord } from './utils/db';
 import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount, updateCurrentBabyInfo } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
 import { handleRecordLink } from './utils/linkService';
 import { FloatingButton } from './components/FloatingButton';
 import { AIChoiceModal } from './components/AIChoiceModal';
 import { GrowthRecordForm } from './components/GrowthRecordForm';
-import { checkGrowthMilestones, GROWTH_ICONS } from './utils/growthMilestones';
 
 // 登录保护
 function AuthGuard({ children }) {
@@ -274,77 +273,25 @@ function AppContent() {
   const handleSaveGrowthRecord = async (recordData) => {
     try {
       const babyId = recordData.babyId || currentBaby?.id || getCurrentBabyInfo()?.id;
-      console.log('[GrowthRecord] Saving with babyId:', babyId, 'recordData:', recordData);
-      
-      // 获取宝宝昵称
-      const babyInfo = getCurrentBabyInfo() || currentBaby;
-      const babyName = babyInfo?.nickname || babyInfo?.name || '宝宝';
-      
-      let savedRecord;
       
       if (recordData.id) {
-        // 更新
-        savedRecord = await updateGrowthRecord(recordData.id, recordData);
+        await updateGrowthRecord(recordData.id, recordData);
         showToast('已更新');
       } else {
-        // 新增
-        // 获取之前的最新记录用于里程碑检测
-        const previousRecord = await getLatestGrowthRecord(babyId);
-        
-        savedRecord = await addGrowthRecord({
+        await addGrowthRecord({
           ...recordData,
           babyId,
         });
         showToast('成长记录已保存！📏');
-        
-        // 检查里程碑触发
-        const triggered = checkGrowthMilestones(savedRecord, previousRecord);
-        
-        if (triggered.length > 0) {
-          // 通知刷新成长记录列表
-          window.dispatchEvent(new Event('v2-moment-updated'));
-          
-          // 为每个触发的里程碑创建时光轴记录
-          for (const milestone of triggered) {
-            try {
-              const momentData = {
-                babyId,
-                date: savedRecord.date,
-                type: 'milestone',
-                content: `${GROWTH_ICONS[milestone.field]} ${babyName}${milestone.label}！`,
-                milestone: 'growth',
-                milestoneLabel: milestone.label,
-                milestoneEmoji: GROWTH_ICONS[milestone.field],
-              };
-              
-              // 根据账号系统选择不同的添加方法
-              if (babyInfo?.isSystem) {
-                // 系统账号不支持添加
-                continue;
-              }
-              
-              if (babyInfo) {
-                await addMomentToCurrentAccount(momentData);
-              } else {
-                await addMoment(momentData);
-              }
-            } catch (e) {
-              console.error('创建里程碑时光轴记录失败:', e);
-            }
-          }
-          
-          // 通知页面刷新
-          window.dispatchEvent(new Event('v2-moment-updated'));
-        }
       }
       
       setShowGrowthForm(false);
       setEditingGrowthRecord(null);
-      // 刷新成长记录列表
       refreshGrowthRecords(babyId);
       
     } catch (error) {
-      console.error('[GrowthRecord] Save error:', error); showToast('保存失败: ' + error.message, 'error');
+      console.error('[GrowthRecord] Save error:', error);
+      showToast('保存失败: ' + error.message, 'error');
     }
   };
 
