@@ -14,152 +14,6 @@ import { TimeBlindBox } from '../components/TimeBlindBox';
 import { GROWTH_LABELS, GROWTH_UNITS, GROWTH_ICONS } from '../utils/growthMilestones';
 
 // 成长曲线图组件
-function GrowthChart({ records, field }) {
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
-  
-  const fieldConfig = {
-    height: { color: '#FF7B70', name: '身高' },
-    weight: { color: '#FFC997', name: '体重' },
-    headCircumference: { color: '#A78BFA', name: '头围' },
-    footLength: { color: '#34D399', name: '脚长' },
-  };
-  
-  const config = fieldConfig[field] || fieldConfig.height;
-  
-  useEffect(() => {
-    if (!chartRef.current) return;
-    
-    // 准备数据（按日期升序）
-    const sortedRecords = [...records].reverse();
-    const dates = sortedRecords.map(r => r.date);
-    const values = sortedRecords.map(r => r[field]).filter(v => v != null);
-    
-    // 过滤有效数据点
-    const validData = sortedRecords.filter(r => r[field] != null);
-    
-    if (validData.length < 2) {
-      // 数据不足，显示提示
-      if (chartInstance.current) {
-        chartInstance.current.dispose();
-        chartInstance.current = null;
-      }
-      return;
-    }
-    
-    const validDates = validData.map(r => r.date);
-    const validValues = validData.map(r => r[field]);
-    
-    // 动态导入 echarts
-    import('echarts').then((echarts) => {
-      if (!chartRef.current) return;
-      
-      // 初始化或更新图表
-      if (!chartInstance.current) {
-        chartInstance.current = echarts.init(chartRef.current);
-      }
-      
-      const option = {
-        grid: {
-          top: 20,
-          right: 15,
-          bottom: 30,
-          left: 45,
-        },
-        xAxis: {
-          type: 'category',
-          data: validDates,
-          axisLabel: {
-            color: '#9CA3AF',
-            fontSize: 10,
-            formatter: (value) => {
-              const date = new Date(value);
-              return `${date.getMonth() + 1}/${date.getDate()}`;
-            },
-          },
-          axisLine: {
-            lineStyle: { color: '#E5E7EB' },
-          },
-        },
-        yAxis: {
-          type: 'value',
-          name: `${config.name}(${GROWTH_UNITS[field]})`,
-          nameTextStyle: {
-            color: '#9CA3AF',
-            fontSize: 10,
-          },
-          axisLabel: {
-            color: '#9CA3AF',
-            fontSize: 10,
-          },
-          axisLine: {
-            lineStyle: { color: '#E5E7EB' },
-          },
-          splitLine: {
-            lineStyle: { color: '#F3F4F6' },
-          },
-        },
-        series: [{
-          type: 'line',
-          data: validValues,
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 6,
-          lineStyle: {
-            color: config.color,
-            width: 2,
-          },
-          itemStyle: {
-            color: config.color,
-          },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: config.color + '30' },
-                { offset: 1, color: config.color + '05' },
-              ],
-            },
-          },
-        }],
-        tooltip: {
-          trigger: 'axis',
-          formatter: (params) => {
-            const p = params[0];
-            return `${p.axisValue}<br/>${config.name}: ${p.value}${GROWTH_UNITS[field]}`;
-          },
-        },
-      };
-      
-      chartInstance.current.setOption(option);
-    });
-    
-    // 清理
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.dispose();
-        chartInstance.current = null;
-      }
-    };
-  }, [records, field]);
-  
-  // 数据不足提示
-  const validCount = records.filter(r => r[field] != null).length;
-  
-  if (validCount < 2) {
-    return (
-      <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
-        记录数据后即可查看增长曲线📈
-      </div>
-    );
-  }
-  
-  return (
-    <div ref={chartRef} className="h-40 w-full" />
-  );
-}
-
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, onAddGrowthRecord, onEditGrowthRecord }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones, growthRecords, refreshGrowthRecords } = useApp();
   
@@ -238,7 +92,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [showMilestoneStats, setShowMilestoneStats] = useState(false);
   const [showRecordTypes, setShowRecordTypes] = useState(false);
   const [showGrowthRecords, setShowGrowthRecords] = useState(true);
-  const [activeGrowthChart, setActiveGrowthChart] = useState('height'); // 身高/体重/头围/脚长
   const [expandedRecordId, setExpandedRecordId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const touchStartY = useRef(0);
@@ -796,30 +649,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                       );
                     })}
                   </div>
+
                   
-                  {/* 增长曲线图 */}
-                  {growthRecords.length >= 2 && (
-                    <div className="space-y-3">
-                      <div className="flex gap-2 overflow-x-auto pb-1">
-                        {['height', 'weight', 'headCircumference', 'footLength'].map((field) => (
-                          <button
-                            key={field}
-                            onClick={() => setActiveGrowthChart(field)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                              activeGrowthChart === field
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                            }`}
-                          >
-                            {GROWTH_ICONS[field]} {GROWTH_LABELS[field]}
-                          </button>
-                        ))}
-                      </div>
-                      
-                      {/* 图表 */}
-                      <GrowthChart records={growthRecords} field={activeGrowthChart} />
-                    </div>
-                  )}
                   
                   {/* 添加记录按钮 */}
                   <button
