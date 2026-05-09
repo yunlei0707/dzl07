@@ -324,21 +324,49 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     sick: '🤒',
   };
   
-  // 心情score映射（使用导入的或内联的）
-  const moodScoreMap = importedMoodScoreMap || {
-    happy: 2,
-    excited: 3,
-    touched: 2,
-    calm: 1,
-    sleepy: 0,
-    sad: -2,
-    angry: -3,
-    sick: -2,
-  };
+  // 心情score映射（使用导入的）
+  const moodScoreMap = importedMoodScoreMap;
   
-  // 心情轨迹数据计算
+  // 心情轨迹数据计算 - 按时间粒度聚合
   const [moodTimeRange, setMoodTimeRange] = useState(30); // 30/90/all
   const [showMoodTrack, setShowMoodTrack] = useState(true);
+  
+  // 根据时间范围确定聚合粒度
+  const getAggregationConfig = (range) => {
+    switch (range) {
+      case 30:
+        return { groupDays: 3, labelFormat: (d) => d.substring(5) }; // 显示 5/1 格式
+      case 90:
+        return { groupDays: 7, labelFormat: (d) => d.substring(5) }; // 显示 5/5 格式
+      case 'all':
+      default:
+        return { groupDays: 30, labelFormat: (d) => d.substring(0, 7).replace('-', '.') }; // 显示 2025.3 格式
+    }
+  };
+  
+  // 心情emoji映射（根据score找最近的）
+  const scoreToMood = (score) => {
+    const moodScores = [
+      { mood: 'excited', emoji: '🎉', score: 3 },
+      { mood: 'happy', emoji: '😊', score: 2 },
+      { mood: 'touched', emoji: '🥰', score: 2 },
+      { mood: 'calm', emoji: '😌', score: 1 },
+      { mood: 'sleepy', emoji: '😴', score: 0 },
+      { mood: 'sad', emoji: '😢', score: -2 },
+      { mood: 'angry', emoji: '😠', score: -3 },
+      { mood: 'sick', emoji: '🤒', score: -2 },
+    ];
+    let closest = moodScores[0];
+    let minDiff = Math.abs(score - closest.score);
+    for (const m of moodScores) {
+      const diff = Math.abs(score - m.score);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = m;
+      }
+    }
+    return closest;
+  };
   
   const moodTrackData = useMemo(() => {
     const activeMoments = hasV2Baby
@@ -354,35 +382,61 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     // 过滤时间范围内的数据
     const filtered = activeMoments.filter(m => new Date(m.date) >= cutoffDate);
     
-    // 按日聚合
-    const dayMap = {};
+    if (filtered.length === 0) return { points: [], distribution: {} };
+    
+    // 获取聚合配置
+    const { groupDays, labelFormat } = getAggregationConfig(moodTimeRange);
+    
+    // 按粒度分组
+    const groupMap = {};
     filtered.forEach(m => {
-      const dayKey = m.date.substring(0, 10); // YYYY-MM-DD
-      if (!dayMap[dayKey]) {
-        dayMap[dayKey] = { scores: [], mood: m.mood };
+      const dateObj = new Date(m.date);
+      // 计算组起始日期
+      const dayOfMonth = dateObj.getDate();
+      const groupStartDay = Math.floor((dayOfMonth - 1) / groupDays) * groupDays + 1;
+      const groupDate = new Date(dateObj);
+      groupDate.setDate(groupStartDay);
+      const groupKey = groupDate.toISOString().substring(0, 10);
+      
+      if (!groupMap[groupKey]) {
+        groupMap[groupKey] = { scores: [], moods: [], count: 0 };
       }
       const score = moodScoreMap[m.mood] || 0;
-      dayMap[dayKey].scores.push(score);
+      groupMap[groupKey].scores.push(score);
+      groupMap[groupKey].moods.push(m.mood);
+      groupMap[groupKey].count++;
     });
     
-    // 计算每天的平均score
-    const points = Object.entries(dayMap)
-      .map(([date, data]) => ({
-        date,
-        score: data.scores.reduce((a, b) => a + b, 0) / data.scores.length,
-        mood: data.mood,
-        count: data.scores.length,
-      }))
+    // 计算每组的平均score和映射的emoji
+    const points = Object.entries(groupMap)
+      .map(([date, data]) => {
+        const avgScore = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
+        const moodInfo = scoreToMood(avgScore);
+        // 统计该组内各心情出现次数，找最常见的
+        const moodCount = {};
+        data.moods.forEach(m => { moodCount[m] = (moodCount[m] || 0) + 1; });
+        const dominantMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0][0];
+        const dominantOption = moodOptions.find(o => o.value === dominantMood) || { emoji: '😊', label: '开心' };
+        
+        return {
+          date,
+          label: labelFormat(date),
+          avgScore,
+          emoji: dominantOption.emoji,
+          moodLabel: dominantOption.label,
+          count: data.count,
+        };
+      })
       .sort((a, b) => a.date.localeCompare(b.date));
     
-    // 心情分布统计
+    // 心情分布统计（基于原始数据）
     const distribution = {};
     filtered.forEach(m => {
       distribution[m.mood] = (distribution[m.mood] || 0) + 1;
     });
     
-    return { points, distribution };
-  }, [moments, v2Moments, hasV2Baby, moodTimeRange]);
+    return { points, distribution, groupDays };
+  }, [moments, v2Moments, hasV2Baby, moodTimeRange, moodScoreMap]);
   
   return (
     <div 
@@ -650,26 +704,69 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                   <MoodCurveChart points={moodTrackData.points} moodOptions={moodOptions} />
                   
                   {/* 心情分布条 */}
-                  <div className="pt-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">心情分布</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(moodTrackData.distribution)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([mood, count]) => {
-                          const option = moodOptions.find(o => o.value === mood);
-                          if (!option) return null;
-                          return (
-                            <div 
-                              key={mood}
-                              className="flex items-center gap-1 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-full"
-                            >
-                              <span className="text-base">{option.emoji}</span>
-                              <span className="text-xs text-gray-600 dark:text-gray-300">{count}</span>
-                            </div>
-                          );
-                        })}
+                  {(() => {
+                    const totalCount = Object.values(moodTrackData.distribution).reduce((a, b) => a + b, 0);
+                    return (
+                    <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">心情分布</p>
+                        <p className="text-xs text-gray-400">共{totalCount}条记录</p>
+                      </div>
+                      {/* 比例进度条 */}
+                      <div className="h-3 rounded-full overflow-hidden flex bg-gray-100 dark:bg-gray-700">
+                        {Object.entries(moodTrackData.distribution)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([mood, count]) => {
+                            const option = moodOptions.find(o => o.value === mood);
+                            if (!option) return null;
+                            const width = (count / totalCount) * 100;
+                            const color = option.score > 0 
+                              ? `rgba(34, 197, 94, ${0.4 + (option.score / 6) * 0.6})` // 绿色系
+                              : `rgba(251, 146, 60, ${0.4 + (Math.abs(option.score) / 6) * 0.6})`; // 橙色系
+                            return (
+                              <div
+                                key={mood}
+                                className="relative group"
+                                style={{ width: `${width}%`, minWidth: width > 0 ? '8px' : '0' }}
+                              >
+                                <div 
+                                  className="w-full h-full transition-all"
+                                  style={{ backgroundColor: color }}
+                                />
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                  <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                    {option.emoji} {option.label}: {count}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                      {/* 心情标签列表 */}
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {Object.entries(moodTrackData.distribution)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([mood, count]) => {
+                            const option = moodOptions.find(o => o.value === mood);
+                            if (!option) return null;
+                            return (
+                              <div 
+                                key={mood}
+                                className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-1 rounded-full"
+                              >
+                                <span className="text-sm">{option.emoji}</span>
+                                <span className="text-xs text-gray-600 dark:text-gray-300">{count}</span>
+                                <span className="text-[10px] text-gray-400">
+                                  ({((count / totalCount) * 100).toFixed(0)}%)
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
                     </div>
-                  </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <div className="text-center py-6 text-gray-400 dark:text-gray-500">
@@ -932,16 +1029,17 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   );
 }
 
-// 心情曲线图组件（纯SVG实现）
+// 心情曲线图组件（纯SVG实现 - 贝塞尔曲线版本）
 function MoodCurveChart({ points, moodOptions }) {
-  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   
   if (!points || points.length === 0) return null;
   
   // SVG配置
   const width = 320;
-  const height = 180;
-  const padding = { top: 20, right: 20, bottom: 40, left: 40 };
+  const height = 200;
+  const padding = { top: 25, right: 50, bottom: 40, left: 15 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   
@@ -953,66 +1051,135 @@ function MoodCurveChart({ points, moodOptions }) {
   const xScale = (index) => padding.left + (index / Math.max(points.length - 1, 1)) * chartWidth;
   const yScale = (value) => padding.top + ((yMax - value) / (yMax - yMin)) * chartHeight;
   
-  // Y轴刻度
-  const yTicks = [3, 2, 1, 0, -1, -2, -3];
-  const yLabels = {
-    3: '兴奋',
-    2: '开心',
-    1: '平静',
-    0: '中性',
-    '-1': '低落',
-    '-2': '难过',
-    '-3': '糟糕',
+  // Y轴心情刻度（右侧标注）
+  const moodTicks = [
+    { score: 3, label: '🎉兴奋', color: '#22c55e' },
+    { score: 2, label: '😊开心', color: '#4ade80' },
+    { score: 0, label: '😌平静', color: '#94a3b8' },
+    { score: -2, label: '😢难过', color: '#fb923c' },
+    { score: -3, label: '😠生气', color: '#f97316' },
+  ];
+  
+  // 生成贝塞尔曲线路径
+  const generateBezierPath = (pts) => {
+    if (pts.length === 0) return '';
+    if (pts.length === 1) {
+      return `M ${xScale(0)} ${yScale(pts[0].avgScore)}`;
+    }
+    
+    let path = `M ${xScale(0)} ${yScale(pts[0].avgScore)}`;
+    
+    for (let i = 0; i < pts.length - 1; i++) {
+      const x0 = xScale(i);
+      const y0 = yScale(pts[i].avgScore);
+      const x1 = xScale(i + 1);
+      const y1 = yScale(pts[i + 1].avgScore);
+      
+      // 控制点偏移量（曲线平滑度）
+      const cpOffset = Math.min(40, Math.abs(x1 - x0) / 2);
+      
+      // 控制点1：前一点向右偏移
+      const cp1x = x0 + cpOffset;
+      const cp1y = y0;
+      
+      // 控制点2：后一点向左偏移
+      const cp2x = x1 - cpOffset;
+      const cp2y = y1;
+      
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x1} ${y1}`;
+    }
+    
+    return path;
   };
   
-  // 获取点对应的emoji
-  const getMoodEmoji = (mood) => {
-    const option = moodOptions.find(o => o.value === mood);
-    return option?.emoji || '😊';
+  // 生成正向填充区域
+  const generateAreaPath = (pts, threshold = 0) => {
+    if (pts.length === 0) return '';
+    const areaPoints = pts.map((p, i) => ({
+      x: xScale(i),
+      y: yScale(Math.max(p.avgScore, threshold))
+    }));
+    
+    let path = `M ${areaPoints[0].x} ${areaPoints[0].y}`;
+    for (let i = 0; i < areaPoints.length - 1; i++) {
+      const cpOffset = Math.min(40, Math.abs(areaPoints[i + 1].x - areaPoints[i].x) / 2);
+      path += ` C ${areaPoints[i].x + cpOffset} ${areaPoints[i].y}, ${areaPoints[i + 1].x - cpOffset} ${areaPoints[i + 1].y}, ${areaPoints[i + 1].x} ${areaPoints[i + 1].y}`;
+    }
+    
+    // 封闭区域
+    path += ` L ${areaPoints[areaPoints.length - 1].x} ${yScale(threshold)}`;
+    path += ` L ${areaPoints[0].x} ${yScale(threshold)} Z`;
+    
+    return path;
   };
   
-  // 生成折线路径
-  const linePath = points.map((point, i) => {
-    const x = xScale(i);
-    const y = yScale(point.score);
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
+  const linePath = generateBezierPath(points);
+  const positiveArea = generateAreaPath(points, 0);
   
-  // 生成填充区域（正值绿色，负值橙色）
-  const areaPathPositive = points.map((point, i) => {
-    const x = xScale(i);
-    const y = yScale(Math.max(point.score, 0));
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ') + ` L ${xScale(points.length - 1)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`;
-  
-  const areaPathNegative = points.map((point, i) => {
-    const x = xScale(i);
-    const y = yScale(Math.min(point.score, 0));
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ') + ` L ${xScale(points.length - 1)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`;
-  
-  // X轴日期标签（只显示关键节点）
-  const labelIndices = points.length <= 5 
-    ? points.map((_, i) => i)
-    : [0, Math.floor(points.length / 2), points.length - 1];
-  
-  // 中性线（y=0）
+  // 中性线位置
   const neutralY = yScale(0);
+  
+  // 获取线条颜色（根据趋势）
+  const getLineColor = () => {
+    const lastScore = points[points.length - 1]?.avgScore || 0;
+    if (lastScore > 0.5) return '#22c55e'; // 绿色
+    if (lastScore < -0.5) return '#f97316'; // 橙色
+    return 'url(#lineGradient)'; // 渐变色
+  };
+  
+  // 获取数据点颜色
+  const getPointColor = (score) => {
+    if (score > 0.5) return '#22c55e';
+    if (score < -0.5) return '#f97316';
+    return '#94a3b8';
+  };
+  
+  // X轴标签（均匀分布）
+  const labelCount = Math.min(points.length, 5);
+  const labelIndices = [];
+  for (let i = 0; i < labelCount; i++) {
+    labelIndices.push(Math.round((i * (points.length - 1)) / (labelCount - 1)));
+  }
   
   return (
     <div className="relative">
       <svg 
         viewBox={`0 0 ${width} ${height}`} 
         className="w-full h-auto"
-        style={{ minHeight: '180px' }}
+        style={{ minHeight: '200px' }}
       >
+        <defs>
+          {/* 渐变色定义 */}
+          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22c55e" />
+            <stop offset="50%" stopColor="#94a3b8" />
+            <stop offset="100%" stopColor="#f97316" />
+          </linearGradient>
+          <linearGradient id="positiveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#86efac" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#86efac" stopOpacity="0.1" />
+          </linearGradient>
+          <linearGradient id="negativeGradient" x1="0%" y1="100%" y2="0%">
+            <stop offset="0%" stopColor="#fed7aa" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#fed7aa" stopOpacity="0.1" />
+          </linearGradient>
+          {/* 高亮效果 */}
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
         {/* 背景网格 */}
         <defs>
-          <pattern id="grid" width="40" height="20" patternUnits="userSpaceOnUse">
+          <pattern id="moodGrid" width="40" height="20" patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" strokeWidth="0.5"/>
           </pattern>
         </defs>
-        <rect x={padding.left} y={padding.top} width={chartWidth} height={chartHeight} fill="url(#grid)" />
+        <rect x={padding.left} y={padding.top} width={chartWidth} height={chartHeight} fill="url(#moodGrid)" />
         
         {/* 中性线 */}
         <line 
@@ -1020,100 +1187,127 @@ function MoodCurveChart({ points, moodOptions }) {
           y1={neutralY} 
           x2={width - padding.right} 
           y2={neutralY} 
-          stroke="#ddd" 
-          strokeWidth="1" 
+          stroke="#e5e7eb" 
+          strokeWidth="1.5" 
           strokeDasharray="4,4" 
         />
         
         {/* 正值区域（浅绿色填充） */}
-        <path d={areaPathPositive} fill="#86efac" fillOpacity="0.3" />
+        <path d={positiveArea} fill="url(#positiveGradient)" />
         
-        {/* 负值区域（浅橙色填充） */}
-        <path d={areaPathNegative} fill="#fdba74" fillOpacity="0.3" />
-        
-        {/* Y轴刻度和标签 */}
-        {yTicks.map(tick => (
-          <g key={tick}>
-            <line 
-              x1={padding.left - 5} 
-              y1={yScale(tick)} 
-              x2={padding.left} 
-              y2={yScale(tick)} 
-              stroke="#ccc" 
-              strokeWidth="1" 
-            />
+        {/* Y轴右侧心情刻度标注 */}
+        {moodTicks.map((tick, i) => (
+          <g key={i}>
             <text 
-              x={padding.left - 10} 
-              y={yScale(tick) + 4} 
-              textAnchor="end" 
-              fontSize="10" 
-              fill="#888"
+              x={width - padding.right + 3} 
+              y={yScale(tick.score) + 4} 
+              fontSize="9" 
+              fill={tick.color}
+              fontWeight="500"
             >
-              {yLabels[tick]}
+              {tick.label}
             </text>
           </g>
         ))}
         
-        {/* X轴日期标签 */}
-        {labelIndices.map(i => (
-          <text 
-            key={i}
-            x={xScale(i)} 
-            y={height - 10} 
-            textAnchor="middle" 
-            fontSize="9" 
-            fill="#888"
-          >
-            {points[i].date.substring(5)}
-          </text>
-        ))}
-        
-        {/* 折线 */}
+        {/* 折线（贝塞尔曲线） */}
         <path 
           d={linePath} 
           fill="none" 
-          stroke={points[points.length - 1]?.score >= 0 ? '#22c55e' : '#f97316'} 
+          stroke={getLineColor()} 
           strokeWidth="2.5" 
           strokeLinecap="round" 
           strokeLinejoin="round"
+          filter={hoveredIndex !== null ? "url(#glow)" : undefined}
         />
         
         {/* 数据点 */}
-        {points.map((point, i) => (
-          <g 
-            key={i}
-            onMouseEnter={() => setHoveredPoint(point)}
-            onMouseLeave={() => setHoveredPoint(null)}
-            className="cursor-pointer"
-          >
-            <circle 
-              cx={xScale(i)} 
-              cy={yScale(point.score)} 
-              r="6" 
-              fill="white" 
-              stroke={point.score >= 0 ? '#22c55e' : '#f97316'} 
-              strokeWidth="2"
-            />
-            <text 
-              x={xScale(i)} 
-              y={yScale(point.score) + 4} 
-              textAnchor="middle" 
-              fontSize="10"
+        {points.map((point, i) => {
+          const cx = xScale(i);
+          const cy = yScale(point.avgScore);
+          const isHovered = hoveredIndex === i;
+          const pointColor = getPointColor(point.avgScore);
+          
+          return (
+            <g 
+              key={i}
+              onMouseEnter={(e) => {
+                setHoveredIndex(i);
+                const rect = e.currentTarget.closest('svg').getBoundingClientRect();
+                const svgWidth = rect.width;
+                const svgHeight = rect.height;
+                const scaleX = svgWidth / width;
+                const scaleY = svgHeight / height;
+                setTooltipPos({
+                  x: cx * scaleX,
+                  y: cy * scaleY,
+                  svgX: cx,
+                  svgY: cy
+                });
+              }}
+              onMouseLeave={() => setHoveredIndex(null)}
+              className="cursor-pointer"
             >
-              {getMoodEmoji(point.mood)}
-            </text>
-          </g>
+              {/* 外圈高亮 */}
+              {isHovered && (
+                <circle 
+                  cx={cx} 
+                  cy={cy} 
+                  r="10" 
+                  fill={pointColor}
+                  fillOpacity="0.2"
+                />
+              )}
+              {/* 数据点 */}
+              <circle 
+                cx={cx} 
+                cy={cy} 
+                r={isHovered ? 7 : 4} 
+                fill="white" 
+                stroke={pointColor} 
+                strokeWidth="2"
+              />
+            </g>
+          );
+        })}
+        
+        {/* X轴日期标签 */}
+        {labelIndices.map((i) => (
+          <text 
+            key={i}
+            x={xScale(i)} 
+            y={height - 8} 
+            textAnchor="middle" 
+            fontSize="9" 
+            fill="#6b7280"
+          >
+            {points[i].label}
+          </text>
         ))}
       </svg>
       
-      {/* Hover提示 */}
-      {hoveredPoint && (
-        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg z-10 whitespace-nowrap">
-          <span className="mr-1">{getMoodEmoji(hoveredPoint.mood)}</span>
-          <span>{hoveredPoint.date.substring(5)}</span>
-          <span className="ml-1 text-gray-300">
-            {hoveredPoint.score > 0 ? '+' : ''}{hoveredPoint.score.toFixed(1)}
-          </span>
+      {/* Hover浮层详情 */}
+      {hoveredIndex !== null && points[hoveredIndex] && (
+        <div 
+          className="absolute z-20 bg-gray-800 text-white px-3 py-2 rounded-xl shadow-xl text-xs whitespace-nowrap transform -translate-x-1/2"
+          style={{
+            left: `${(tooltipPos.x / 320) * 100}%`,
+            top: `${Math.max(5, (tooltipPos.y / 200) * 100 - 15)}%`,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{points[hoveredIndex].emoji}</span>
+            <div className="flex flex-col">
+              <span className="text-gray-300 text-[10px]">{points[hoveredIndex].label}</span>
+              <span className="font-medium">
+                {points[hoveredIndex].moodLabel} 
+                <span className="text-gray-400 ml-1">
+                  ({points[hoveredIndex].avgScore > 0 ? '+' : ''}{points[hoveredIndex].avgScore.toFixed(1)})
+                </span>
+              </span>
+              <span className="text-gray-400 text-[10px]">{points[hoveredIndex].count}条记录</span>
+            </div>
+          </div>
         </div>
       )}
     </div>
