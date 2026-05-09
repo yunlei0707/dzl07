@@ -660,7 +660,7 @@ export function ProfilePage(
               onClick={onOpenCapsules}
               className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100 rounded-full transition-all shadow-sm border border-rose-100/50"
             >
-              <Heart className="w-3.5 h-3.5 text-rose-500" />
+              <span className="text-sm">💌</span>
               <span className="text-sm font-medium text-rose-600">给宝宝的信</span>
             </button>
             </div>

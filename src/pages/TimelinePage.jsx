@@ -406,13 +406,13 @@ export function TimelinePage({
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              {/* 神预言按钮 */}
+              {/* 月灵神预言按钮 */}
               <button
                 onClick={() => setShowPrediction(true)}
                 className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-full transition-all shadow-sm border border-purple-100/50"
               >
                 <span className="text-sm">✨</span>
-                <span className="text-sm font-medium text-purple-600">神预言</span>
+                <span className="text-sm font-medium text-purple-600">月灵神预言</span>
               </button>
             </div>
           </div>
@@ -518,7 +518,7 @@ export function TimelinePage({
             </div>
           </div>
 
-          {/* 名场面筛选 - 和心情同款式 */}
+          {/* 名场面筛选 */}
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-gray-400 flex-shrink-0">名场面</span>
             <button
@@ -531,80 +531,63 @@ export function TimelinePage({
             >
               全部
             </button>
-            {/* 前3个标签直接展示 */}
-            {milestoneFilters.filter(f => f.value !== '').slice(0, 3).map(filter => {
-              const isSelected = selectedMilestone === filter.value;
-              const color = filter.color || '#8B5CF6';
-              const emoji = filter.emoji || '✨';
-              return (
-                <button
-                  key={filter.value}
-                  onClick={() => setSelectedMilestone(filter.value)}
-                  className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
-                    isSelected
-                      ? 'font-medium'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}
-                  style={isSelected ? {
-                    backgroundColor: color,
-                    color: 'white',
-                  } : {}}
-                >
-                  {emoji} {filter.shortLabel || filter.label}
-                </button>
-              );
-            })}
-            {/* 更多标签下拉 */}
-            {milestoneFilters.filter(f => f.value !== '').length > 3 && (
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('milestone-dropdown');
-                    if (el) el.classList.toggle('hidden');
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 flex items-center gap-1 ${
-                    selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone)
-                      ? 'font-medium'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}
-                  style={selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone) ? {
-                    backgroundColor: milestoneFilters.find(f => f.value === selectedMilestone)?.color || '#8B5CF6',
-                    color: 'white',
-                  } : {}}
-                >
-                  {selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone)
-                    ? `${milestoneFilters.find(f => f.value === selectedMilestone)?.emoji || '✨'} ${milestoneFilters.find(f => f.value === selectedMilestone)?.shortLabel || '更多'}`
-                    : <>更多 <ChevronDown className="w-3 h-3" /></>
-                  }
-                </button>
-                <div
-                  id="milestone-dropdown"
-                  className="hidden absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 min-w-[140px]"
-                >
-                  {milestoneFilters.filter(f => f.value !== '').slice(3).map(filter => {
-                    const isSelected = selectedMilestone === filter.value;
-                    const color = filter.color || '#8B5CF6';
-                    const emoji = filter.emoji || '✨';
-                    return (
-                      <button
-                        key={filter.value}
-                        onClick={() => {
-                          setSelectedMilestone(filter.value);
-                          document.getElementById('milestone-dropdown')?.classList.add('hidden');
-                        }}
-                        className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 transition-colors ${
-                          isSelected ? 'font-medium' : ''
-                        }`}
-                        style={isSelected ? { color } : {}}
-                      >
-                        <span>{emoji}</span>
-                        <span>{filter.shortLabel || filter.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+              {milestoneFilters.filter(f => f.value !== '').map(filter => {
+                const isSelected = selectedMilestone === filter.value;
+                const color = filter.color || '#8B5CF6';
+                const emoji = filter.emoji || '✨';
+                return (
+                  <button
+                    key={filter.value}
+                    onClick={() => setSelectedMilestone(filter.value)}
+                    className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
+                      isSelected ? 'font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                    style={isSelected ? { backgroundColor: color, color: 'white' } : {}}
+                  >
+                    {emoji} {filter.shortLabel || filter.label}
+                  </button>
+                );
+              })}
+            </div>
+            {/* 更多下拉 - 显示所有标签供快速选择 */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => {
+                  const el = document.getElementById('milestone-dropdown');
+                  if (el) el.classList.toggle('hidden');
+                }}
+                className="px-2 py-1 rounded-full text-xs whitespace-nowrap transition-colors bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center gap-0.5"
+              >
+                更多 <ChevronDown className="w-3 h-3" />
+              </button>
+              <div
+                id="milestone-dropdown"
+                className="hidden absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 min-w-[140px]"
+              >
+                {milestoneFilters.filter(f => f.value !== '').map(filter => {
+                  const isSelected = selectedMilestone === filter.value;
+                  const color = filter.color || '#8B5CF6';
+                  const emoji = filter.emoji || '✨';
+                  return (
+                    <button
+                      key={filter.value}
+                      onClick={() => {
+                        setSelectedMilestone(filter.value);
+                        document.getElementById('milestone-dropdown')?.classList.add('hidden');
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 transition-colors ${
+                        isSelected ? 'font-medium' : ''
+                      }`}
+                      style={isSelected ? { color } : {}}
+                    >
+                      <span>{emoji}</span>
+                      <span>{filter.shortLabel || filter.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
           </div>
         </div>
         
@@ -784,7 +767,7 @@ export function TimelinePage({
         </div>
       )}
       
-      {/* 神预言全屏页面 */}
+      {/* 月灵神预言全屏页面 */}
       {showPrediction && (
         <PredictionPage onClose={() => setShowPrediction(false)} />
       )}
