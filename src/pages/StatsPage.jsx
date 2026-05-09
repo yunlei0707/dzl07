@@ -470,7 +470,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                     style={{ width: `${(stats.photoMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
-                <span className="text-sm text-gray-500 w-8 font-medium">{stats.photoMoments}</span>
+                <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.photoMoments}</span>
               </div>
             </div>
             
@@ -510,7 +510,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                     style={{ width: `${(stats.diaryMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
                   />
                 </div>
-                <span className="text-sm text-gray-500 w-8 font-medium">{stats.diaryMoments}</span>
+                <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.diaryMoments}</span>
               </div>
             </div>
             
