@@ -328,19 +328,23 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const moodScoreMap = importedMoodScoreMap;
   
   // 心情轨迹数据计算 - 按时间粒度聚合
-  const [moodTimeRange, setMoodTimeRange] = useState(30); // 30/90/all
+  const [moodTimeRange, setMoodTimeRange] = useState(30); // 7/30/90/180/all
   const [showMoodTrack, setShowMoodTrack] = useState(true);
   
   // 根据时间范围确定聚合粒度
   const getAggregationConfig = (range) => {
     switch (range) {
+      case 7:
+        return { groupDays: 1, labelFormat: (d) => d.substring(5) }; // 按天展示 5/1
       case 30:
-        return { groupDays: 3, labelFormat: (d) => d.substring(5) }; // 显示 5/1 格式
+        return { groupDays: 3, labelFormat: (d) => d.substring(5) }; // 每3天 5/1
       case 90:
-        return { groupDays: 7, labelFormat: (d) => d.substring(5) }; // 显示 5/5 格式
+        return { groupDays: 7, labelFormat: (d) => d.substring(5) }; // 每周 5/5
+      case 180:
+        return { groupDays: 15, labelFormat: (d) => d.substring(5) }; // 半个月 5/1
       case 'all':
       default:
-        return { groupDays: 30, labelFormat: (d) => d.substring(0, 7).replace('-', '.') }; // 显示 2025.3 格式
+        return { groupDays: 30, labelFormat: (d) => d.substring(0, 7).replace('-', '.') }; // 每月 2025.3
     }
   };
   
@@ -683,7 +687,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
             <div className="space-y-4">
               {/* 时间范围切换 */}
               <div className="flex gap-2 justify-center">
-                {[30, 90, 'all'].map(range => (
+                {[7, 30, 90, 180, 'all'].map(range => (
                   <button
                     key={range}
                     onClick={() => setMoodTimeRange(range)}
