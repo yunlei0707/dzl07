@@ -480,8 +480,12 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
       )}
       
       {/* 头部 - 优化：左上角显示头像 */}
-      <header className="bg-gradient-to-b from-[#FFF8F0] to-white safe-top">
-        <div className="px-4 pt-4 pb-6">
+      <header className="bg-gradient-to-b from-[#FFF8F0] to-white safe-top relative overflow-hidden">
+        <div className="px-4 pt-4 pb-6 relative z-10">
+        {/* 装饰光晕 */}
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary-200/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-warm-200/20 rounded-full blur-3xl" />
+      
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {/* 头像显示在左上角（使用v2账号身份信息） */}
