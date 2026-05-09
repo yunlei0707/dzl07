@@ -592,19 +592,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
           )}
         </div>
         
-        {/* 宝宝成长档案入口 */}
-        <div 
-          className="card cursor-pointer active:scale-[0.98] transition-transform animate-fade-in"
-          style={{ animationDelay: '0.4s' }}
-          onClick={() => onOpenMonthlyReport?.()}
-        >
-          <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2 cursor-pointer hover:text-gray-600">
-            <BookOpen className="w-5 h-5 text-primary-500" />
-            宝宝成长档案
-            <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-          </h3>
-          <p className="text-xs text-gray-400 mt-1">查看成长档案</p>
-        </div>
         
         {/* 身体成长区块 */}
         <div className="card animate-fade-in" style={{ animationDelay: '0.5s' }}>
@@ -781,6 +768,21 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
             </div>
           )}
         </div>
+        {/* 宝宝成长档案入口 */}
+        <div 
+          className="card cursor-pointer active:scale-[0.98] transition-transform animate-fade-in"
+          style={{ animationDelay: '0.4s' }}
+          onClick={() => onOpenMonthlyReport?.()}
+        >
+          <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2 cursor-pointer hover:text-gray-600">
+            <BookOpen className="w-5 h-5 text-primary-500" />
+            宝宝成长档案
+            <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+          </h3>
+          <p className="text-xs text-gray-400 mt-1">查看成长档案</p>
+        </div>
+
+
       </main>
     </div>
   );
