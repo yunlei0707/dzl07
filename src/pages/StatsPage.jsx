@@ -292,6 +292,10 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     }
   }, [v2BabyInfo, displayBaby]);
 
+  // 心情轨迹状态 - 必须在条件返回之前声明
+  const [moodTimeRange, setMoodTimeRange] = useState(30); // 7/30/90/180/all
+  const [showMoodTrack, setShowMoodTrack] = useState(true);
+
   if (!displayBaby || !stats) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4">
@@ -340,12 +344,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     sick: '🤒',
   };
   
-  // 心情score映射（使用导入的）
-  const moodScoreMap = importedMoodScoreMap;
-  
-  // 心情轨迹数据计算 - 按时间粒度聚合
-  const [moodTimeRange, setMoodTimeRange] = useState(30); // 7/30/90/180/all
-  const [showMoodTrack, setShowMoodTrack] = useState(true);
+  // 心情轨迹状态 - 必须在条件返回之前声明
+
   
   // 根据时间范围确定聚合粒度
   const getAggregationConfig = (range) => {
