@@ -74,7 +74,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   
   // 刷新成长记录
   useEffect(() => {
-    const babyId = v2BabyInfo?.id || currentBaby?.id;
+    const babyId = currentBaby?.id || v2BabyInfo?.id;
     if (babyId) {
       refreshGrowthRecords(babyId);
     }
@@ -463,8 +463,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                 <span className="text-xl">📷</span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">照片记录</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                   <div 
                     className="h-full bg-primary-400 rounded-full"
                     style={{ width: `${(stats.photoMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
@@ -483,8 +483,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                 <span className="text-xl">🎬</span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">视频记录</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                   <div 
                     className="h-full bg-purple-400 rounded-full"
                     style={{ width: `${(stats.videoMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
@@ -503,8 +503,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                 <span className="text-xl">📝</span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">文字记录</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                   <div 
                     className="h-full bg-warm-400 rounded-full"
                     style={{ width: `${(stats.diaryMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
@@ -523,8 +523,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                 <span className="text-xl">🎙️</span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">语音记录</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                   <div 
                     className="h-full bg-green-400 rounded-full"
                     style={{ width: `${(stats.audioMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
@@ -561,7 +561,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                   <span className="text-sm text-gray-600 dark:text-gray-400">{ms.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                     <div 
                       className="h-full bg-amber-400 rounded-full"
                       style={{ width: `${(ms.count / Math.max(stats.milestoneCount, 1)) * 100}%` }}
@@ -579,7 +579,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                       <span className="text-sm text-gray-400">{opt.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                         <div className="h-full bg-amber-400 rounded-full" style={{ width: '0%' }} />
                       </div>
                       <span className="text-sm text-gray-400 w-8 font-medium text-right">0</span>
