@@ -103,6 +103,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   // 折叠状态 - 成长概览默认展开，其他折叠
   const [showGrowthOverview, setShowGrowthOverview] = useState(true);
   const [showMilestoneStats, setShowMilestoneStats] = useState(false);
+  const [showPredictionStats, setShowPredictionStats] = useState(false);
   const [showRecordTypes, setShowRecordTypes] = useState(false);
   const [showGrowthRecords, setShowGrowthRecords] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState(null);
@@ -275,7 +276,22 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     // 按数量降序
     return result.sort((a, b) => b.count - a.count);
   }, [moments, v2Moments, hasV2Baby, getAllMilestones]);
-  
+
+  // 月龄神预言统计
+  const predictionStats = useMemo(() => {
+    const babyId = v2BabyInfo?.id || displayBaby?.id || 'default';
+    try {
+      const stored = localStorage.getItem(`babyPredictions_${babyId}`);
+      const all = stored ? JSON.parse(stored) : [];
+      const total = all.length;
+      const fulfilled = all.filter(p => p.status === 'fulfilled').length;
+      const rate = total > 0 ? Math.round((fulfilled / total) * 100) : 0;
+      return { total, fulfilled, rate };
+    } catch {
+      return { total: 0, fulfilled: 0, rate: 0 };
+    }
+  }, [v2BabyInfo, displayBaby]);
+
   if (!displayBaby || !stats) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4">
@@ -836,8 +852,70 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
           </div>
           )}
         </div>
-        
-        
+
+        {/* 月龄神预言统计 */}
+        <div className="card animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <h3
+            className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 cursor-pointer hover:text-gray-600"
+            onClick={() => setShowPredictionStats(!showPredictionStats)}
+          >
+            <span className="text-xl">✨</span>
+            月龄神预言
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${showPredictionStats ? 'rotate-180' : ''}`} />
+          </h3>
+
+          {showPredictionStats && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg p-1 -m-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🔮</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">总预言</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                    <div
+                      className="h-full bg-purple-400 rounded-full"
+                      style={{ width: predictionStats.total > 0 ? '100%' : '0%' }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500 w-8 font-medium text-right">{predictionStats.total}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg p-1 -m-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✅</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">已命中</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                    <div
+                      className="h-full bg-green-400 rounded-full"
+                      style={{ width: predictionStats.total > 0 ? `${(predictionStats.fulfilled / predictionStats.total) * 100}%` : '0%' }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500 w-8 font-medium text-right">{predictionStats.fulfilled}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg p-1 -m-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎯</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">命中率</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                    <div
+                      className="h-full bg-rose-400 rounded-full"
+                      style={{ width: `${predictionStats.rate}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500 w-8 font-medium text-right">{predictionStats.rate}%</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+
         {/* 身体成长区块 */}
         <div className="card animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <h3 
