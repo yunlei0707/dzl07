@@ -73,13 +73,22 @@ function AppContent() {
   const { showToast, babies, currentBaby, setCurrentBaby, setMoments, setCapsules, setBabies, currentUser, refreshGrowthRecords } = useApp();
   
   const [activeTab, setActiveTab] = useState(() => {
-    const hash = window.location.hash.replace('#', '');
-    return ['timeline', 'stats', 'virtual', 'profile'].includes(hash) ? hash : 'timeline';
+    try {
+      const hash = window.location.hash.replace('#', '');
+      const saved = localStorage.getItem('activeTab');
+      const tab = ['timeline', 'stats', 'virtual', 'profile'].includes(hash) ? hash 
+                : ['timeline', 'stats', 'virtual', 'profile'].includes(saved) ? saved 
+                : 'timeline';
+      return tab;
+    } catch { return 'timeline'; }
   });
   
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    window.location.hash = tab;
+    try {
+      window.location.hash = tab;
+      localStorage.setItem('activeTab', tab);
+    } catch {}
   };
   
   const [showMomentForm, setShowMomentForm] = useState(false);
