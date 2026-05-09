@@ -430,8 +430,8 @@ export function TimelinePage({
                 onClick={checkSameDayLastYear}
                 className="flex items-center gap-1.5 px-3 py-0 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors"
               >
-                <Clock className="w-4 h-4 text-primary-500" />
-                <span className="text-base font-medium text-primary-600">往年今日</span>
+                <Clock className="w-4 h-4 text-amber-500" />
+                <span className="text-base font-medium text-gray-700">往年今日</span>
               </button>
             </div>
           </div>
