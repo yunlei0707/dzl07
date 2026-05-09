@@ -409,10 +409,10 @@ export function TimelinePage({
               {/* 神预言按钮 */}
               <button
                 onClick={() => setShowPrediction(true)}
-                className="flex items-center gap-1.5 px-3 py-0 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
+                className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-full transition-all shadow-sm border border-purple-100/50"
               >
-                <span className="text-lg">✨</span>
-                <span className="text-base font-medium text-gray-700">神预言</span>
+                <span className="text-sm">✨</span>
+                <span className="text-sm font-medium text-purple-600">神预言</span>
               </button>
             </div>
           </div>
