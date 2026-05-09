@@ -442,19 +442,23 @@ export const babyPredictions = [
   ...month36,
 ];
 
-// 按月龄分组
-export const predictionsByMonth = babyPredictions.reduce((acc, pred) => {
-  if (!acc[pred.monthAge]) {
-    acc[pred.monthAge] = [];
-  }
-  acc[pred.monthAge].push(pred);
-  return acc;
-}, {});
+// 按月龄分组的懒加载缓存（不自动计算，按需生成）
+const _monthCache = {};
 
-// 获取指定月龄的预言
+// 获取指定月龄的预言（懒加载，只计算请求的月龄）
 export const getPredictionsByMonthAge = (monthAge) => {
-  return predictionsByMonth[monthAge] || [];
+  if (_monthCache[monthAge]) return _monthCache[monthAge];
+  const result = babyPredictions.filter(p => p.monthAge === monthAge);
+  _monthCache[monthAge] = result;
+  return result;
 };
+
+// 按需获取分组（兼容旧引用）
+export const predictionsByMonth = new Proxy({}, {
+  get(_, monthAge) {
+    return getPredictionsByMonthAge(Number(monthAge));
+  }
+});
 
 // 预言类型配置
 export const predictionTypes = {
