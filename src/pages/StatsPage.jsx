@@ -295,6 +295,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   // 心情轨迹状态 - 必须在条件返回之前声明
   const [moodTimeRange, setMoodTimeRange] = useState(30); // 7/30/90/180/all
   const [showMoodTrack, setShowMoodTrack] = useState(true);
+  const moodScoreMap = importedMoodScoreMap;
 
   if (!displayBaby || !stats) {
     return (
