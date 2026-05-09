@@ -1,5 +1,5 @@
 /**
- * 月灵月灵神预言全屏页面
+ * 月龄神预言全屏页面
  * 基于宝宝月龄展示趣味预言
  */
 
@@ -230,7 +230,7 @@ export function PredictionPage({ onClose }) {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">✨</span>
-            <h1 className="text-lg font-bold text-gray-800">月灵月灵神预言</h1>
+            <h1 className="text-lg font-bold text-gray-800">月龄神预言</h1>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-purple-100 transition-colors">
             <X className="w-6 h-6 text-gray-600" />
@@ -288,7 +288,7 @@ export function PredictionPage({ onClose }) {
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95"
             >
               <Sparkles className="w-5 h-5" />
-              生成月灵月灵神预言
+              生成月龄神预言
             </button>
           </div>
         ) : (

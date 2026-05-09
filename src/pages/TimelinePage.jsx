@@ -406,13 +406,13 @@ export function TimelinePage({
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              {/* 月灵神预言按钮 */}
+              {/* 月龄神预言按钮 */}
               <button
                 onClick={() => setShowPrediction(true)}
                 className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-full transition-all shadow-sm border border-purple-100/50"
               >
                 <span className="text-sm">✨</span>
-                <span className="text-sm font-medium text-purple-600">月灵神预言</span>
+                <span className="text-sm font-medium text-purple-600">月龄神预言</span>
               </button>
             </div>
           </div>
@@ -767,7 +767,7 @@ export function TimelinePage({
         </div>
       )}
       
-      {/* 月灵神预言全屏页面 */}
+      {/* 月龄神预言全屏页面 */}
       {showPrediction && (
         <PredictionPage onClose={() => setShowPrediction(false)} />
       )}
