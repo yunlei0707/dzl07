@@ -311,7 +311,7 @@ export const sampleTemplates = {
       moments: [
         {
           type: 'photo',
-          content: '终于翻身成功啦！从仰卧到趴着，虽然动作还有点笨拙，但这是人生第一个大运动里程碑！',
+          content: '终于翻身成功啦！从仰卧到趴着，虽然动作还有点笨拙，但这是人生第一个大运动名场面！',
           mood: 'excited',
           weather: 'sunny',
           milestone: 'growth',
@@ -463,7 +463,7 @@ export const sampleTemplates = {
     // 套4：半岁成长（成长风）
     {
       name: '半岁成长',
-      description: '半岁宝宝的成长里程碑',
+      description: '半岁宝宝的成长名场面',
       style: 'growth',
       moments: [
         {
@@ -1078,7 +1078,7 @@ export const sampleTemplates = {
         },
       ],
     },
-    // 套5：两岁成长（里程碑风）
+    // 套5：两岁成长（名场面风）
     {
       name: '两岁成长',
       description: '两周岁的特别纪念',

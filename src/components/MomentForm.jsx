@@ -92,7 +92,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const markerRef = useRef(null);
   const geocoderRef = useRef(null);
 
-  // 获取所有里程碑选项
+  // 获取所有名场面选项
   const milestoneOptions = getAllMilestones();
 
   // 清理录音资源
@@ -845,11 +845,11 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
           />
         </div>
         
-        {/* 里程碑 - 使用自定义里程碑列表 */}
+        {/* 名场面 - 使用自定义名场面列表 */}
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
             <Star className="w-4 h-4 inline mr-1" />
-            里程碑标签
+            名场面标签
           </label>
           <div className="flex flex-wrap gap-2">
             {milestoneOptions.map(option => (

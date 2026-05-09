@@ -179,7 +179,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     const photoCount = activeMoments.filter(m => m.photos && m.photos.length > 0)
       .reduce((acc, m) => acc + m.photos.length, 0);
     
-    // 里程碑数量
+    // 名场面数量
     const milestoneCount = activeMoments.filter(m => m.milestone).length;
     
     // 按类型统计
@@ -222,7 +222,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     };
   }, [currentBaby, moments, capsules, v2Moments, hasV2Baby]);
   
-  // 里程碑列表
+  // 名场面列表
   const milestones = useMemo(() => {
     const sourceMoments = hasV2Baby
       ? v2Moments
@@ -230,14 +230,14 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
   }, [moments, v2Moments, hasV2Baby]);
 
-  // 里程碑类型统计
+  // 名场面类型统计
   const milestoneStats = useMemo(() => {
     const sourceMoments = hasV2Baby
       ? v2Moments
       : (moments && moments.length > 0 ? moments : []);
     const milestoneMoments = sourceMoments.filter(m => m.milestone && !m.isDeleted);
     
-    // 获取所有里程碑选项
+    // 获取所有名场面选项
     const allOptions = getAllMilestones();
     
     // 按milestone id分组计数
@@ -259,7 +259,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
         count: countMap[opt.id],
       }));
     
-    // 也加上没有匹配到选项的里程碑（自定义被删除的）
+    // 也加上没有匹配到选项的名场面（自定义被删除的）
     Object.keys(countMap).forEach(key => {
       if (!result.find(r => r.id === key)) {
         const sample = milestoneMoments.find(m => m.milestone === key);
@@ -551,7 +551,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
               <p className="text-xs text-gray-400 mt-1">珍贵照片</p>
             </div>
             
-            {/* 重要里程碑 */}
+            {/* 名场面 */}
             <div 
               className="bg-cream-50 dark:bg-gray-700 rounded-xl p-4 text-center cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => onStatClick({ type: 'filter', filterMilestone: 'all' })}
@@ -559,7 +559,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
               <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                 {stats.milestoneCount}
               </p>
-              <p className="text-xs text-gray-400 mt-1">重要里程碑</p>
+              <p className="text-xs text-gray-400 mt-1">名场面</p>
             </div>
             
             {/* 成长天数 */}
@@ -782,14 +782,14 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
           )}
         </div>
         
-        {/* 里程碑类型统计 */}
+        {/* 名场面类型统计 */}
         <div className="card animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <h3 
             className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 cursor-pointer hover:text-gray-600"
             onClick={() => setShowMilestoneStats(!showMilestoneStats)}
           >
             <Star className="w-5 h-5 text-amber-500" />
-            里程碑统计
+            名场面统计
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${showMilestoneStats ? 'rotate-180' : ''}`} />
           </h3>
           

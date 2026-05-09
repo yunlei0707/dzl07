@@ -87,9 +87,9 @@ const weatherIcons = {
   stormy: '⛈️',
 };
 
-// 里程碑标签类型
+// 名场面标签类型
 const milestoneTypes = {
-  first: { label: '里程碑', className: 'first', emoji: '⭐' },
+  first: { label: '名场面', className: 'first', emoji: '⭐' },
   growth: { label: '成长', className: 'growth', emoji: '🌱' },
   health: { label: '健康', className: 'health', emoji: '💪' },
   learning: { label: '学习', className: 'learning', emoji: '📚' },

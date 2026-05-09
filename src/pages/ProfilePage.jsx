@@ -41,7 +41,7 @@ const THEME_PRESETS = [
 { id: 'sunshine', name: '暖阳黄', color: '#FBBF24', gradient: 'from-amber-400 to-amber-500' },
 ];
 
-// 里程碑emoji选项
+// 名场面emoji选项
 const EMOJI_OPTIONS = ['⭐', '🌱', '💪', '📚', '✨', '🎈', '🎀', '🌟', '💫', '🌈', '☀️', '🌙', '❤️', '🎉', '👏', '🦋', '🌸', '🍀'];
 
 export function ProfilePage(
@@ -515,7 +515,7 @@ export function ProfilePage(
     }
   }, [showToast]);
   
-  // 保存里程碑
+  // 保存名场面
   const handleSaveMilestone = useCallback(async () => 
 {
     try 
@@ -698,14 +698,14 @@ export function ProfilePage(
               <Tags className="w-5 h-5 text-amber-500" />
               <div className="flex-1 text-left">
                 <span className="text-sm dark:text-white">标签自定义</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">管理里程碑、心情、虚拟时光标签</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">管理名场面、心情、虚拟时光标签</p>
               </div>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showTagGroup ? 'rotate-180' : ''}`} />
             </button>
 
             {showTagGroup && (
               <div className="space-y-2 pl-4">
-                {/* 里程碑标签自定义 */}
+                {/* 名场面标签自定义 */}
                 <button
                   onClick={() => {
                     setEditingMilestone(null);
@@ -716,7 +716,7 @@ export function ProfilePage(
                 >
                   <span className="text-sm text-primary-500">⭐</span>
                   <div className="flex-1 text-left">
-                    <span className="text-sm dark:text-white">里程碑标签自定义</span>
+                    <span className="text-sm dark:text-white">名场面标签自定义</span>
                   </div>
                 </button>
 
@@ -1157,20 +1157,20 @@ export function ProfilePage(
       )}
       
       
-{/* 里程碑编辑弹窗 */}
+{/* 名场面编辑弹窗 */}
       
 {showMilestoneModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-6 dark:text-white">
               
-{editingMilestone ? '编辑里程碑' : '添加里程碑'}
+{editingMilestone ? '编辑名场面' : '添加名场面'}
             </h3>
             
             
 {/* 名称 */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 dark:text-gray-300">里程碑名称</label>
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">名场面名称</label>
               <input
                 type="text"
                 value=
@@ -1246,11 +1246,11 @@ export function ProfilePage(
             </div>
             
             
-{/* 已有里程碑列表 */}
+{/* 已有名场面列表 */}
             
 {customMilestones.length > 0 && (
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的里程碑自定义</h4>
+                <h4 className="text-sm font-medium mb-3 dark:text-gray-300">已有的名场面自定义</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   
 {customMilestones.map(ms => (

@@ -42,7 +42,7 @@ export const LINK_RULES = [
     template: "以后我的孩子生病，我也要像妈妈一样{key_sentence}"
   },
   
-  // 规则4：里程碑 + 类型=第一次叫爸妈 → 幼儿园宝宝
+  // 规则4：名场面 + 类型=第一次叫爸妈 → 幼儿园宝宝
   {
     id: "rule_004",
     record_type: "milestone",

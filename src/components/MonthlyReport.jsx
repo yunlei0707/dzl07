@@ -103,7 +103,7 @@ export function GrowthReport({ onClose }) {
     angry: '😠',
   };
   
-  // 里程碑emoji
+  // 名场面emoji
   const milestoneEmojis = {
     first: '👶',
     growth: '🌱',
@@ -119,14 +119,14 @@ export function GrowthReport({ onClose }) {
     const { totalMoments, milestoneCount, firstMilestones } = stats;
     const rangeText = rangeTextMap[range] || '这段时间';
     
-    // 优先规则：第一次里程碑
+    // 优先规则：第一次名场面
     if (firstMilestones && firstMilestones.length > 0) {
       return `这${rangeText}，${babyName}又解锁了${firstMilestones.length}个第一次，每一步都值得被记住。`;
     }
     
-    // 里程碑数>=3
+    // 名场面数>=3
     if (milestoneCount >= 3) {
-      return `这${rangeText}，${babyName}达成了${milestoneCount}个里程碑，成长的速度让人惊叹！`;
+      return `这${rangeText}，${babyName}达成了${milestoneCount}个名场面，成长的速度让人惊叹！`;
     }
     
     // 记录数>=10
@@ -394,12 +394,12 @@ export function GrowthReport({ onClose }) {
                   </div>
                 )}
 
-                {/* 里程碑事件 */}
+                {/* 名场面事件 */}
                 {stats.milestones && stats.milestones.length > 0 && (
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 mb-4 shadow-sm">
                     <h4 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
                       <Star className="w-4 h-4 text-amber-500" />
-                      里程碑达成
+                      名场面达成
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {stats.milestones.slice(0, 5).map((m, i) => (
@@ -407,7 +407,7 @@ export function GrowthReport({ onClose }) {
                           key={i}
                           className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-sm flex items-center gap-1"
                         >
-                          {m.milestoneEmoji || '⭐'} {m.milestoneLabel || '里程碑'}
+                          {m.milestoneEmoji || '⭐'} {m.milestoneLabel || '名场面'}
                         </span>
                       ))}
                       {stats.milestones.length > 5 && (

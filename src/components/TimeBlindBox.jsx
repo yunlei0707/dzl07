@@ -207,7 +207,7 @@ export function TimeBlindBox({ moments, babyName = '宝宝' }) {
             <div ref={shareCardRef} className="flex-1 overflow-y-auto hide-scrollbar">
               {/* 内容 */}
               <div className="p-4">
-                {/* 心情和里程碑 */}
+                {/* 心情和名场面 */}
                 {(selectedMoment.milestone || selectedMoment.mood) && (
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-2xl">{moodIcons[selectedMoment.mood] || '👶'}</span>

@@ -90,7 +90,7 @@ export function TimelinePage({
     };
   }, []);
   
-  // 获取所有里程碑选项（包含预设和自定义）
+  // 获取所有名场面选项（包含预设和自定义）
   const milestoneFilters = useMemo(() => {
     const allMilestones = getAllMilestones();
     return [
@@ -615,9 +615,9 @@ export function TimelinePage({
             </div>
           </div>
 
-          {/* 里程碑筛选 */}
+          {/* 名场面筛选 */}
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs text-gray-400 flex-shrink-0">里程碑</span>
+            <span className="text-xs text-gray-400 flex-shrink-0">名场面</span>
             <button
               onClick={() => setSelectedMilestone('')}
               className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 ${

@@ -18,7 +18,7 @@ const moodIcons = {
   love: '❤️',
 };
 
-// 里程碑图标映射
+// 名场面图标映射
 const milestoneIcons = {
   first: '⭐',
   growth: '🌱',

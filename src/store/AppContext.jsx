@@ -31,7 +31,7 @@ import {
 
 const AppContext = createContext(null);
 
-// 预设里程碑（不可删除）
+// 预设名场面（不可删除）
 const DEFAULT_MOODS = [
   { id: 'happy', label: '开心', emoji: '😊' },
   { id: 'excited', label: '兴奋', emoji: '🎉' },
@@ -41,7 +41,7 @@ const DEFAULT_MOODS = [
   { id: 'angry', label: '生气', emoji: '😠' },
 ];
 
-// 预设里程碑（不可删除）
+// 预设名场面（不可删除）
 const DEFAULT_MILESTONES = [
   { id: 'first', label: '第一次', emoji: '⭐' },
   { id: 'growth', label: '成长', emoji: '🌱' },
@@ -82,7 +82,7 @@ export function AppProvider({ children }) {
     setTimeout(() => setToast(null), 2500);
   }, []);
 
-  // 获取所有可用的里程碑（预设 + 自定义）
+  // 获取所有可用的名场面（预设 + 自定义）
   const getAllMilestones = useCallback(() => {
     const hidden = Array.isArray(hiddenMilestones) ? hiddenMilestones : [];
     const custom = Array.isArray(customMilestones) ? customMilestones : [];
@@ -328,7 +328,7 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  // 添加自定义里程碑
+  // 添加自定义名场面
   const addMilestone = useCallback(async (milestone) => {
     try {
       // db already imported at top
@@ -337,13 +337,13 @@ export function AppProvider({ children }) {
       setCustomMilestones(prev => [...prev, newMilestone]);
       return newMilestone;
     } catch (error) {
-      console.error('添加里程碑失败:', error);
+      console.error('添加名场面失败:', error);
       showToast('添加失败', 'error');
       throw error;
     }
   }, [showToast]);
 
-  // 更新自定义里程碑
+  // 更新自定义名场面
   const updateMilestone = useCallback(async (id, updates) => {
     try {
       // updateCustomMilestone already imported at top
@@ -351,20 +351,20 @@ export function AppProvider({ children }) {
       setCustomMilestones(prev => prev.map(m => m.id === id ? updated : m));
       return updated;
     } catch (error) {
-      console.error('更新里程碑失败:', error);
+      console.error('更新名场面失败:', error);
       showToast('更新失败', 'error');
       throw error;
     }
   }, [showToast]);
 
-  // 删除自定义里程碑
+  // 删除自定义名场面
   const deleteMilestone = useCallback(async (id) => {
     try {
       // deleteCustomMilestone already imported at top
       await deleteCustomMilestone(id);
       setCustomMilestones(prev => prev.filter(m => m.id !== id));
     } catch (error) {
-      console.error('删除里程碑失败:', error);
+      console.error('删除名场面失败:', error);
       showToast('删除失败', 'error');
       throw error;
     }
@@ -408,7 +408,7 @@ export function AppProvider({ children }) {
     }
   }, [showToast]);
 
-  // 隐藏/显示预设里程碑
+  // 隐藏/显示预设名场面
   const toggleMilestoneVisibility = useCallback(async (milestoneId, hidden) => {
     const newHidden = hidden 
       ? [...hiddenMilestones, milestoneId]
@@ -481,7 +481,7 @@ export function AppProvider({ children }) {
     toggleTheme,
     setTheme,
     showToast,
-    // 里程碑相关
+    // 名场面相关
     customMilestones,
     hiddenMilestones,
     getAllMilestones,

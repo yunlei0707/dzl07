@@ -1,4 +1,4 @@
-// 成长里程碑定义
+// 成长名场面定义
 
 export const GROWTH_MILESTONES = {
   height: [50, 60, 70, 75, 80, 85, 90, 100, 110, 120],
@@ -28,8 +28,8 @@ export const GROWTH_ICONS = {
   footLength: '👣',
 };
 
-// 检查是否有新的里程碑触发
-// 返回触发的里程碑数组 [{field, value, label}]
+// 检查是否有新的名场面触发
+// 返回触发的名场面数组 [{field, value, label}]
 export function checkGrowthMilestones(newRecord, previousRecord) {
   const triggered = [];
   
@@ -40,7 +40,7 @@ export function checkGrowthMilestones(newRecord, previousRecord) {
     if (newValue == null || newValue <= 0) continue;
     
     for (const milestone of milestones) {
-      // 新值达到里程碑，旧值未达到（或没有旧值）
+      // 新值达到名场面，旧值未达到（或没有旧值）
       if (newValue >= milestone && (oldValue == null || oldValue < milestone)) {
         triggered.push({
           field,

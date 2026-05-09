@@ -382,7 +382,7 @@ export async function deleteMoment(id) {
 }
 
 /**
- * 根据里程碑标签筛选动态
+ * 根据名场面标签筛选动态
  */
 export async function getMomentsByMilestone(babyId, milestone) {
   const db = await initDB();
@@ -493,7 +493,7 @@ export async function updateSettings(updates) {
 }
 
 /**
- * 获取自定义里程碑标签
+ * 获取自定义名场面标签
  */
 export async function getCustomMilestones() {
   const settings = await getSettings();
@@ -501,14 +501,14 @@ export async function getCustomMilestones() {
 }
 
 /**
- * 保存自定义里程碑标签
+ * 保存自定义名场面标签
  */
 export async function saveCustomMilestones(milestones) {
   return updateSettings({ customMilestones: milestones });
 }
 
 /**
- * 添加自定义里程碑标签
+ * 添加自定义名场面标签
  */
 export async function addCustomMilestone(milestone) {
   const milestones = await getCustomMilestones();
@@ -522,7 +522,7 @@ export async function addCustomMilestone(milestone) {
 }
 
 /**
- * 更新自定义里程碑标签
+ * 更新自定义名场面标签
  */
 export async function updateCustomMilestone(id, updates) {
   const milestones = await getCustomMilestones();
@@ -532,11 +532,11 @@ export async function updateCustomMilestone(id, updates) {
     await saveCustomMilestones(milestones);
     return milestones[index];
   }
-  throw new Error('里程碑不存在');
+  throw new Error('名场面不存在');
 }
 
 /**
- * 删除自定义里程碑标签
+ * 删除自定义名场面标签
  */
 export async function deleteCustomMilestone(id) {
   const milestones = await getCustomMilestones();
@@ -1240,7 +1240,7 @@ export async function getMonthlyStats(babyId, year, month) {
   // 视频总数
   const videoCount = videoMoments.reduce((acc, m) => acc + (m.videos?.length || 0), 0);
   
-  // 获取里程碑事件
+  // 获取名场面事件
   const milestones = monthlyMoments
     .filter(m => m.milestone)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -1361,14 +1361,14 @@ function generateTimeMessage(stats, range, babyName) {
   
   const name = babyName || '宝宝';
   
-  // 优先规则：第一次里程碑
+  // 优先规则：第一次名场面
   if (firstMilestones && firstMilestones.length > 0) {
     return `这${rangeText}，${name}又解锁了${firstMilestones.length}个第一次，每一步都值得被记住。`;
   }
   
-  // 里程碑数>=3
+  // 名场面数>=3
   if (milestoneCount >= 3) {
-    return `这${rangeText}，${name}达成了${milestoneCount}个里程碑，成长的速度让人惊叹！`;
+    return `这${rangeText}，${name}达成了${milestoneCount}个名场面，成长的速度让人惊叹！`;
   }
   
   // 记录数>=10
@@ -1441,12 +1441,12 @@ export async function getGrowthReportStats(babyId, range = '1month', birthDate =
   // 视频总数
   const videoCount = videoMoments.reduce((acc, m) => acc + (m.videos?.length || 0), 0);
   
-  // 获取里程碑事件
+  // 获取名场面事件
   const milestones = filteredMoments
     .filter(m => m.milestone)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   
-  // 分离"第一次"里程碑
+  // 分离"第一次"名场面
   const firstMilestones = milestones.filter(m => m.milestone === 'first');
   
   // 获取心情分布
