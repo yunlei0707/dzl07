@@ -9,11 +9,27 @@ import { getCurrentBabyInfo } from '../utils/dbV2';
 import { isInApp, jsBridgeAudioRecorder } from '../utils/jsBridge';
 
 const moodOptions = [
-  { value: 'happy', emoji: '😊', label: '开心' },
-  { value: 'excited', emoji: '🎉', label: '兴奋' },
-  { value: 'touched', emoji: '🥰', label: '感动' },
-  { value: 'sleepy', emoji: '😴', label: '困倦' },
+  { value: 'happy', emoji: '😊', label: '开心', score: 2 },
+  { value: 'excited', emoji: '🎉', label: '兴奋', score: 3 },
+  { value: 'touched', emoji: '🥰', label: '感动', score: 2 },
+  { value: 'calm', emoji: '😌', label: '平静', score: 1 },
+  { value: 'sleepy', emoji: '😴', label: '困倦', score: 0 },
+  { value: 'sad', emoji: '😢', label: '难过', score: -2 },
+  { value: 'angry', emoji: '😠', label: '生气', score: -3 },
+  { value: 'sick', emoji: '🤒', label: '不舒服', score: -2 },
 ];
+
+// 心情选项映射（用于快速查找score）
+export const moodScoreMap = {
+  happy: 2,
+  excited: 3,
+  touched: 2,
+  calm: 1,
+  sleepy: 0,
+  sad: -2,
+  angry: -3,
+  sick: -2,
+};
 
 const weatherOptions = [
   { value: 'sunny', emoji: '☀️', label: '晴天' },
