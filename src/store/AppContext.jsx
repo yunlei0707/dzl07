@@ -43,11 +43,12 @@ const DEFAULT_MOODS = [
 
 // 预设名场面（不可删除）
 const DEFAULT_MILESTONES = [
-  { id: 'first', label: '第一次', emoji: '⭐' },
-  { id: 'growth', label: '成长', emoji: '🌱' },
-  { id: 'health', label: '健康', emoji: '💪' },
-  { id: 'learning', label: '学习', emoji: '📚' },
-  { id: 'daily', label: '日常', emoji: '✨' },
+  { id: 'first', label: '第一次', emoji: '🥇', shortLabel: '第一次' },
+  { id: 'homeboss', label: '窝里横外面怂', emoji: '🏠', shortLabel: '窝里横' },
+  { id: 'sensory', label: '感官挑战', emoji: '🧸', shortLabel: '感官挑战' },
+  { id: 'itemfriend', label: '我的小物品朋友', emoji: '🎒', shortLabel: '小物品' },
+  { id: 'littleboss', label: '小大人训话', emoji: '📢', shortLabel: '小大人' },
+  { id: 'ithink', label: '我想...', emoji: '💭', shortLabel: '我想' },
 ];
 
 /**

@@ -168,13 +168,13 @@ export function PredictionPage({ onClose }) {
   
   // 从localStorage加载预言
   useEffect(() => {
-    const loadPredictions = () => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
       try {
         const storageKey = `babyPredictions_${babyId}`;
         const stored = localStorage.getItem(storageKey);
         if (stored) {
           const allPredictions = JSON.parse(stored);
-          // 筛选当前选中月龄的预言
           const monthPredictions = allPredictions.filter(p => p.monthAge === selectedMonth);
           setPredictions(monthPredictions);
         } else {
@@ -185,14 +185,25 @@ export function PredictionPage({ onClose }) {
         setPredictions([]);
       }
       setIsLoading(false);
-    };
+    }, 100); // 100ms防抖，避免快速切换时频繁读取
     
-    loadPredictions();
+    return () => clearTimeout(timer);
   }, [babyId, selectedMonth]);
   
   // 生成新预言
   const handleGenerate = useCallback(() => {
-    // 从预言池中随机抽取3条
+    // 检查是否已有该月龄的预言（换一组时重新生成）
+    const storageKey = `babyPredictions_${babyId}`;
+    let existing = [];
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const all = JSON.parse(stored);
+        existing = all.filter(p => p.monthAge === selectedMonth);
+      }
+    } catch {}
+    
+    // 从预言池中随机抽取3条（换一组时传空数组以强制重新生成）
     const newPredictions = generatePredictionsForMonth(selectedMonth, babyId, []);
     
     if (newPredictions.length === 0) {
@@ -249,13 +260,18 @@ export function PredictionPage({ onClose }) {
     return { total, fulfilled, rate };
   }, [predictions]);
   
-  // 月龄选择范围
+  // 月龄选择范围（精简显示）
   const monthOptions = useMemo(() => {
-    const options = [];
-    for (let i = 0; i <= Math.max(36, currentMonthAge); i++) {
-      options.push(i);
-    }
-    return options;
+    const options = new Set();
+    // 0-12月每月显示
+    for (let i = 0; i <= 12; i++) options.add(i);
+    // 13-24月每3月
+    for (let i = 15; i <= 24; i += 3) options.add(i);
+    // 25-36月每6月
+    for (let i = 30; i <= 36; i += 6) options.add(i);
+    // 确保当前月龄在列表中
+    options.add(currentMonthAge);
+    return [...options].sort((a, b) => a - b);
   }, [currentMonthAge]);
   
   return (
