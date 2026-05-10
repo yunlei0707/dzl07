@@ -325,7 +325,17 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
       { mood: 'sick', emoji: '🤒', score: -2 },
     ];
     let closest = moodScores[0];
-
+    let minDiff = Math.abs(score - closest.score);
+    for (const m of moodScores) {
+      const diff = Math.abs(score - m.score);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = m;
+      }
+    }
+    return closest;
+  };
+  
   const moodTrackData = useMemo(() => {
     const activeMoments = hasV2Baby
       ? v2Moments.filter(m => !m.isDeleted && m.mood)
@@ -448,24 +458,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
 
   
   // 根据时间范围确定聚合粒度
-      { mood: 'calm', emoji: '😌', score: 1 },
-      { mood: 'sleepy', emoji: '😴', score: 0 },
-      { mood: 'sad', emoji: '😢', score: -2 },
-      { mood: 'angry', emoji: '😠', score: -3 },
-      { mood: 'sick', emoji: '🤒', score: -2 },
-    ];
-    let closest = moodScores[0];
-    let minDiff = Math.abs(score - closest.score);
-    for (const m of moodScores) {
-      const diff = Math.abs(score - m.score);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = m;
-      }
-    }
-    return closest;
-  };
-  
   
   return (
     <div 
