@@ -37,63 +37,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [isSystemAccount, setIsSystemAccount] = useState(false);
   const [hasV2Baby, setHasV2Baby] = useState(false);
   const [v2AccountInfo, setV2AccountInfo] = useState(null);
-  
-  // 监听账号切换，刷新 v2 数据（和 TimelinePage 完全一致）
-  useEffect(() => {
-    const updateV2Info = () => {
-      const account = getCurrentV2Account();
-      const timeline = getCurrentTimeline();
-      const isSystem = checkIsSystemAccount();
-      const growth = getCurrentGrowth();
-      const babyInfo = getCurrentBabyInfo();
-      
-      setV2Moments(timeline);
-      setIsSystemAccount(isSystem);
-      setHasV2Baby(!!babyInfo);
-      setV2AccountInfo(account || null);
-      setV2Growth(growth);
-      setV2BabyInfo(babyInfo);
-    };
-    
-    // 数据更新时：刷新 v2 数据
-    const handleDataUpdate = () => {
-      updateV2Info();
-      // 如果没有 v2 宝宝，则从 IndexedDB 重新加载
-      if (currentBaby && !getCurrentBabyInfo()) {
-        getMomentsByBaby(currentBaby.id).then(babyMoments => {
-          setMoments(babyMoments);
-        });
-        getCapsulesByBaby(currentBaby.id).then(babyCapsules => {
-          setCapsules(babyCapsules);
-        });
-      }
-    };
-    
-    updateV2Info();
-    
-    // 监听 localStorage 变化（跨标签页同步）
-    window.addEventListener('storage', updateV2Info);
-    // 监听数据更新事件（添加/导入动态后触发）
-    window.addEventListener('v2-moment-updated', handleDataUpdate);
-    // 轮询更新（和 TimelinePage 一致，300ms）
-    const interval = setInterval(updateV2Info, 300);
-    
-    return () => {
-      window.removeEventListener('storage', updateV2Info);
-      window.removeEventListener('v2-moment-updated', handleDataUpdate);
-      clearInterval(interval);
-    };
-  }, [currentBaby, setMoments, setCapsules]);
-  
-  // 刷新成长记录
-  useEffect(() => {
-    const babyId = currentBaby?.id || v2BabyInfo?.id;
-    if (babyId) {
-      refreshGrowthRecords(babyId);
-    }
-  }, [currentBaby, v2BabyInfo, refreshGrowthRecords]);
-  
-  // 优先使用 v2 账号信息，兼容旧的 currentBaby
   const displayBaby = v2BabyInfo || currentBaby;
   
   // 下拉刷新状态
@@ -158,6 +101,63 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const handleTouchEnd = useCallback(() => {
     if (pullDistance > 60 && !isRefreshing) {
       handleRefresh();
+  
+  // 监听账号切换，刷新 v2 数据（和 TimelinePage 完全一致）
+  useEffect(() => {
+    const updateV2Info = () => {
+      const account = getCurrentV2Account();
+      const timeline = getCurrentTimeline();
+      const isSystem = checkIsSystemAccount();
+      const growth = getCurrentGrowth();
+      const babyInfo = getCurrentBabyInfo();
+      
+      setV2Moments(timeline);
+      setIsSystemAccount(isSystem);
+      setHasV2Baby(!!babyInfo);
+      setV2AccountInfo(account || null);
+      setV2Growth(growth);
+      setV2BabyInfo(babyInfo);
+    };
+    
+    // 数据更新时：刷新 v2 数据
+    const handleDataUpdate = () => {
+      updateV2Info();
+      // 如果没有 v2 宝宝，则从 IndexedDB 重新加载
+      if (currentBaby && !getCurrentBabyInfo()) {
+        getMomentsByBaby(currentBaby.id).then(babyMoments => {
+          setMoments(babyMoments);
+        });
+        getCapsulesByBaby(currentBaby.id).then(babyCapsules => {
+          setCapsules(babyCapsules);
+        });
+      }
+    };
+    
+    updateV2Info();
+    
+    // 监听 localStorage 变化（跨标签页同步）
+    window.addEventListener('storage', updateV2Info);
+    // 监听数据更新事件（添加/导入动态后触发）
+    window.addEventListener('v2-moment-updated', handleDataUpdate);
+    // 轮询更新（和 TimelinePage 一致，300ms）
+    const interval = setInterval(updateV2Info, 300);
+    
+    return () => {
+      window.removeEventListener('storage', updateV2Info);
+      window.removeEventListener('v2-moment-updated', handleDataUpdate);
+      clearInterval(interval);
+    };
+  }, [currentBaby, setMoments, setCapsules]);
+  
+  // 刷新成长记录
+  useEffect(() => {
+    const babyId = currentBaby?.id || v2BabyInfo?.id;
+    if (babyId) {
+      refreshGrowthRecords(babyId);
+    }
+  }, [currentBaby, v2BabyInfo, refreshGrowthRecords]);
+  
+  // 优先使用 v2 账号信息，兼容旧的 currentBaby
     } else {
       setPullDistance(0);
     }
