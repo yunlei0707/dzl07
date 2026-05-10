@@ -296,6 +296,35 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [moodTimeRange, setMoodTimeRange] = useState(30); // 7/30/90/180/all
   const [showMoodTrack, setShowMoodTrack] = useState(true);
   const moodScoreMap = importedMoodScoreMap;
+  const getAggregationConfig = (range) => {
+    switch (range) {
+      case 7:
+        return { groupDays: 1, labelFormat: (d) => d.substring(5) }; // 按天展示 5/1
+      case 30:
+        return { groupDays: 3, labelFormat: (d) => d.substring(5) }; // 每3天 5/1
+      case 90:
+        return { groupDays: 7, labelFormat: (d) => d.substring(5) }; // 每周 5/5
+      case 180:
+        return { groupDays: 15, labelFormat: (d) => d.substring(5) }; // 半个月 5/1
+      case 'all':
+      default:
+        return { groupDays: 30, labelFormat: (d) => d.substring(0, 7).replace('-', '.') }; // 每月 2025.3
+    }
+  };
+  
+  // 心情emoji映射（根据score找最近的）
+  const scoreToMood = (score) => {
+    const moodScores = [
+      { mood: 'excited', emoji: '🎉', score: 3 },
+      { mood: 'happy', emoji: '😊', score: 2 },
+      { mood: 'touched', emoji: '🥰', score: 2 },
+      { mood: 'calm', emoji: '😌', score: 1 },
+      { mood: 'sleepy', emoji: '😴', score: 0 },
+      { mood: 'sad', emoji: '😢', score: -2 },
+      { mood: 'angry', emoji: '😠', score: -3 },
+      { mood: 'sick', emoji: '🤒', score: -2 },
+    ];
+    let closest = moodScores[0];
 
   const moodTrackData = useMemo(() => {
     const activeMoments = hasV2Baby
@@ -419,28 +448,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
 
   
   // 根据时间范围确定聚合粒度
-  const getAggregationConfig = (range) => {
-    switch (range) {
-      case 7:
-        return { groupDays: 1, labelFormat: (d) => d.substring(5) }; // 按天展示 5/1
-      case 30:
-        return { groupDays: 3, labelFormat: (d) => d.substring(5) }; // 每3天 5/1
-      case 90:
-        return { groupDays: 7, labelFormat: (d) => d.substring(5) }; // 每周 5/5
-      case 180:
-        return { groupDays: 15, labelFormat: (d) => d.substring(5) }; // 半个月 5/1
-      case 'all':
-      default:
-        return { groupDays: 30, labelFormat: (d) => d.substring(0, 7).replace('-', '.') }; // 每月 2025.3
-    }
-  };
-  
-  // 心情emoji映射（根据score找最近的）
-  const scoreToMood = (score) => {
-    const moodScores = [
-      { mood: 'excited', emoji: '🎉', score: 3 },
-      { mood: 'happy', emoji: '😊', score: 2 },
-      { mood: 'touched', emoji: '🥰', score: 2 },
       { mood: 'calm', emoji: '😌', score: 1 },
       { mood: 'sleepy', emoji: '😴', score: 0 },
       { mood: 'sad', emoji: '😢', score: -2 },
