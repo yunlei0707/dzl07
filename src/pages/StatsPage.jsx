@@ -297,6 +297,76 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [showMoodTrack, setShowMoodTrack] = useState(true);
   const moodScoreMap = importedMoodScoreMap;
 
+  const moodTrackData = useMemo(() => {
+    const activeMoments = hasV2Baby
+      ? v2Moments.filter(m => !m.isDeleted && m.mood)
+      : (moments && moments.length > 0 ? moments.filter(m => !m.isDeleted && m.mood) : []);
+    
+    if (activeMoments.length === 0) return { points: [], distribution: {} };
+    
+    const now = new Date();
+    const cutoffDays = moodTimeRange === 'all' ? 365 * 10 : moodTimeRange;
+    const cutoffDate = new Date(now.getTime() - cutoffDays * 24 * 60 * 60 * 1000);
+    
+    // 过滤时间范围内的数据
+    const filtered = activeMoments.filter(m => new Date(m.date) >= cutoffDate);
+    
+    if (filtered.length === 0) return { points: [], distribution: {} };
+    
+    // 获取聚合配置
+    const { groupDays, labelFormat } = getAggregationConfig(moodTimeRange);
+    
+    // 按粒度分组
+    const groupMap = {};
+    filtered.forEach(m => {
+      const dateObj = new Date(m.date);
+      // 计算组起始日期
+      const dayOfMonth = dateObj.getDate();
+      const groupStartDay = Math.floor((dayOfMonth - 1) / groupDays) * groupDays + 1;
+      const groupDate = new Date(dateObj);
+      groupDate.setDate(groupStartDay);
+      const groupKey = groupDate.toISOString().substring(0, 10);
+      
+      if (!groupMap[groupKey]) {
+        groupMap[groupKey] = { scores: [], moods: [], count: 0 };
+      }
+      const score = moodScoreMap[m.mood] || 0;
+      groupMap[groupKey].scores.push(score);
+      groupMap[groupKey].moods.push(m.mood);
+      groupMap[groupKey].count++;
+    });
+    
+    // 计算每组的平均score和映射的emoji
+    const points = Object.entries(groupMap)
+      .map(([date, data]) => {
+        const avgScore = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
+        const moodInfo = scoreToMood(avgScore);
+        // 统计该组内各心情出现次数，找最常见的
+        const moodCount = {};
+        data.moods.forEach(m => { moodCount[m] = (moodCount[m] || 0) + 1; });
+        const dominantMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0][0];
+        const dominantOption = moodOptions.find(o => o.value === dominantMood) || { emoji: '😊', label: '开心' };
+        
+        return {
+          date,
+          label: labelFormat(date),
+          avgScore,
+          emoji: dominantOption.emoji,
+          moodLabel: dominantOption.label,
+          count: data.count,
+        };
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+    
+    // 心情分布统计（基于原始数据）
+    const distribution = {};
+    filtered.forEach(m => {
+      distribution[m.mood] = (distribution[m.mood] || 0) + 1;
+    });
+    
+    return { points, distribution, groupDays };
+  }, [moments, v2Moments, hasV2Baby, moodTimeRange, moodScoreMap]);
+
   if (!displayBaby || !stats) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4">
@@ -389,75 +459,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     return closest;
   };
   
-  const moodTrackData = useMemo(() => {
-    const activeMoments = hasV2Baby
-      ? v2Moments.filter(m => !m.isDeleted && m.mood)
-      : (moments && moments.length > 0 ? moments.filter(m => !m.isDeleted && m.mood) : []);
-    
-    if (activeMoments.length === 0) return { points: [], distribution: {} };
-    
-    const now = new Date();
-    const cutoffDays = moodTimeRange === 'all' ? 365 * 10 : moodTimeRange;
-    const cutoffDate = new Date(now.getTime() - cutoffDays * 24 * 60 * 60 * 1000);
-    
-    // 过滤时间范围内的数据
-    const filtered = activeMoments.filter(m => new Date(m.date) >= cutoffDate);
-    
-    if (filtered.length === 0) return { points: [], distribution: {} };
-    
-    // 获取聚合配置
-    const { groupDays, labelFormat } = getAggregationConfig(moodTimeRange);
-    
-    // 按粒度分组
-    const groupMap = {};
-    filtered.forEach(m => {
-      const dateObj = new Date(m.date);
-      // 计算组起始日期
-      const dayOfMonth = dateObj.getDate();
-      const groupStartDay = Math.floor((dayOfMonth - 1) / groupDays) * groupDays + 1;
-      const groupDate = new Date(dateObj);
-      groupDate.setDate(groupStartDay);
-      const groupKey = groupDate.toISOString().substring(0, 10);
-      
-      if (!groupMap[groupKey]) {
-        groupMap[groupKey] = { scores: [], moods: [], count: 0 };
-      }
-      const score = moodScoreMap[m.mood] || 0;
-      groupMap[groupKey].scores.push(score);
-      groupMap[groupKey].moods.push(m.mood);
-      groupMap[groupKey].count++;
-    });
-    
-    // 计算每组的平均score和映射的emoji
-    const points = Object.entries(groupMap)
-      .map(([date, data]) => {
-        const avgScore = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
-        const moodInfo = scoreToMood(avgScore);
-        // 统计该组内各心情出现次数，找最常见的
-        const moodCount = {};
-        data.moods.forEach(m => { moodCount[m] = (moodCount[m] || 0) + 1; });
-        const dominantMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0][0];
-        const dominantOption = moodOptions.find(o => o.value === dominantMood) || { emoji: '😊', label: '开心' };
-        
-        return {
-          date,
-          label: labelFormat(date),
-          avgScore,
-          emoji: dominantOption.emoji,
-          moodLabel: dominantOption.label,
-          count: data.count,
-        };
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
-    
-    // 心情分布统计（基于原始数据）
-    const distribution = {};
-    filtered.forEach(m => {
-      distribution[m.mood] = (distribution[m.mood] || 0) + 1;
-    });
-    
-    return { points, distribution, groupDays };
-  }, [moments, v2Moments, hasV2Baby, moodTimeRange, moodScoreMap]);
   
   return (
     <div 
