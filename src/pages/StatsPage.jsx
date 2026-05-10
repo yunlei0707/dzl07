@@ -37,6 +37,63 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [isSystemAccount, setIsSystemAccount] = useState(false);
   const [hasV2Baby, setHasV2Baby] = useState(false);
   const [v2AccountInfo, setV2AccountInfo] = useState(null);
+  
+  // 监听账号切换，刷新 v2 数据（和 TimelinePage 完全一致）
+  useEffect(() => {
+    const updateV2Info = () => {
+      const account = getCurrentV2Account();
+      const timeline = getCurrentTimeline();
+      const isSystem = checkIsSystemAccount();
+      const growth = getCurrentGrowth();
+      const babyInfo = getCurrentBabyInfo();
+      
+      setV2Moments(timeline);
+      setIsSystemAccount(isSystem);
+      setHasV2Baby(!!babyInfo);
+      setV2AccountInfo(account || null);
+      setV2Growth(growth);
+      setV2BabyInfo(babyInfo);
+    };
+    
+    // 数据更新时：刷新 v2 数据
+    const handleDataUpdate = () => {
+      updateV2Info();
+      // 如果没有 v2 宝宝，则从 IndexedDB 重新加载
+      if (currentBaby && !getCurrentBabyInfo()) {
+        getMomentsByBaby(currentBaby.id).then(babyMoments => {
+          setMoments(babyMoments);
+        });
+        getCapsulesByBaby(currentBaby.id).then(babyCapsules => {
+          setCapsules(babyCapsules);
+        });
+      }
+    };
+    
+    updateV2Info();
+    
+    // 监听 localStorage 变化（跨标签页同步）
+    window.addEventListener('storage', updateV2Info);
+    // 监听数据更新事件（添加/导入动态后触发）
+    window.addEventListener('v2-moment-updated', handleDataUpdate);
+    // 轮询更新（和 TimelinePage 一致，300ms）
+    const interval = setInterval(updateV2Info, 300);
+    
+    return () => {
+      window.removeEventListener('storage', updateV2Info);
+      window.removeEventListener('v2-moment-updated', handleDataUpdate);
+      clearInterval(interval);
+    };
+  }, [currentBaby, setMoments, setCapsules]);
+  
+  // 刷新成长记录
+  useEffect(() => {
+    const babyId = currentBaby?.id || v2BabyInfo?.id;
+    if (babyId) {
+      refreshGrowthRecords(babyId);
+    }
+  }, [currentBaby, v2BabyInfo, refreshGrowthRecords]);
+  
+  // 优先使用 v2 账号信息，兼容旧的 currentBaby
   const displayBaby = v2BabyInfo || currentBaby;
   
   // 下拉刷新状态
@@ -238,8 +295,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   // 心情轨迹状态 - 必须在条件返回之前声明
   const [moodTimeRange, setMoodTimeRange] = useState(30); // 7/30/90/180/all
   const [showMoodTrack, setShowMoodTrack] = useState(true);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const moodScoreMap = importedMoodScoreMap;
 
   if (!displayBaby || !stats) {
@@ -382,63 +437,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
         const moodCount = {};
         data.moods.forEach(m => { moodCount[m] = (moodCount[m] || 0) + 1; });
         const dominantMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0][0];
-  
-  // 监听账号切换，刷新 v2 数据（和 TimelinePage 完全一致）
-  useEffect(() => {
-    const updateV2Info = () => {
-      const account = getCurrentV2Account();
-      const timeline = getCurrentTimeline();
-      const isSystem = checkIsSystemAccount();
-      const growth = getCurrentGrowth();
-      const babyInfo = getCurrentBabyInfo();
-      
-      setV2Moments(timeline);
-      setIsSystemAccount(isSystem);
-      setHasV2Baby(!!babyInfo);
-      setV2AccountInfo(account || null);
-      setV2Growth(growth);
-      setV2BabyInfo(babyInfo);
-    };
-    
-    // 数据更新时：刷新 v2 数据
-    const handleDataUpdate = () => {
-      updateV2Info();
-      // 如果没有 v2 宝宝，则从 IndexedDB 重新加载
-      if (currentBaby && !getCurrentBabyInfo()) {
-        getMomentsByBaby(currentBaby.id).then(babyMoments => {
-          setMoments(babyMoments);
-        });
-        getCapsulesByBaby(currentBaby.id).then(babyCapsules => {
-          setCapsules(babyCapsules);
-        });
-      }
-    };
-    
-    updateV2Info();
-    
-    // 监听 localStorage 变化（跨标签页同步）
-    window.addEventListener('storage', updateV2Info);
-    // 监听数据更新事件（添加/导入动态后触发）
-    window.addEventListener('v2-moment-updated', handleDataUpdate);
-    // 轮询更新（和 TimelinePage 一致，300ms）
-    const interval = setInterval(updateV2Info, 300);
-    
-    return () => {
-      window.removeEventListener('storage', updateV2Info);
-      window.removeEventListener('v2-moment-updated', handleDataUpdate);
-      clearInterval(interval);
-    };
-  }, [currentBaby, setMoments, setCapsules]);
-  
-  // 刷新成长记录
-  useEffect(() => {
-    const babyId = currentBaby?.id || v2BabyInfo?.id;
-    if (babyId) {
-      refreshGrowthRecords(babyId);
-    }
-  }, [currentBaby, v2BabyInfo, refreshGrowthRecords]);
-  
-  // 优先使用 v2 账号信息，兼容旧的 currentBaby
         const dominantOption = moodOptions.find(o => o.value === dominantMood) || { emoji: '😊', label: '开心' };
         
         return {
@@ -1116,6 +1114,8 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
 
 // 心情曲线图组件（纯SVG实现 - 贝塞尔曲线版本）
 function MoodCurveChart({ points, moodOptions }) {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   
   if (!points || points.length === 0) return null;
   
