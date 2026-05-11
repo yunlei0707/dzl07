@@ -122,6 +122,7 @@ export function TimelinePage({
   const [selectedMilestone, setSelectedMilestone] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
+  const [showMilestoneDropdown, setShowMilestoneDropdown] = useState(false);
   const [showPrediction, setShowPrediction] = useState(false);
   const [sharingMoment, setSharingMoment] = useState(null);
 
@@ -209,8 +210,12 @@ export function TimelinePage({
   
   // 筛选后的动态 - 根据账号类型选择数据源
   const filteredMoments = useMemo(() => {
-    // 有 v2 宝宝信息使用 v2Moments，否则使用 moments
-    const sourceMoments = hasV2Baby ? v2Moments : moments;
+    // 判断当前宝宝是否是 v2 账号
+    const babyInfo = getCurrentBabyInfo();
+    // 有两种情况用v2数据：1)没有普通宝宝 2)当前宝宝ID匹配v2账号ID
+    const useV2Data = !currentBaby || (babyInfo && babyInfo.id === currentBaby.id);
+    // 使用对应数据源
+    const sourceMoments = useV2Data ? v2Moments : moments;
     let result = sourceMoments.filter(m => !m.isDeleted); // 排除已删除的记录
     
     if (selectedType) {
@@ -549,58 +554,54 @@ export function TimelinePage({
                   </button>
                 );
               })}
-              {/* 更多按钮 - 滑到第3个后出现 */}
-              {milestoneFilters.filter(f => f.value !== '').length > 3 && (
-                <div className="relative flex-shrink-0">
-                  <button
-                    onClick={() => {
-                      const el = document.getElementById('milestone-dropdown');
-                      if (el) el.classList.toggle('hidden');
-                    }}
-                    className={`px-2 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex items-center gap-0.5 ${
-                      selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone)
-                        ? 'font-medium'
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                    style={selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone) ? {
-                      backgroundColor: milestoneFilters.find(f => f.value === selectedMilestone)?.color || '#8B5CF6',
-                      color: 'white',
-                    } : {}}
-                  >
-                    {selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone)
-                      ? `${milestoneFilters.find(f => f.value === selectedMilestone)?.emoji || '✨'} ${milestoneFilters.find(f => f.value === selectedMilestone)?.shortLabel || '更多'}`
-                      : <>更多 <ChevronDown className="w-3 h-3" /></>
-                    }
-                  </button>
-                  <div
-                    id="milestone-dropdown"
-                    className="hidden absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 min-w-[140px]"
-                  >
-                    {milestoneFilters.filter(f => f.value !== '').slice(3).map(filter => {
-                      const isSelected = selectedMilestone === filter.value;
-                      const color = filter.color || '#8B5CF6';
-                      const emoji = filter.emoji || '✨';
-                      return (
-                        <button
-                          key={filter.value}
-                          onClick={() => {
-                            setSelectedMilestone(filter.value);
-                            document.getElementById('milestone-dropdown')?.classList.add('hidden');
-                          }}
-                          className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 transition-colors ${
-                            isSelected ? 'font-medium' : ''
-                          }`}
-                          style={isSelected ? { color } : {}}
-                        >
-                          <span>{emoji}</span>
-                          <span>{filter.shortLabel || filter.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
+            {/* 更多按钮 - 滑到第3个后出现 */}
+            {milestoneFilters.filter(f => f.value !== '').length > 3 && (
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => setShowMilestoneDropdown(!showMilestoneDropdown)}
+                  className={`px-2 py-1 rounded-full text-xs whitespace-nowrap transition-colors flex items-center gap-0.5 ${
+                    selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone)
+                      ? 'font-medium'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                  style={selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone) ? {
+                    backgroundColor: milestoneFilters.find(f => f.value === selectedMilestone)?.color || '#8B5CF6',
+                    color: 'white',
+                  } : {}}
+                >
+                  {selectedMilestone && !milestoneFilters.filter(f => f.value !== '').slice(0, 3).find(f => f.value === selectedMilestone)
+                    ? `${milestoneFilters.find(f => f.value === selectedMilestone)?.emoji || '✨'} ${milestoneFilters.find(f => f.value === selectedMilestone)?.shortLabel || '更多'}`
+                    : <>更多 <ChevronDown className="w-3 h-3" /></>
+                  }
+                </button>
+                <div
+                  className={`absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-[100] min-w-[140px] ${showMilestoneDropdown ? '' : 'hidden'}`}
+                >
+                  {milestoneFilters.filter(f => f.value !== '').slice(3).map(filter => {
+                    const isSelected = selectedMilestone === filter.value;
+                    const color = filter.color || '#8B5CF6';
+                    const emoji = filter.emoji || '✨';
+                    return (
+                      <button
+                        key={filter.value}
+                        onClick={() => {
+                          setSelectedMilestone(filter.value);
+                          setShowMilestoneDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 transition-colors ${
+                          isSelected ? 'font-medium' : ''
+                        }`}
+                        style={isSelected ? { color } : {}}
+                      >
+                        <span>{emoji}</span>
+                        <span>{filter.shortLabel || filter.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         

@@ -23,7 +23,7 @@ import { RecycleBin } from './components/RecycleBin';
 
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
-import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby, addGrowthRecord, updateGrowthRecord } from './utils/db';
+import { addMoment, updateMoment, addCapsule, updateCapsule, addBaby, updateBaby, addGrowthRecord, updateGrowthRecord, getMomentsByBaby } from './utils/db';
 import { isSystemAccount, getCurrentBabyInfo, addMomentToCurrentAccount, updateMomentInCurrentAccount, updateCurrentBabyInfo } from './utils/dbV2';
 import { initializeApp } from './utils/dbV2';
 import { handleRecordLink } from './utils/linkService';
@@ -181,9 +181,9 @@ function AppContent() {
       // 获取当前宝宝信息
       const babyInfo = getCurrentBabyInfo();
       
-      // 如果没有 babyId，使用当前账号的宝宝 ID
+      // 如果没有 babyId，优先使用当前选中的普通宝宝ID，其次是v2账号ID
       if (!momentData.babyId) {
-        momentData.babyId = babyInfo?.id || currentBaby?.id || 'user';
+        momentData.babyId = currentBaby?.id || babyInfo?.id || 'user';
       }
       
       // 确保有 babyId
@@ -192,7 +192,10 @@ function AppContent() {
       }
       
       // 根据账号类型使用不同的添加方法
-      if (babyInfo?.isSystem) {
+      // 只有两种情况是v2账号：1)没有普通宝宝 且 2)babyId匹配v2账号id
+      const isV2Account = !currentBaby && babyInfo && babyInfo.id === momentData.babyId;
+      
+      if (isV2Account && babyInfo?.isSystem) {
         // 系统账号不支持添加
         showToast('系统账号不可添加记录', 'error');
         return;
@@ -200,7 +203,7 @@ function AppContent() {
       
       if (momentData.id) {
         // 更新操作
-        if (babyInfo) {
+        if (isV2Account) {
           await updateMomentInCurrentAccount(momentData.id, momentData);
         } else {
           await updateMoment(momentData.id, momentData);
@@ -209,10 +212,13 @@ function AppContent() {
       } else {
         // 新增操作
         let savedMoment;
-        if (babyInfo) {
+        if (isV2Account) {
           savedMoment = await addMomentToCurrentAccount(momentData);
         } else {
           savedMoment = await addMoment(momentData);
+          // 普通宝宝保存成功后刷新 context 中的 moments
+          const updatedMoments = await getMomentsByBaby(currentBaby.id);
+          setMoments(updatedMoments);
         }
         showToast('记录已保存！🎉');
         

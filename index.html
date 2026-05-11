@@ -141,24 +141,23 @@
     min-height: 0 !important;
     overflow: hidden !important;
   }
+  
   </style>
 
   <!-- SDK 初始化 - 最简单最基础的版本，确保按钮正常显示 -->
   <script>
-  window.addEventListener('load', function() {
-    setTimeout(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const initSDK = () => {
       if (typeof CozeWebSDK !== 'undefined' && !window.cozeClient) {
         window.cozeClient = new CozeWebSDK.WebChatClient({
-          config: {
-            bot_id: '7636350042466418731'
-          },
-          componentProps: {
-            title: '虚拟时光助手'
-          }
+          config: { bot_id: '7636350042466418731' },
+          componentProps: { title: '虚拟时光助手' },
         });
-        console.log('✅ SDK initialized');
       }
-    }, 1000);
+    };
+    initSDK();
+    let cnt = 0;
+    const t = setInterval(() => { if (++cnt >= 10 || window.cozeClient) clearInterval(t); else initSDK(); }, 500);
   });
   </script>
   

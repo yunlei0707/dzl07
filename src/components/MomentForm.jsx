@@ -45,7 +45,7 @@ const formatTime2 = (seconds) => {
 };
 
 export function MomentForm({ moment, onSave, onCancel, babyId }) {
-  const { getAllMilestones } = useApp();
+  const { getAllMilestones, currentBaby } = useApp();
   const [type, setType] = useState(moment?.type || 'photo');
   const [content, setContent] = useState(moment?.content || '');
   const [photos, setPhotos] = useState(moment?.photos || []);
@@ -598,6 +598,24 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     videoReader.onload = (event) => {
       const videoDataURL = event.target.result;
       
+      // 标志位：防止重复添加同一个视频
+      let videoAdded = false;
+      
+      // 添加视频的统一函数
+      const addVideo = (cover = null, duration = 0) => {
+        if (videoAdded) return;  // 防止重复添加
+        videoAdded = true;
+        
+        setVideos(prev => [...prev, {
+          url: videoDataURL,
+          cover: cover,
+          name: file.name,
+          size: file.size,
+          duration: duration
+        }]);
+        setSaving(false);
+      };
+      
       // 创建视频元素读取封面
       const video = document.createElement('video');
       video.src = videoDataURL;
@@ -607,13 +625,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       
       // 超时保护：5秒内如果视频无法加载封面，直接存储
       const coverTimeout = setTimeout(() => {
-        setVideos(prev => [...prev, {
-          url: videoDataURL,
-          cover: null,
-          name: file.name,
-          size: file.size
-        }]);
-        setSaving(false);
+        addVideo(null, 0);
       }, 5000);
       
       video.onloadeddata = () => {
@@ -627,26 +639,11 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         try {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const coverImage = canvas.toDataURL('image/jpeg', 0.6);
-          
-          const videoData = {
-            url: videoDataURL, // 存储实际视频数据
-            cover: coverImage,
-            name: file.name,
-            size: file.size,
-            duration: video.duration
-          };
-          
-          setVideos(prev => [...prev, videoData]);
+          addVideo(coverImage, video.duration);
         } catch (err) {
           // 如果生成失败，使用默认占位
-          setVideos(prev => [...prev, {
-            url: videoDataURL,
-            cover: null,
-            name: file.name,
-            size: file.size
-          }]);
+          addVideo(null, video.duration);
         }
-        setSaving(false);
         // 释放视频元素
         video.src = '';
         video.remove();
@@ -655,13 +652,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       video.onerror = () => {
         clearTimeout(coverTimeout);
         // 即使封面失败，也保存视频
-        setVideos(prev => [...prev, {
-          url: videoDataURL,
-          cover: null,
-          name: file.name,
-          size: file.size
-        }]);
-        setSaving(false);
+        addVideo(null, 0);
       };
     };
     
@@ -717,7 +708,8 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       // v2 账号（localStorage）：5MB 限制，安全上限 4MB
       // 普通宝宝（IndexedDB）：空间充裕，放宽到 30MB
       const babyInfo = getCurrentBabyInfo();
-      const isV2Account = !!babyInfo;
+      // 只有两种情况是v2账号：1)没有普通宝宝 且 2)babyId匹配v2账号id
+      const isV2Account = !currentBaby && babyInfo && babyInfo.id === babyId;
       const MAX_SIZE = isV2Account ? 4 * 1024 * 1024 : 30 * 1024 * 1024;
       const dataSize = JSON.stringify(momentData).length;
       

@@ -154,7 +154,10 @@ export function BabyForm({ baby, onSave, onCancel, isSystem = false }) {
       
       <div className="p-4 pb-24 space-y-4 max-w-lg mx-auto">
         <div className="flex flex-col items-center">
-          <div className={`relative ${!isSystem ? 'cursor-pointer group' : ''}`}>
+          <div 
+            className={`relative ${!isSystem ? 'cursor-pointer group' : ''}`}
+            onClick={() => !isSystem && document.getElementById('baby-avatar-input')?.click()}
+          >
             <div className="w-28 h-28 rounded-full overflow-hidden bg-cream-100 dark:bg-gray-700 border-4 border-white dark:border-gray-600 shadow-lg">
               {avatar ? (
                 <img src={avatar} alt="" className="w-full h-full object-cover" />
@@ -170,6 +173,7 @@ export function BabyForm({ baby, onSave, onCancel, isSystem = false }) {
                   <Camera className="w-5 h-5 text-white" />
                 </div>
                 <input
+                  id="baby-avatar-input"
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarUpload}
