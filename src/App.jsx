@@ -48,6 +48,7 @@ function AuthGuard({ children }) {
 function RoutePersistence({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentBaby } = useApp();
   
   // 页面加载时：恢复上次路由 + 清理孤儿视频文件
   useEffect(() => {

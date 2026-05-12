@@ -443,7 +443,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setAudios(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 播客音频上传
+  // 播客音频上传（简化版，先确保基本功能可用）
   const handlePodcastAudioUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -453,55 +453,33 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     // 限制音频大小
     if (file.size > 50 * 1024 * 1024) {
       alert('音频文件不能超过50MB');
+      e.target.value = '';
       return;
     }
     
     const reader = new FileReader();
-    reader.onload = (event) => {
-      console.log('[播客上传] 文件读取完成，长度:', event.target.result?.length);
-      // 创建音频元素获取时长
-      try {
-        const audio = new Audio(event.target.result);
-        audio.addEventListener('loadedmetadata', () => {
-          console.log('[播客上传] 音频元数据加载完成，时长:', audio.duration);
-          setPodcastAudio({
-            url: event.target.result,
-            name: file.name,
-            size: file.size,
-            duration: audio.duration
-          });
-        });
-        audio.addEventListener('error', (err) => {
-          console.error('[播客上传] 音频加载失败:', err);
-          alert('音频文件格式不支持或已损坏，请选择其他文件');
-          // 即使获取时长失败，也保存音频文件
-          setPodcastAudio({
-            url: event.target.result,
-            name: file.name,
-            size: file.size,
-            duration: 0
-          });
-        });
-      } catch (err) {
-        console.error('[播客上传] 创建音频对象失败:', err);
-        // 即使获取时长失败，也保存音频文件
-        setPodcastAudio({
-          url: event.target.result,
-          name: file.name,
-          size: file.size,
-          duration: 0
-        });
+    reader.onloadend = () => {
+      if (reader.error) {
+        console.error('[播客上传] 读取失败:', reader.error);
+        alert('读取失败: ' + reader.error.message);
+        e.target.value = '';
+        return;
       }
-    };
-    reader.onerror = (err) => {
-      console.error('[播客上传] 文件读取失败:', err);
-      alert('读取文件失败，请重试');
+      
+      console.log('[播客上传] 读取成功');
+      // 简化：不获取音频时长，直接保存
+      setPodcastAudio({
+        url: reader.result,
+        name: file.name,
+        size: file.size,
+        duration: 0
+      });
+      e.target.value = '';
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
   
-  // 播客封面上传
+  // 播客封面上传（简化版）
   const handlePodcastCoverUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -509,16 +487,17 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     console.log('[播客封面] 选择文件:', file.name);
     
     const reader = new FileReader();
-    reader.onload = (event) => {
-      console.log('[播客封面] 读取完成');
-      setPodcastCover(event.target.result);
-    };
-    reader.onerror = (err) => {
-      console.error('[播客封面] 读取失败:', err);
-      alert('封面图片读取失败');
+    reader.onloadend = () => {
+      if (reader.error) {
+        console.error('[播客封面] 读取失败:', reader.error);
+        alert('封面读取失败');
+        e.target.value = '';
+        return;
+      }
+      setPodcastCover(reader.result);
+      e.target.value = '';
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
   
   // 删除播客音频

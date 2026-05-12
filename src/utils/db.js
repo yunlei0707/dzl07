@@ -615,18 +615,19 @@ export async function deleteCustomMood(id) {
  */
 export async function exportAllData() {
   const db = await initDB();
-  const [babies, moments, capsules, settings, users] = await Promise.all([
+  const [babies, moments, capsules, settings, users, growthRecords] = await Promise.all([
     db.getAll('babies'),
     db.getAll('moments'),
     db.getAll('capsules'),
     db.getAll('settings'),
     db.getAll('users'),
+    db.getAll('growthRecords'),
   ]);
   
   return {
     exportTime: new Date().toISOString(),
-    version: '1.1.0',
-    data: { babies, moments, capsules, settings, users },
+    version: '1.2.0',
+    data: { babies, moments, capsules, settings, users, growthRecords },
   };
 }
 
@@ -640,22 +641,34 @@ export async function importAllData(data, mode = 'merge') {
   
   if (mode === 'replace') {
     // 覆盖模式：清空所有数据后导入
-    const tx = db.transaction(['babies', 'moments', 'capsules', 'settings', 'users'], 'readwrite');
+    const tx = db.transaction(['babies', 'moments', 'capsules', 'settings', 'users', 'growthRecords'], 'readwrite');
     await tx.objectStore('babies').clear();
     await tx.objectStore('moments').clear();
     await tx.objectStore('capsules').clear();
     await tx.objectStore('settings').clear();
     await tx.objectStore('users').clear();
+    await tx.objectStore('growthRecords').clear();
     await tx.done;
   }
   
   const { data: importedData } = data;
-  const { babies, moments, capsules, settings, users } = importedData;
+  const { babies, moments, capsules, settings, users, growthRecords } = importedData;
   
   // 导入数据
   if (babies && babies.length > 0) {
     for (const baby of babies) {
       await db.put('babies', baby);
+    }
+  }
+  
+  // 导入成长记录
+  if (growthRecords && growthRecords.length > 0) {
+    for (const record of growthRecords) {
+      try {
+        await db.put('growthRecords', record);
+      } catch (e) {
+        console.warn('导入成长记录失败（可能已存在）:', record.id, e);
+      }
     }
   }
   
