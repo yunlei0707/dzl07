@@ -305,13 +305,13 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                 </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <Mic className="w-4 h-4 text-primary-500" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                        语音文字
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Mic className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+                        {audio.fileName || '语音记录'}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 flex-shrink-0">
                       {formatTime2(audio.duration)}
                     </span>
                   </div>

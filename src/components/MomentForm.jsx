@@ -3,7 +3,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play, Pause, Navigation, Search } from 'lucide-react';
+import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play, Pause, Navigation, Search, Upload } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { getCurrentBabyInfo } from '../utils/dbV2';
 import { isInApp, jsBridgeAudioRecorder } from '../utils/jsBridge';
@@ -435,6 +435,61 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   // 删除音频
   const removeAudio = (index) => {
     setAudios(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 音频文件上传处理
+  const handleAudioUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 验证文件类型
+    const validTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/m4a', 'audio/mp4', 'audio/x-m4a', 'audio/aac'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|aac)$/i)) {
+      alert('不支持的音频格式，请选择mp3、wav或m4a格式的文件');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    const audio = new Audio();
+
+    reader.onload = (event) => {
+      audio.src = event.target.result;
+
+      // 获取音频时长
+      audio.onloadedmetadata = () => {
+        const duration = Math.floor(audio.duration);
+
+        // 生成模拟波形数据（与录音保持一致）
+        const simulatedWaveform = [];
+        for (let i = 0; i < 50; i++) {
+          const frame = Array.from({ length: 32 }, () => Math.random() * 200 + 50);
+          simulatedWaveform.push(frame);
+        }
+
+        const audioData = {
+          url: event.target.result,
+          duration: duration,
+          waveform: simulatedWaveform,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          isImported: true
+        };
+        setAudios(prev => [...prev, audioData]);
+      };
+
+      audio.onerror = () => {
+        alert('音频文件加载失败，请检查文件是否损坏');
+      };
+    };
+
+    reader.onerror = () => {
+      alert('读取音频文件失败');
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
   
   // 播放/暂停音频
@@ -1029,8 +1084,13 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                           <Play className="w-4 h-4 ml-0.5" />
                         )}
                       </button>
-                      <div className="flex-1">
-                        <div className="h-8 bg-primary-200 dark:bg-primary-700 rounded-full overflow-hidden flex items-end px-1">
+                      <div className="flex-1 min-w-0">
+                        {audio.fileName && (
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate mb-1">
+                            {audio.fileName}
+                          </p>
+                        )}
+                        <div className="h-6 bg-primary-200 dark:bg-primary-700 rounded-full overflow-hidden flex items-end px-1">
                           {(audio.waveform || []).slice(-1)[0]?.map((val, i) => (
                             <div
                               key={i}
@@ -1040,7 +1100,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
                           )) || <div className="flex-1" />}
                         </div>
                       </div>
-                      <span className="text-sm text-gray-500">{formatTime2(audio.duration)}</span>
+                      <span className="text-sm text-gray-500 whitespace-nowrap">{formatTime2(audio.duration)}</span>
                       <button
                         onClick={() => removeAudio(index)}
                         className="p-2 text-gray-400 hover:text-red-500"
@@ -1053,26 +1113,41 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
               </div>
             )}
             
-            <button
-              onClick={isRecording ? stopRecording : startRecording}
-              className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
-                isRecording
-                  ? 'bg-red-500 text-white'
-                  : 'bg-primary-500 text-white hover:bg-primary-600'
-              }`}
-            >
-              {isRecording ? (
-                <>
-                  <Square className="w-5 h-5" />
-                  <span>停止录音 ({formatTime2(recordingTime)})</span>
-                </>
-              ) : (
-                <>
-                  <Mic className="w-5 h-5" />
-                  <span>开始录音</span>
-                </>
-              )}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors ${
+                  isRecording
+                    ? 'bg-red-500 text-white'
+                    : 'bg-primary-500 text-white hover:bg-primary-600'
+                }`}
+              >
+                {isRecording ? (
+                  <>
+                    <Square className="w-5 h-5" />
+                    <span>停止录音 ({formatTime2(recordingTime)})</span>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-5 h-5" />
+                    <span>开始录音</span>
+                  </>
+                )}
+              </button>
+              
+              <label className="flex-1">
+                <div className="w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-colors bg-cream-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-cream-300 dark:hover:bg-gray-500 cursor-pointer">
+                  <Upload className="w-5 h-5" />
+                  <span>导入音频</span>
+                </div>
+                <input
+                  type="file"
+                  accept="audio/mp3,audio/mpeg,audio/wav,audio/m4a,audio/mp4,audio/aac,.mp3,.wav,.m4a,.aac"
+                  onChange={handleAudioUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
         )}
         
