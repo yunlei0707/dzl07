@@ -109,9 +109,14 @@ function PhotoItem({ photo, alt, className }) {
     if (typeof photo === 'string') {
       // Base64模式：直接使用
       setPhotoUrl(photo);
-    } else if (photo && typeof photo === 'object' && photo.filename) {
-      // FS模式：从文件系统加载
-      loadFSPhoto();
+    } else if (photo && typeof photo === 'object') {
+      // 优先使用preview字段（如果有）
+      if (photo.preview) {
+        setPhotoUrl(photo.preview);
+      } else if (photo.filename) {
+        // FS模式：从文件系统加载
+        loadFSPhoto();
+      }
     }
   }, [photo]);
 

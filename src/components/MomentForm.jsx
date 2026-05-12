@@ -699,8 +699,11 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       const fileInfo = await savePhotoToFS(base64);
       
       if (fileInfo) {
-        // FS模式：存储文件信息
-        setPhotos(prev => [...prev, fileInfo]);
+        // FS模式：存储文件信息 + 保留预览用于立即显示
+        setPhotos(prev => [...prev, {
+          ...fileInfo,
+          preview: base64  // 保留base64预览用于立即显示
+        }]);
       } else {
         // Base64模式：传统方式
         setPhotos(prev => [...prev, base64]);
@@ -1072,7 +1075,11 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {photos.map((photo, index) => (
                   <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-cream-100 dark:bg-gray-700">
-                    <img src={photo} alt="" className="w-full h-full object-cover" />
+                    <img 
+                      src={typeof photo === 'object' ? photo.preview : photo} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                    />
                     <button
                       onClick={() => removePhoto(index)}
                       className="absolute top-1 right-1 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
