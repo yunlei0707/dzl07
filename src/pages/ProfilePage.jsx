@@ -435,16 +435,19 @@ export function ProfilePage(
       
       // APP环境：写入系统下载目录
       let filePath = '';
+      let writeSuccess = false;
       if (isInApp()) {
         try {
           const { jsBridgeFS } = await import('../utils/jsBridge');
           filePath = `fs://download/宝宝时光备份/${filename}`;
+          console.log('[ProfilePage] 准备写入文件, 路径:', filePath);
           
           // 确保目录存在
           try {
             await jsBridgeFS.mkdir('fs://download/宝宝时光备份');
+            console.log('[ProfilePage] 目录创建成功');
           } catch (e) {
-            // 目录可能已存在
+            console.log('[ProfilePage] 目录可能已存在:', e);
           }
           
           // Blob转Base64写入
@@ -453,24 +456,33 @@ export function ProfilePage(
             reader.onload = async () => {
               try {
                 const base64 = reader.result.split(',')[1];
+                console.log('[ProfilePage] 开始写入文件, base64长度:', base64?.length);
                 await jsBridgeFS.writeBinary(filePath, base64);
+                console.log('[ProfilePage] 文件写入成功');
+                writeSuccess = true;
                 resolve();
               } catch (e) {
+                console.error('[ProfilePage] writeBinary失败:', e);
                 reject(e);
               }
             };
-            reader.onerror = reject;
+            reader.onerror = (e) => {
+              console.error('[ProfilePage] FileReader失败:', e);
+              reject(e);
+            };
             reader.readAsDataURL(zipBlob);
           });
         } catch (e) {
-          console.log('APP写入失败，将使用传统方式');
+          console.error('APP写入失败，将使用传统方式:', e);
           triggerDownload(zipBlob, filename);
+          filePath = ''; // 写入失败时清空路径，避免后续操作失败
         }
       } else {
         triggerDownload(zipBlob, filename);
       }
       
       // 显示成功弹窗
+      console.log('[ProfilePage] 导出完成, filePath:', filePath, 'writeSuccess:', writeSuccess);
       setZipSuccessFilename(filename);
       setZipSuccessFilePath(filePath);
       setZipIncludeVideos(includeVideos);
@@ -493,7 +505,12 @@ export function ProfilePage(
   }, []);
 
   // 打开备份文件
-  const handleOpenBackupFile = useCallback(async () => {
+  const handleOpenBackupFile = useCallback(() => {
+    console.log('[ProfilePage] 开始打开备份文件, 当前路径:', zipSuccessFilePath);
+    console.log('[ProfilePage] isInApp:', isInApp());
+    console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
+    console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
+
     if (!isInApp()) {
       showToast('当前环境不支持直接打开，请在文件管理中查看', 'warning');
       return;
@@ -503,19 +520,43 @@ export function ProfilePage(
       return;
     }
     try {
-      const { jsBridgeFS } = await import('../utils/jsBridge');
-      const result = await jsBridgeFS.open(zipSuccessFilePath);
-      console.log('[ProfilePage] 打开文件成功:', result);
-      showToast('正在打开文件...', 'success');
+      // 使用一门APP官方原生回调方式，不使用Promise封装
+      if (window.jsBridge && window.jsBridge.fs) {
+        console.log('[ProfilePage] 调用window.jsBridge.fs.open, 路径:', zipSuccessFilePath);
+        if (typeof window.jsBridge.fs.open !== 'function') {
+          console.error('[ProfilePage] window.jsBridge.fs.open 不是函数');
+          showToast('open方法不存在，请升级APP', 'error');
+          return;
+        }
+        window.jsBridge.fs.open(zipSuccessFilePath, function(succ, msg) {
+          console.log('[ProfilePage] open回调 - succ:', succ, 'msg:', msg);
+          if (succ) {
+            console.log('[ProfilePage] 打开文件成功');
+            showToast('正在打开文件...', 'success');
+          } else {
+            console.error('[ProfilePage] 打开文件失败:', msg);
+            showToast(`打开文件失败: ${msg || '未知错误'}`, 'error');
+          }
+        });
+      } else {
+        console.error('[ProfilePage] jsBridge未初始化, window.jsBridge:', window.jsBridge);
+        showToast('jsBridge未初始化，请重启APP', 'error');
+      }
     } catch (e) {
-      console.error('[ProfilePage] 打开文件失败:', e);
+      console.error('[ProfilePage] 打开文件异常:', e);
+      console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
       showToast(`打开文件失败: ${errorMsg}`, 'error');
     }
   }, [zipSuccessFilePath, showToast]);
 
   // 分享备份文件
-  const handleShareBackupFile = useCallback(async () => {
+  const handleShareBackupFile = useCallback(() => {
+    console.log('[ProfilePage] 开始分享备份文件, 当前路径:', zipSuccessFilePath);
+    console.log('[ProfilePage] isInApp:', isInApp());
+    console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
+    console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
+
     if (!isInApp()) {
       showToast('当前环境不支持直接分享，请在文件管理中查看', 'warning');
       return;
@@ -525,12 +566,31 @@ export function ProfilePage(
       return;
     }
     try {
-      const { jsBridgeFS } = await import('../utils/jsBridge');
-      const result = await jsBridgeFS.share(zipSuccessFilePath);
-      console.log('[ProfilePage] 分享文件成功:', result);
-      showToast('正在打开分享面板...', 'success');
+      // 使用一门APP官方原生回调方式，不使用Promise封装
+      if (window.jsBridge && window.jsBridge.fs) {
+        console.log('[ProfilePage] 调用window.jsBridge.fs.share, 路径:', zipSuccessFilePath);
+        if (typeof window.jsBridge.fs.share !== 'function') {
+          console.error('[ProfilePage] window.jsBridge.fs.share 不是函数');
+          showToast('share方法不存在，请升级APP', 'error');
+          return;
+        }
+        window.jsBridge.fs.share(zipSuccessFilePath, function(succ, msg) {
+          console.log('[ProfilePage] share回调 - succ:', succ, 'msg:', msg);
+          if (succ) {
+            console.log('[ProfilePage] 分享文件成功');
+            showToast('正在打开分享面板...', 'success');
+          } else {
+            console.error('[ProfilePage] 分享文件失败:', msg);
+            showToast(`分享文件失败: ${msg || '未知错误'}`, 'error');
+          }
+        });
+      } else {
+        console.error('[ProfilePage] jsBridge未初始化, window.jsBridge:', window.jsBridge);
+        showToast('jsBridge未初始化，请重启APP', 'error');
+      }
     } catch (e) {
-      console.error('[ProfilePage] 分享文件失败:', e);
+      console.error('[ProfilePage] 分享文件异常:', e);
+      console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
       showToast(`分享文件失败: ${errorMsg}`, 'error');
     }
@@ -575,6 +635,27 @@ export function ProfilePage(
     showToast('文件已下载', 'success');
   }, [exportData, showToast]);
   
+  // 从ZIP文件中解压并读取data.json
+  const extractDataFromZip = async (file) => {
+    // 检查JSZip是否可用
+    if (typeof window.JSZip === 'undefined') {
+      throw new Error('JSZip库未加载，请检查网络连接');
+    }
+    
+    const zip = new window.JSZip();
+    const zipContent = await zip.loadAsync(file);
+    
+    // 查找data.json文件
+    const dataJsonFile = zipContent.file('data.json');
+    if (!dataJsonFile) {
+      throw new Error('ZIP文件中未找到data.json');
+    }
+    
+    // 读取data.json内容
+    const jsonContent = await dataJsonFile.async('string');
+    return JSON.parse(jsonContent);
+  };
+
   // 导入数据
   const handleImport = useCallback(async () => 
 {
@@ -592,8 +673,25 @@ export function ProfilePage(
     } else if (importFile) {
       // 方式2：从文件选择
       try {
-        const text = await importFile.text();
-        data = JSON.parse(text);
+        const fileName = importFile.name.toLowerCase();
+        if (fileName.endsWith('.zip')) {
+          // 处理ZIP文件
+          try {
+            data = await extractDataFromZip(importFile);
+          } catch (e) {
+            console.error('ZIP解压失败:', e);
+            const errorMsg = e?.message || '未知错误';
+            showToast('ZIP解压失败: ' + errorMsg, 'error');
+            return;
+          }
+        } else if (fileName.endsWith('.json')) {
+          // 处理JSON文件
+          const text = await importFile.text();
+          data = JSON.parse(text);
+        } else {
+          showToast('不支持的文件格式，请选择.json或.zip文件', 'error');
+          return;
+        }
       } catch (e) {
         showToast('文件格式错误', 'error');
         return;
@@ -629,7 +727,7 @@ export function ProfilePage(
 {
       setIsImporting(false);
     }
-  }, [importFile, importText, importMode, showToast, refreshData]);
+  }, [importFile, importText, importMode, showToast, refreshData, extractDataFromZip]);
   
   
   // 退出登录
@@ -1107,7 +1205,7 @@ export function ProfilePage(
                 ref=
 {fileInputRef}
                 type="file"
-                accept=".json"
+                accept=".json,.zip"
                 onChange=
 {(e) => { setImportFile(e.target.files?.[0] || null); setImportText(''); }}
                 className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-100 file:text-primary-700 hover:file:bg-primary-200 file:cursor-pointer dark:file:bg-primary-900/30 dark:file:text-primary-400"
@@ -1117,6 +1215,7 @@ export function ProfilePage(
                 <p className="text-sm text-green-600 mt-2">已选择: 
 {importFile.name}</p>
               )}
+              <p className="text-xs text-gray-400 mt-2">支持 .json 和 .zip 格式的备份文件</p>
               
               <div className="flex items-center gap-2 my-3">
                 <div className="flex-1 h-px bg-gray-200 dark:bg-gray-600"></div>
