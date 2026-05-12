@@ -1153,6 +1153,7 @@ export const getTypeEmoji = (type) => {
     case 'photo': return '📷';
     case 'video': return '🎬';
     case 'audio': return '🎵';
+    case 'podcast': return '🎧';
     case 'diary': return '📝';
     default: return '📷';
   }

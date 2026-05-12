@@ -188,6 +188,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     const videoMoments = activeMoments.filter(m => m.type === 'video').length;
     const diaryMoments = activeMoments.filter(m => m.type === 'diary').length;
     const audioMoments = activeMoments.filter(m => m.type === 'audio').length;
+    const podcastMoments = activeMoments.filter(m => m.type === 'podcast').length;
     
     // 按心情统计
     const moodStats = {};
@@ -218,6 +219,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
       videoMoments,
       diaryMoments,
       audioMoments,
+      podcastMoments,
       topMood,
       moodStats,
     };
@@ -685,6 +687,28 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                 <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.audioMoments}</span>
               </div>
             </div>
+            
+            {/* 播客记录 - 有数据时才显示 */}
+            {stats.podcastMoments > 0 && (
+            <div 
+              className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => onStatClick({ type: 'filter', filterType: 'podcast' })}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎧</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">播客记录</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-24 h-2 bg-cream-100 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                  <div 
+                    className="h-full bg-purple-400 rounded-full"
+                    style={{ width: `${(stats.podcastMoments / Math.max(stats.totalMoments, 1)) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.podcastMoments}</span>
+              </div>
+            </div>
+            )}
           </div>
           )}
         </div>

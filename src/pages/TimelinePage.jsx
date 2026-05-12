@@ -32,6 +32,7 @@ const typeFilters = [
   { value: 'video', label: '视频' },
   { value: 'diary', label: '文字' },
   { value: 'audio', label: '语音' },
+  { value: 'podcast', label: '播客' },
 ];
 
 export function TimelinePage({ 

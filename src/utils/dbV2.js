@@ -717,6 +717,20 @@ export function importV2AccountData(data, mode = 'merge') {
       }
     }
     
+    // 合并成长数据：height/weight 取非空的值（当前有值就保留，否则用导入的）
+    const currentGrowth = current.accountData?.growth || { height: null, weight: null, records: [] };
+    const importGrowth = data.growth || { height: null, weight: null, records: [] };
+    
+    // 合并成长记录去重（按id）
+    const existingRecordIds = new Set((currentGrowth.records || []).map(r => r.id));
+    const newRecords = (importGrowth.records || []).filter(r => !existingRecordIds.has(r.id));
+    
+    const mergedGrowth = {
+      height: currentGrowth.height !== null ? currentGrowth.height : importGrowth.height,
+      weight: currentGrowth.weight !== null ? currentGrowth.weight : importGrowth.weight,
+      records: [...(currentGrowth.records || []), ...newRecords],
+    };
+    
     updateV2AccountData(identityName, accountId, {
       timeline: mergedTimeline,
       // 虚拟时光也合并
@@ -727,6 +741,8 @@ export function importV2AccountData(data, mode = 'merge') {
         ),
       ],
       virtualTimeContents: mergedVTContents,
+      // 成长数据也合并
+      growth: mergedGrowth,
     });
   }
   
