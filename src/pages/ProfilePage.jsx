@@ -504,10 +504,13 @@ export function ProfilePage(
     }
     try {
       const { jsBridgeFS } = await import('../utils/jsBridge');
-      await jsBridgeFS.open(zipSuccessFilePath);
+      const result = await jsBridgeFS.open(zipSuccessFilePath);
+      console.log('[ProfilePage] 打开文件成功:', result);
+      showToast('正在打开文件...', 'success');
     } catch (e) {
-      console.error('打开文件失败:', e);
-      showToast('打开文件失败', 'error');
+      console.error('[ProfilePage] 打开文件失败:', e);
+      const errorMsg = e?.message || '未知错误';
+      showToast(`打开文件失败: ${errorMsg}`, 'error');
     }
   }, [zipSuccessFilePath, showToast]);
 
@@ -523,10 +526,13 @@ export function ProfilePage(
     }
     try {
       const { jsBridgeFS } = await import('../utils/jsBridge');
-      await jsBridgeFS.share(zipSuccessFilePath);
+      const result = await jsBridgeFS.share(zipSuccessFilePath);
+      console.log('[ProfilePage] 分享文件成功:', result);
+      showToast('正在打开分享面板...', 'success');
     } catch (e) {
-      console.error('分享文件失败:', e);
-      showToast('分享文件失败', 'error');
+      console.error('[ProfilePage] 分享文件失败:', e);
+      const errorMsg = e?.message || '未知错误';
+      showToast(`分享文件失败: ${errorMsg}`, 'error');
     }
   }, [zipSuccessFilePath, showToast]);
   

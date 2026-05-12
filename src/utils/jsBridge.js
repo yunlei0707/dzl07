@@ -35,8 +35,9 @@ const ensureReady = () => {
 
 /**
  * 通用Promise封装
- * 官方SDK的fs回调格式：成功时直接返回数据（字符串/布尔值/数字），失败时可能返回错误信息
- * 不假设{code, data}格式，直接透传回调结果
+ * 官方SDK的fs回调格式：
+ * - 大多数方法：成功时直接返回数据（字符串/布尔值/数字）
+ * - open/share 特殊方法：回调有两个参数 (succ, msg)，succ 为布尔值表示是否成功
  */
 const promisify = (fnName, ...args) => {
   return new Promise(async (resolve, reject) => {
@@ -58,11 +59,21 @@ const promisify = (fnName, ...args) => {
         return;
       }
 
-      method.call(jsb.fs, ...args, (result) => {
-        // 官方SDK回调直接返回结果
-        // 对于readText返回文本内容，exist返回布尔值，mkdir等返回成功标志
-        resolve(result);
-      });
+      // open 和 share 方法的回调有两个参数：(succ, msg)
+      if (fnName === 'open' || fnName === 'share') {
+        method.call(jsb.fs, ...args, (succ, msg) => {
+          if (succ) {
+            resolve({ success: true, message: msg });
+          } else {
+            reject(new Error(msg || `${fnName} failed`));
+          }
+        });
+      } else {
+        // 其他方法回调只有一个参数 result
+        method.call(jsb.fs, ...args, (result) => {
+          resolve(result);
+        });
+      }
     } catch (e) {
       reject(e);
     }
