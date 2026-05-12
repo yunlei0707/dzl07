@@ -229,7 +229,7 @@ function VideoItem({ video }) {
 }
 
 // 播客音频组件 - 完全按照视频VideoItem的方式实现
-function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
+function PodcastAudioItem({ audio, onPlayEnd }) {
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -275,21 +275,6 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
     };
   }, [audio.url, audio.filename, audio.name]);
 
-  // 监听播放状态变化 - 和video保持100%一致！
-  useEffect(() => {
-    if (!audioElementRef.current || !audioUrl) return;
-    
-    if (isPlaying) {
-      console.log('[PodcastAudioItem] 开始播放');
-      audioElementRef.current.play().catch(e => {
-        console.error('[PodcastAudioItem] 播放失败:', e);
-        setError('播放失败: ' + e.message);
-      });
-    } else {
-      console.log('[PodcastAudioItem] 暂停播放');
-      audioElementRef.current.pause();
-    }
-  }, [isPlaying, audioUrl]);
 
   const loadOPFSAudio = async () => {
     try {
@@ -374,7 +359,7 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
           playsInline
           webkit-playsinline="true"
           preload="metadata"
-          className="w-full h-10 mt-2"
+          className="w-full h-14 mt-2"
         />
       )}
       
@@ -605,18 +590,6 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                   src={moment.podcast.cover}
                   alt={moment.podcast.title || '播客封面'}
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button
-                    onClick={() => togglePlayAudio(-1)}
-                    className="w-16 h-16 bg-white/90 dark:bg-gray-800/90 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-colors shadow-lg"
-                  >
-                    {playingIndex === -1 ? (
-                      <Pause className="w-8 h-8 text-primary-500" />
-                    ) : (
-                      <Play className="w-8 h-8 text-primary-500 ml-1" />
-                    )}
-                  </button>
-                </div>
               </div>
             )}
             {/* 播客信息 */}
@@ -631,16 +604,6 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
               )}
               {/* 播放控制 */}
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => togglePlayAudio(-1)}
-                  className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-primary-600 transition-colors"
-                >
-                  {playingIndex === -1 ? (
-                    <Pause className="w-5 h-5 text-white" />
-                  ) : (
-                    <Play className="w-5 h-5 text-white ml-0.5" />
-                  )}
-                </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-400">
@@ -651,7 +614,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                   {/* 播客音频组件 - 负责加载、播放、错误显示 */}
                   <PodcastAudioItem
                     audio={moment.podcast.audio}
-                    isPlaying={playingIndex === -1}
+                    
                     onPlayEnd={() => setPlayingIndex(null)}
                   />
                   
