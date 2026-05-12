@@ -52,7 +52,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
       const growth = getCurrentGrowth();
       const babyInfo = getCurrentBabyInfo();
       
-      setV2Moments(timeline);
+      setV2Moments([...timeline]); // 创建新数组引用，确保React检测到变化
       setIsSystemAccount(isSystem);
       setHasV2Baby(!!babyInfo);
       setV2AccountInfo(account || null);

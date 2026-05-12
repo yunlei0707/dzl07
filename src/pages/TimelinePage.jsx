@@ -164,7 +164,7 @@ export function TimelinePage({
       if (isSystemAccount) {
         // 系统账号刷新 v2 数据
         const timeline = getCurrentTimeline();
-        setV2Moments(timeline);
+        setV2Moments([...timeline]); // 创建新数组引用，确保React检测到变化
       } else if (currentBaby) {
         // 用户账号刷新 db 数据
         const babyMoments = await getMomentsByBaby(currentBaby.id);
