@@ -271,27 +271,45 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
     if (index === -1 && moment.podcast?.audio) {
       const audio = moment.podcast.audio;
       console.log('[MomentCard] 播放播客:', moment.podcast.title);
+      console.log('[MomentCard] 播客音频数据:', {
+        storage: audio.storage,
+        hasFilename: !!audio.filename,
+        hasUrl: !!audio.url,
+        urlLength: audio.url?.length || 0
+      });
       
       try {
         let audioUrl;
         // OPFS模式：从文件系统加载
         if (audio.storage === 'opfs' && audio.filename) {
+          console.log('[MomentCard] 使用OPFS模式播放');
           const file = await readAudioFromOPFS(audio.filename);
           audioUrl = URL.createObjectURL(file);
         }
         // Base64模式：直接用url
         else if (audio.url) {
+          console.log('[MomentCard] 使用Base64模式播放');
           audioUrl = audio.url;
         }
         
         if (audioUrl) {
           audioRef.current = new Audio(audioUrl);
           audioRef.current.onended = () => setPlayingIndex(null);
+          audioRef.current.onerror = (e) => {
+            console.error('[MomentCard] 音频播放错误:', e);
+            setPlayingIndex(null);
+          };
           await audioRef.current.play();
           setPlayingIndex(index);
+          console.log('[MomentCard] 播客播放成功');
+        } else {
+          console.error('[MomentCard] 无法获取播客音频URL');
+          alert('播客音频加载失败，请重试');
         }
       } catch (e) {
         console.error('[MomentCard] 播客播放失败:', e);
+        setPlayingIndex(null);
+        alert('播客播放失败：' + e.message);
       }
     }
     // 普通音频模式

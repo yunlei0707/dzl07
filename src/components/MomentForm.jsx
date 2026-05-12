@@ -478,15 +478,28 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       } else {
         // Base64模式：直接转base64存储
         const reader = new FileReader();
-        reader.onloadend = () => {
+        
+        reader.onload = (event) => {
+          // 只有成功时才设置
           setPodcastAudio({
-            url: reader.result,
+            url: event.target.result,
             name: file.name,
             size: file.size,
             duration: 0,
             storage: 'base64'
           });
+          console.log('[播客上传] Base64转换成功，数据长度:', event.target.result?.length);
         };
+        
+        reader.onerror = () => {
+          console.error('[播客上传] Base64转换失败:', reader.error);
+          alert('音频文件读取失败，请重试或换一个文件');
+        };
+        
+        reader.onabort = () => {
+          console.warn('[播客上传] 文件读取被中止');
+        };
+        
         reader.readAsDataURL(file);
       }
       
