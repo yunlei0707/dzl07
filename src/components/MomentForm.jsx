@@ -53,10 +53,10 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const { getAllMilestones, currentBaby } = useApp();
   const [type, setType] = useState(moment?.type || 'photo');
   // 播客相关状态
-  const [podcastTitle, setPodcastTitle] = useState(moment?.podcastTitle || '');
-  const [podcastDescription, setPodcastDescription] = useState(moment?.podcastDescription || '');
-  const [podcastAudio, setPodcastAudio] = useState(moment?.podcastAudio || null);
-  const [podcastCover, setPodcastCover] = useState(moment?.podcastCover || null);
+  const [podcastTitle, setPodcastTitle] = useState(moment?.podcast?.title || '');
+  const [podcastDescription, setPodcastDescription] = useState(moment?.podcast?.description || '');
+  const [podcastAudio, setPodcastAudio] = useState(moment?.podcast?.audio || null);
+  const [podcastCover, setPodcastCover] = useState(moment?.podcast?.cover || null);
   const [content, setContent] = useState(moment?.content || '');
   const [photos, setPhotos] = useState(moment?.photos || []);
   const [videos, setVideos] = useState(moment?.videos || []); // [{url, cover, name, size}]
