@@ -97,6 +97,9 @@ export function ProfilePage(
   const [exportProgressMessage, setExportProgressMessage] = useState('');
   const [exportStats, setExportStats] = useState(null);
   const [showZipExportModal, setShowZipExportModal] = useState(false);
+  const [showZipSuccessModal, setShowZipSuccessModal] = useState(false);
+  const [zipSuccessFilename, setZipSuccessFilename] = useState('');
+  const [zipIncludeVideos, setZipIncludeVideos] = useState(true);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
@@ -430,7 +433,10 @@ export function ProfilePage(
       const filename = `宝宝时光数据备份_${timestamp}.zip`;
       triggerDownload(zipBlob, filename);
       
-      showToast(`备份文件已下载完成！\n\n文件名：${filename}\n\n保存位置：手机/电脑的"下载"文件夹\n\n请在文件管理中查看，解压后包含数据文件${includeVideos ? '和所有视频' : ''}。`, 'success');
+      // 显示成功弹窗
+      setZipSuccessFilename(filename);
+      setZipIncludeVideos(includeVideos);
+      setShowZipSuccessModal(true);
       setShowZipExportModal(false);
     } catch (error) {
       console.error('ZIP导出失败:', error);
@@ -438,7 +444,7 @@ export function ProfilePage(
     } finally {
       setIsExporting(false);
     }
-  }, [isExporting, showToast]);
+  }, [isExporting, showToast, setZipSuccessFilename, setZipIncludeVideos, setShowZipSuccessModal]);
 
   // 取消ZIP导出
   const handleCancelExport = useCallback(() => {
@@ -1263,6 +1269,45 @@ export function ProfilePage(
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* ZIP导出成功弹窗 */}
+      {showZipSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-2 dark:text-white">✅ 备份文件已下载完成！</h3>
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6 text-sm space-y-3">
+              <div>
+                <div className="text-gray-500 dark:text-gray-400 mb-1">文件名：</div>
+                <div className="font-medium dark:text-white font-mono break-all">{zipSuccessFilename}</div>
+              </div>
+              <div>
+                <div className="text-gray-500 dark:text-gray-400 mb-1">保存位置：</div>
+                <div className="font-medium dark:text-white">手机/电脑的"下载"文件夹</div>
+              </div>
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                <div className="text-gray-500 dark:text-gray-400 text-xs">
+                  💡 提示：请在文件管理中查看，解压后包含数据文件{zipIncludeVideos ? '和所有视频' : ''}。
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowZipSuccessModal(false)}
+              className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors"
+            >
+              我知道了
+            </button>
           </div>
         </div>
       )}
