@@ -234,6 +234,11 @@ export function AppProvider({ children }) {
     setBabies(allBabies);
   }, []);
 
+  // 数据版本递增：触发所有依赖数据的组件重新计算
+  const bumpDataVersion = useCallback(() => {
+    setDataVersion(prev => prev + 1);
+  }, []);
+
   // 刷新动态
   const refreshMoments = useCallback(async () => {
     if (currentBaby) {
@@ -281,11 +286,6 @@ export function AppProvider({ children }) {
       } catch(e) {}
     }
   }, [currentBaby]);
-
-  // 数据版本递增：触发所有依赖数据的组件重新计算
-  const bumpDataVersion = useCallback(() => {
-    setDataVersion(prev => prev + 1);
-  }, []);
 
   // 添加动态
   const addMomentToContext = useCallback(async (momentData) => {
