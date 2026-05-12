@@ -39,14 +39,6 @@ export async function checkStorageCapability() {
  * @returns {Promise<boolean>}
  */
 export async function shouldUseOPFS() {
-  // APP环境下不使用OPFS（一门APP的WebView不支持OPFS）
-  if (isInApp()) {
-    if (STORAGE_CONFIG.DEBUG_MODE) {
-      console.log('[StorageCheck] APP环境，自动降级到Base64存储');
-    }
-    return false;
-  }
-
   // 强制关闭
   if (STORAGE_CONFIG.USE_OPFS === false) {
     return false;

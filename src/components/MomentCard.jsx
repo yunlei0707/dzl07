@@ -275,15 +275,12 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
     };
   }, [audio.url, audio.filename, audio.name]);
 
-  // 监听播放状态变化
+  // 监听播放状态变化 - 和video保持100%一致！
   useEffect(() => {
     if (!audioElementRef.current || !audioUrl) return;
     
     if (isPlaying) {
-      console.log('[PodcastAudioItem] 开始播放，显式调用load()');
-      // 关键修复：设置src后显式调用load()
-      audioElementRef.current.src = audioUrl;
-      audioElementRef.current.load(); // 手动触发加载，APP WebView必须！
+      console.log('[PodcastAudioItem] 开始播放');
       audioElementRef.current.play().catch(e => {
         console.error('[PodcastAudioItem] 播放失败:', e);
         setError('播放失败: ' + e.message);
@@ -356,28 +353,30 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
 
   return (
     <>
-      {/* 隐藏的audio元素 - 完全按照video的方式 */}
-      {/* 注意：src会在播放时动态设置，这里不预先设置 */}
-      <audio
-        ref={audioElementRef}
-        onEnded={handleEnded}
-        onError={(e) => {
-          const errMsg = audioElementRef.current?.error?.message || '音频解码失败，请检查文件格式';
-          console.error('[PodcastAudioItem] audio元素错误:', e, '错误详情:', audioElementRef.current?.error);
-          setError(errMsg);
-        }}
-        onLoadedMetadata={() => {
-          console.log('[PodcastAudioItem] 音频元数据加载完成，时长:', audioElementRef.current?.duration);
-        }}
-        onCanPlay={() => {
-          console.log('[PodcastAudioItem] 音频可以播放了');
-        }}
-        playsInline
-        webkit-playsinline="true" // iOS Safari额外支持
-        x5-playsinline="true" // 腾讯X5内核支持
-        preload="auto"
-        style={{ display: 'none' }}
-      />
+      {/* audio元素 - 添加原生播放控件，让用户可以直接点击播放 */}
+      {audioUrl && (
+        <audio
+          ref={audioElementRef}
+          src={audioUrl}
+          controls
+          onEnded={handleEnded}
+          onError={(e) => {
+            const errMsg = audioElementRef.current?.error?.message || '音频解码失败，请检查文件格式';
+            console.error('[PodcastAudioItem] audio元素错误:', e, '错误详情:', audioElementRef.current?.error);
+            setError(errMsg);
+          }}
+          onLoadedMetadata={() => {
+            console.log('[PodcastAudioItem] 音频元数据加载完成，时长:', audioElementRef.current?.duration);
+          }}
+          onCanPlay={() => {
+            console.log('[PodcastAudioItem] 音频可以播放了');
+          }}
+          playsInline
+          webkit-playsinline="true"
+          preload="metadata"
+          className="w-full h-10 mt-2"
+        />
+      )}
       
       {/* 加载状态 */}
       {loading && (
