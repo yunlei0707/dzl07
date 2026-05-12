@@ -239,9 +239,28 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
   // 按照视频的方式：组件渲染时就加载URL
   useEffect(() => {
     if (audio.url) {
-      // Base64模式：直接使用url
+      // Base64模式：检查并修正MIME type
       console.log('[PodcastAudioItem] Base64模式，URL长度:', audio.url?.length);
-      setAudioUrl(audio.url);
+      
+      // 检查Base64 data URL的MIME type
+      let fixedUrl = audio.url;
+      if (audio.url.startsWith('data:audio/mp4;')) {
+        // audio/mp4 修正为 audio/m4a
+        fixedUrl = audio.url.replace('data:audio/mp4;', 'data:audio/m4a;');
+        console.log('[PodcastAudioItem] Base64 MIME type已修正: audio/mp4 → audio/m4a');
+      } else if (!audio.url.startsWith('data:audio/')) {
+        // 奇怪的类型，尝试从文件名推断
+        const ext = audio.name?.split('.').pop()?.toLowerCase();
+        if (ext === 'm4a') {
+          fixedUrl = audio.url.replace(/^data:[^;]+;/, 'data:audio/m4a;');
+          console.log('[PodcastAudioItem] Base64 MIME type已修正为 audio/m4a');
+        } else if (ext === 'mp3') {
+          fixedUrl = audio.url.replace(/^data:[^;]+;/, 'data:audio/mpeg;');
+          console.log('[PodcastAudioItem] Base64 MIME type已修正为 audio/mpeg');
+        }
+      }
+      
+      setAudioUrl(fixedUrl);
     } else if (audio.filename) {
       // OPFS模式：从文件系统加载
       console.log('[PodcastAudioItem] OPFS模式，filename:', audio.filename);
@@ -254,14 +273,17 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
         URL.revokeObjectURL(objectUrlRef.current);
       }
     };
-  }, [audio.url, audio.filename]);
+  }, [audio.url, audio.filename, audio.name]);
 
   // 监听播放状态变化
   useEffect(() => {
-    if (!audioElementRef.current) return;
+    if (!audioElementRef.current || !audioUrl) return;
     
     if (isPlaying) {
-      console.log('[PodcastAudioItem] 开始播放');
+      console.log('[PodcastAudioItem] 开始播放，显式调用load()');
+      // 关键修复：设置src后显式调用load()
+      audioElementRef.current.src = audioUrl;
+      audioElementRef.current.load(); // 手动触发加载，APP WebView必须！
       audioElementRef.current.play().catch(e => {
         console.error('[PodcastAudioItem] 播放失败:', e);
         setError('播放失败: ' + e.message);
@@ -270,17 +292,55 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
       console.log('[PodcastAudioItem] 暂停播放');
       audioElementRef.current.pause();
     }
-  }, [isPlaying]);
+  }, [isPlaying, audioUrl]);
 
   const loadOPFSAudio = async () => {
     try {
       setLoading(true);
       setError(null);
       const file = await readAudioFromOPFS(audio.filename);
-      console.log('[PodcastAudioItem] OPFS文件读取成功，type:', file.type, 'size:', file.size);
-      const url = URL.createObjectURL(file);
-      objectUrlRef.current = url;
-      setAudioUrl(url);
+      console.log('[PodcastAudioItem] OPFS文件读取成功，原始type:', file.type, 'size:', file.size);
+      
+      // 关键修复：修正MIME type - APP WebView对某些音频type支持有问题
+      let fixedType = file.type;
+      let typeFixed = false;
+      
+      if (!file.type || file.type === '' || file.type === 'application/octet-stream') {
+        // 没有类型，尝试从文件名推断
+        if (audio.filename?.toLowerCase().endsWith('.m4a')) {
+          fixedType = 'audio/m4a';
+          typeFixed = true;
+        } else if (audio.filename?.toLowerCase().endsWith('.mp3')) {
+          fixedType = 'audio/mpeg';
+          typeFixed = true;
+        } else if (audio.filename?.toLowerCase().endsWith('.wav')) {
+          fixedType = 'audio/wav';
+          typeFixed = true;
+        } else {
+          // 默认用mp3
+          fixedType = 'audio/mpeg';
+          typeFixed = true;
+        }
+      } else if (file.type === 'audio/mp4') {
+        // m4a文件经常被识别为audio/mp4，但某些WebView不认这个类型
+        fixedType = 'audio/m4a';
+        typeFixed = true;
+      }
+      
+      if (typeFixed) {
+        console.log('[PodcastAudioItem] MIME type已修正:', file.type, '→', fixedType);
+        // 重新创建Blob，使用修正后的type
+        const arrayBuffer = await file.arrayBuffer();
+        const fixedBlob = new Blob([arrayBuffer], { type: fixedType });
+        const url = URL.createObjectURL(fixedBlob);
+        objectUrlRef.current = url;
+        setAudioUrl(url);
+      } else {
+        // 不需要修正，直接用原文件
+        const url = URL.createObjectURL(file);
+        objectUrlRef.current = url;
+        setAudioUrl(url);
+      }
     } catch (e) {
       console.error('[PodcastAudioItem] OPFS音频加载失败:', e);
       setError('文件加载失败: ' + e.message);
@@ -297,23 +357,27 @@ function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
   return (
     <>
       {/* 隐藏的audio元素 - 完全按照video的方式 */}
-      {audioUrl && (
-        <audio
-          ref={audioElementRef}
-          src={audioUrl}
-          onEnded={handleEnded}
-          onError={(e) => {
-            console.error('[PodcastAudioItem] audio元素错误:', e);
-            setError('音频解码失败，请检查文件格式');
-          }}
-          onLoadedMetadata={() => {
-            console.log('[PodcastAudioItem] 音频元数据加载完成');
-          }}
-          playsInline
-          preload="metadata"
-          style={{ display: 'none' }}
-        />
-      )}
+      {/* 注意：src会在播放时动态设置，这里不预先设置 */}
+      <audio
+        ref={audioElementRef}
+        onEnded={handleEnded}
+        onError={(e) => {
+          const errMsg = audioElementRef.current?.error?.message || '音频解码失败，请检查文件格式';
+          console.error('[PodcastAudioItem] audio元素错误:', e, '错误详情:', audioElementRef.current?.error);
+          setError(errMsg);
+        }}
+        onLoadedMetadata={() => {
+          console.log('[PodcastAudioItem] 音频元数据加载完成，时长:', audioElementRef.current?.duration);
+        }}
+        onCanPlay={() => {
+          console.log('[PodcastAudioItem] 音频可以播放了');
+        }}
+        playsInline
+        webkit-playsinline="true" // iOS Safari额外支持
+        x5-playsinline="true" // 腾讯X5内核支持
+        preload="auto"
+        style={{ display: 'none' }}
+      />
       
       {/* 加载状态 */}
       {loading && (
