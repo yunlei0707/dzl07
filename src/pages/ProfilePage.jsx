@@ -493,7 +493,7 @@ export function ProfilePage(
   }, []);
 
   // 打开备份文件
-  const handleOpenBackupFile = useCallback(async () => {
+  const handleOpenBackupFile = useCallback(() => {
     if (!isInApp()) {
       showToast('当前环境不支持直接打开，请在文件管理中查看', 'warning');
       return;
@@ -503,16 +503,29 @@ export function ProfilePage(
       return;
     }
     try {
-      const { jsBridgeFS } = await import('../utils/jsBridge');
-      await jsBridgeFS.open(zipSuccessFilePath);
+      // 使用一门APP官方原生回调方式，不使用Promise封装
+      if (window.jsBridge && window.jsBridge.fs) {
+        window.jsBridge.fs.open(zipSuccessFilePath, function(succ, msg) {
+          if (succ) {
+            console.log('[ProfilePage] 打开文件成功');
+            showToast('正在打开文件...', 'success');
+          } else {
+            console.error('[ProfilePage] 打开文件失败:', msg);
+            showToast(`打开文件失败: ${msg}`, 'error');
+          }
+        });
+      } else {
+        showToast('jsBridge未初始化', 'error');
+      }
     } catch (e) {
-      console.error('打开文件失败:', e);
-      showToast('打开文件失败', 'error');
+      console.error('[ProfilePage] 打开文件失败:', e);
+      const errorMsg = e?.message || '未知错误';
+      showToast(`打开文件失败: ${errorMsg}`, 'error');
     }
   }, [zipSuccessFilePath, showToast]);
 
   // 分享备份文件
-  const handleShareBackupFile = useCallback(async () => {
+  const handleShareBackupFile = useCallback(() => {
     if (!isInApp()) {
       showToast('当前环境不支持直接分享，请在文件管理中查看', 'warning');
       return;
@@ -522,11 +535,24 @@ export function ProfilePage(
       return;
     }
     try {
-      const { jsBridgeFS } = await import('../utils/jsBridge');
-      await jsBridgeFS.share(zipSuccessFilePath);
+      // 使用一门APP官方原生回调方式，不使用Promise封装
+      if (window.jsBridge && window.jsBridge.fs) {
+        window.jsBridge.fs.share(zipSuccessFilePath, function(succ, msg) {
+          if (succ) {
+            console.log('[ProfilePage] 分享文件成功');
+            showToast('正在打开分享面板...', 'success');
+          } else {
+            console.error('[ProfilePage] 分享文件失败:', msg);
+            showToast(`分享文件失败: ${msg}`, 'error');
+          }
+        });
+      } else {
+        showToast('jsBridge未初始化', 'error');
+      }
     } catch (e) {
-      console.error('分享文件失败:', e);
-      showToast('分享文件失败', 'error');
+      console.error('[ProfilePage] 分享文件失败:', e);
+      const errorMsg = e?.message || '未知错误';
+      showToast(`分享文件失败: ${errorMsg}`, 'error');
     }
   }, [zipSuccessFilePath, showToast]);
   

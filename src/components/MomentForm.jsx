@@ -51,6 +51,11 @@ const formatTime2 = (seconds) => {
 export function MomentForm({ moment, onSave, onCancel, babyId }) {
   const { getAllMilestones, currentBaby } = useApp();
   const [type, setType] = useState(moment?.type || 'photo');
+  // 播客相关状态
+  const [podcastTitle, setPodcastTitle] = useState(moment?.podcastTitle || '');
+  const [podcastDescription, setPodcastDescription] = useState(moment?.podcastDescription || '');
+  const [podcastAudio, setPodcastAudio] = useState(moment?.podcastAudio || null);
+  const [podcastCover, setPodcastCover] = useState(moment?.podcastCover || null);
   const [content, setContent] = useState(moment?.content || '');
   const [photos, setPhotos] = useState(moment?.photos || []);
   const [videos, setVideos] = useState(moment?.videos || []); // [{url, cover, name, size}]
@@ -437,6 +442,57 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setAudios(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 播客音频上传
+  const handlePodcastAudioUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // 限制音频大小
+    if (file.size > 50 * 1024 * 1024) {
+      alert('音频文件不能超过50MB');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      // 创建音频元素获取时长
+      const audio = new Audio(event.target.result);
+      audio.addEventListener('loadedmetadata', () => {
+        setPodcastAudio({
+          url: event.target.result,
+          name: file.name,
+          size: file.size,
+          duration: audio.duration
+        });
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+  
+  // 播客封面上传
+  const handlePodcastCoverUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPodcastCover(event.target.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+  
+  // 删除播客音频
+  const removePodcastAudio = () => {
+    setPodcastAudio(null);
+  };
+  
+  // 删除播客封面
+  const removePodcastCover = () => {
+    setPodcastCover(null);
+  };
+
   // 音频文件上传处理
   const handleAudioUpload = (e) => {
     const file = e.target.files[0];
@@ -774,6 +830,12 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       photos: type === 'photo' ? photos : [],
       videos: type === 'video' ? videos : [],
       audios: type === 'audio' ? audios : [],
+      podcast: type === 'podcast' ? {
+        title: podcastTitle,
+        description: podcastDescription,
+        audio: podcastAudio,
+        cover: podcastCover
+      } : null,
       mood,
       weather,
       location,
@@ -903,6 +965,16 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
             }`}
           >
             ✏️ 文字
+          </button>
+          <button
+            onClick={() => setType('podcast')}
+            className={`flex-1 flex items-center justify-center py-2.5 rounded-xl transition-colors text-sm font-medium ${
+              type === 'podcast' 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+            }`}
+          >
+            🎙️ 播客
           </button>
         </div>
         
@@ -1062,7 +1134,111 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
         )}
         
         {/* 语音 */}
-        {type === 'audio' && (
+        {type === 'podcast' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                  🎙️ 播客标题
+                </label>
+                <input
+                  type="text"
+                  value={podcastTitle}
+                  onChange={(e) => setPodcastTitle(e.target.value)}
+                  placeholder="输入播客标题..."
+                  className="w-full px-4 py-2.5 bg-cream-100 dark:bg-gray-700 rounded-xl text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                  📝 播客描述
+                </label>
+                <textarea
+                  value={podcastDescription}
+                  onChange={(e) => setPodcastDescription(e.target.value)}
+                  placeholder="输入播客描述..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-cream-100 dark:bg-gray-700 rounded-xl text-sm resize-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                  🎵 播客音频
+                </label>
+                {podcastAudio ? (
+                  <div className="flex items-center justify-between bg-cream-100 dark:bg-gray-700 rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">🎵</span>
+                      <div>
+                        <p className="text-sm font-medium">{podcastAudio.name}</p>
+                        <p className="text-xs text-gray-500">{formatTime2(podcastAudio.duration)}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removePodcastAudio}
+                      className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => document.getElementById('podcast-audio-input').click()}
+                    className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center hover:border-primary-500 transition-colors"
+                  >
+                    <Mic className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-gray-500 dark:text-gray-400">上传播客音频</span>
+                  </button>
+                )}
+                <input
+                  id="podcast-audio-input"
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={handlePodcastAudioUpload}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                  🖼️ 播客封面（可选）
+                </label>
+                {podcastCover ? (
+                  <div className="relative">
+                    <img
+                      src={podcastCover}
+                      alt="播客封面"
+                      className="w-full h-40 object-cover rounded-xl"
+                    />
+                    <button
+                      onClick={removePodcastCover}
+                      className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => document.getElementById('podcast-cover-input').click()}
+                    className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center hover:border-primary-500 transition-colors"
+                  >
+                    <Image className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-gray-500 dark:text-gray-400">上传封面图片</span>
+                  </button>
+                )}
+                <input
+                  id="podcast-cover-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePodcastCoverUpload}
+                />
+              </div>
+            </div>
+          )}
+          
+          {type === 'audio' && (
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1.5">
               <Mic className="w-4 h-4 inline mr-1" />
