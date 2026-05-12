@@ -228,11 +228,121 @@ function VideoItem({ video }) {
   );
 }
 
+// 播客音频组件 - 完全按照视频VideoItem的方式实现
+function PodcastAudioItem({ audio, isPlaying, onPlayEnd }) {
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const objectUrlRef = useRef(null);
+  const audioElementRef = useRef(null);
+
+  // 按照视频的方式：组件渲染时就加载URL
+  useEffect(() => {
+    if (audio.url) {
+      // Base64模式：直接使用url
+      console.log('[PodcastAudioItem] Base64模式，URL长度:', audio.url?.length);
+      setAudioUrl(audio.url);
+    } else if (audio.filename) {
+      // OPFS模式：从文件系统加载
+      console.log('[PodcastAudioItem] OPFS模式，filename:', audio.filename);
+      loadOPFSAudio();
+    }
+
+    // 清理：组件卸载时释放Blob URL
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, [audio.url, audio.filename]);
+
+  // 监听播放状态变化
+  useEffect(() => {
+    if (!audioElementRef.current) return;
+    
+    if (isPlaying) {
+      console.log('[PodcastAudioItem] 开始播放');
+      audioElementRef.current.play().catch(e => {
+        console.error('[PodcastAudioItem] 播放失败:', e);
+        setError('播放失败: ' + e.message);
+      });
+    } else {
+      console.log('[PodcastAudioItem] 暂停播放');
+      audioElementRef.current.pause();
+    }
+  }, [isPlaying]);
+
+  const loadOPFSAudio = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const file = await readAudioFromOPFS(audio.filename);
+      console.log('[PodcastAudioItem] OPFS文件读取成功，type:', file.type, 'size:', file.size);
+      const url = URL.createObjectURL(file);
+      objectUrlRef.current = url;
+      setAudioUrl(url);
+    } catch (e) {
+      console.error('[PodcastAudioItem] OPFS音频加载失败:', e);
+      setError('文件加载失败: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEnded = () => {
+    console.log('[PodcastAudioItem] 播放结束');
+    onPlayEnd && onPlayEnd();
+  };
+
+  return (
+    <>
+      {/* 隐藏的audio元素 - 完全按照video的方式 */}
+      {audioUrl && (
+        <audio
+          ref={audioElementRef}
+          src={audioUrl}
+          onEnded={handleEnded}
+          onError={(e) => {
+            console.error('[PodcastAudioItem] audio元素错误:', e);
+            setError('音频解码失败，请检查文件格式');
+          }}
+          onLoadedMetadata={() => {
+            console.log('[PodcastAudioItem] 音频元数据加载完成');
+          }}
+          playsInline
+          preload="metadata"
+          style={{ display: 'none' }}
+        />
+      )}
+      
+      {/* 加载状态 */}
+      {loading && (
+        <div className="text-xs text-gray-500">
+          <span className="animate-pulse">⏳ 加载中...</span>
+        </div>
+      )}
+      
+      {/* 错误状态 */}
+      {error && (
+        <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded break-all">
+          ❌ {error}
+        </div>
+      )}
+      
+      {/* 音频URL信息 */}
+      {!loading && !error && (
+        <div className="text-xs text-gray-400 mb-1">
+          {audio.url ? '📦 Base64模式' : '📂 OPFS模式'}
+          {audio.type && ` | ${audio.type}`}
+        </div>
+      )}
+    </>
+  );
+}
+
 export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
   const [showMenu, setShowMenu] = useState(false);
   const [playingIndex, setPlayingIndex] = useState(null);
-  const [podcastError, setPodcastError] = useState(null);
-  const audioRef = useRef(null);
   
   const typeIcons = {
     photo: '📷',
@@ -269,56 +379,10 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
     }
     
     // 播客模式 (index = -1)
+    // 注意：现在播客音频由PodcastAudioItem组件负责播放，这里只负责切换状态
     if (index === -1 && moment.podcast?.audio) {
-      const audio = moment.podcast.audio;
-      console.log('[MomentCard] 播放播客:', moment.podcast.title);
-      console.log('[MomentCard] 播客音频数据:', {
-        storage: audio.storage,
-        hasFilename: !!audio.filename,
-        hasUrl: !!audio.url,
-        urlLength: audio.url?.length || 0
-      });
-      
-      // 清除之前的错误
-      setPodcastError(null);
-      
-      try {
-        let audioUrl;
-        // OPFS模式：从文件系统加载
-        if (audio.storage === 'opfs' && audio.filename) {
-          console.log('[MomentCard] 使用OPFS模式播放');
-          const file = await readAudioFromOPFS(audio.filename);
-          audioUrl = URL.createObjectURL(file);
-        }
-        // Base64模式：直接用url
-        else if (audio.url) {
-          console.log('[MomentCard] 使用Base64模式播放');
-          audioUrl = audio.url;
-        }
-        
-        if (audioUrl) {
-          audioRef.current = new Audio(audioUrl);
-          audioRef.current.onended = () => setPlayingIndex(null);
-          audioRef.current.onerror = (e) => {
-            const errMsg = '音频解码失败，文件格式可能不支持';
-            console.error('[MomentCard] 音频播放错误:', e, errMsg);
-            setPodcastError(errMsg);
-            setPlayingIndex(null);
-          };
-          await audioRef.current.play();
-          setPlayingIndex(index);
-          console.log('[MomentCard] 播客播放成功');
-        } else {
-          const errMsg = '找不到音频数据，storage=' + audio.storage + ', hasUrl=' + !!audio.url + ', hasFilename=' + !!audio.filename;
-          console.error('[MomentCard] 无法获取播客音频URL:', errMsg);
-          setPodcastError(errMsg);
-        }
-      } catch (e) {
-        const errMsg = e.message || '未知错误';
-        console.error('[MomentCard] 播客播放失败:', e);
-        setPodcastError(errMsg);
-        setPlayingIndex(null);
-      }
+      console.log('[MomentCard] 切换播客播放状态:', playingIndex === -1 ? '暂停' : '播放');
+      // 状态变化会触发PodcastAudioItem中的useEffect执行播放/暂停
     }
     // 普通音频模式
     else if (index >= 0 && moment.audios && moment.audios[index]) {
@@ -506,12 +570,10 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => togglePlayAudio(-1)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${podcastError ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'}`}
+                  className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-primary-600 transition-colors"
                 >
                   {playingIndex === -1 ? (
                     <Pause className="w-5 h-5 text-white" />
-                  ) : podcastError ? (
-                    <span className="text-white text-sm">!</span>
                   ) : (
                     <Play className="w-5 h-5 text-white ml-0.5" />
                   )}
@@ -522,26 +584,28 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                       {moment.podcast.duration ? formatTime2(moment.podcast.duration) : '--:--'}
                     </span>
                   </div>
-                  {/* 波形显示或错误信息 */}
-                  {podcastError ? (
-                    <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded break-all">
-                      ❌ {podcastError}
-                    </div>
-                  ) : (
-                    <div className="h-4 flex items-center gap-0.5 overflow-hidden">
-                      {moment.podcast.waveform?.length > 0 ? (
-                        moment.podcast.waveform.slice(-60).map((frame, i) => (
-                          <div
-                            key={i}
-                            className="w-0.5 bg-primary-300 dark:bg-primary-600 rounded-full"
-                            style={{ height: `${Math.max(8, ((frame || 0) / 255) * 100)}%` }}
-                          />
-                        ))
-                      ) : (
-                        <div className="w-full h-1.5 bg-primary-200 dark:bg-primary-700 rounded" />
-                      )}
-                    </div>
-                  )}
+                  
+                  {/* 播客音频组件 - 负责加载、播放、错误显示 */}
+                  <PodcastAudioItem
+                    audio={moment.podcast.audio}
+                    isPlaying={playingIndex === -1}
+                    onPlayEnd={() => setPlayingIndex(null)}
+                  />
+                  
+                  {/* 波形显示 */}
+                  <div className="h-4 flex items-center gap-0.5 overflow-hidden mt-1">
+                    {moment.podcast.waveform?.length > 0 ? (
+                      moment.podcast.waveform.slice(-60).map((frame, i) => (
+                        <div
+                          key={i}
+                          className="w-0.5 bg-primary-300 dark:bg-primary-600 rounded-full"
+                          style={{ height: `${Math.max(8, ((frame || 0) / 255) * 100)}%` }}
+                        />
+                      ))
+                    ) : (
+                      <div className="w-full h-1.5 bg-primary-200 dark:bg-primary-700 rounded" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
