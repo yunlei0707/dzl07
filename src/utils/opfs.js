@@ -6,12 +6,36 @@
 import { STORAGE_CONFIG } from '../config/storage';
 
 /**
- * 检测OPFS是否可用
+ * OPFS支持检测 - 用于APP端实际验证
+ * 输出详细的检测日志到控制台
+ * @returns {boolean} 是否支持OPFS
+ */
+export function checkOPFSSupport() {
+  const hasStorage = 'storage' in navigator;
+  const hasGetDirectory = hasStorage && 'getDirectory' in navigator.storage;
+  const supported = hasStorage && hasGetDirectory;
+  
+  console.log('='.repeat(50));
+  console.log('=== OPFS Support Check ===');
+  console.log('='.repeat(50));
+  console.log('navigator.storage:', hasStorage);
+  console.log('navigator.storage.getDirectory:', hasGetDirectory);
+  console.log('OPFS Supported:', supported);
+  console.log('User Agent:', navigator.userAgent);
+  console.log('jsBridge.inApp:', typeof window !== 'undefined' && window.jsBridge?.inApp);
+  console.log('='.repeat(50));
+  
+  return supported;
+}
+
+/**
+ * 检测OPFS是否可用（异步完整版）
+ * 不仅检查API存在，还实际尝试获取目录
  * @returns {Promise<boolean>}
  */
 export async function isOPFSSupported() {
   try {
-    if (!navigator.storage || !navigator.storage.getDirectory) {
+    if (!checkOPFSSupport()) {
       return false;
     }
     // 尝试获取根目录，确认权限可用

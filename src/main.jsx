@@ -7,7 +7,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { checkOPFSSupport } from './utils/opfs';
 import './index.css';
+
+// 页面加载时执行OPFS支持检测
+setTimeout(() => {
+  checkOPFSSupport();
+}, 100);
 
 // ===== 版本自动检测机制 =====
 // 每次 Vercel 部署后，version.json 会更新
