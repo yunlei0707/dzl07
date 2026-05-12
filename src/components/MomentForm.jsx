@@ -7,6 +7,10 @@ import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play
 import { useApp } from '../store/AppContext';
 import { getCurrentBabyInfo } from '../utils/dbV2';
 import { isInApp, jsBridgeAudioRecorder } from '../utils/jsBridge';
+import { saveVideoToOPFS, deleteVideoFromOPFS } from '../utils/opfs';
+import { shouldUseOPFS } from '../utils/storageCheck';
+import { saveFileMetadata, deleteFileMetadata } from '../utils/db';
+import { STORAGE_CONFIG } from '../config/storage';
 
 const moodOptions = [
   { value: 'happy', emoji: '😊', label: '开心', score: 2 },
@@ -577,15 +581,14 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     });
   };
 
-  // 视频上传 - 生成封面图并存储视频数据
-  const handleVideoUpload = (e) => {
+  // 视频上传 - 智能选择存储方式（OPFS或Base64）
+  const handleVideoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // 限制视频大小：50MB
-    const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-    if (file.size > MAX_VIDEO_SIZE) {
-      alert('视频文件不能超过50MB，请压缩后重试');
+    // 限制视频大小
+    if (file.size > STORAGE_CONFIG.MAX_VIDEO_SIZE) {
+      alert(`视频文件不能超过${STORAGE_CONFIG.MAX_VIDEO_SIZE / 1024 / 1024}MB，请压缩后重试`);
       e.target.value = '';
       return;
     }
@@ -593,75 +596,89 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     // 显示加载提示
     setSaving(true);
     
-    // 先将视频文件转为DataURL存储
-    const videoReader = new FileReader();
-    videoReader.onload = (event) => {
-      const videoDataURL = event.target.result;
+    try {
+      // 检测是否使用OPFS
+      const useOPFS = await shouldUseOPFS();
       
-      // 标志位：防止重复添加同一个视频
-      let videoAdded = false;
+      if (STORAGE_CONFIG.DEBUG_MODE) {
+        console.log('[MomentForm] 视频存储模式:', useOPFS ? 'OPFS' : 'Base64');
+      }
       
-      // 添加视频的统一函数
-      const addVideo = (cover = null, duration = 0) => {
-        if (videoAdded) return;  // 防止重复添加
-        videoAdded = true;
-        
-        setVideos(prev => [...prev, {
-          url: videoDataURL,
-          cover: cover,
-          name: file.name,
-          size: file.size,
-          duration: duration
-        }]);
-        setSaving(false);
-      };
+      // 先生成视频封面（始终需要）
+      const coverUrl = URL.createObjectURL(file);
       
       // 创建视频元素读取封面
       const video = document.createElement('video');
-      video.src = videoDataURL;
+      video.src = coverUrl;
       video.currentTime = 0.5; // 取第0.5秒作为封面
       video.muted = true;
       video.playsInline = true;
       
-      // 超时保护：5秒内如果视频无法加载封面，直接存储
-      const coverTimeout = setTimeout(() => {
-        addVideo(null, 0);
-      }, 5000);
-      
-      video.onloadeddata = () => {
-        clearTimeout(coverTimeout);
-        // 创建canvas绘制封面
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 320;
-        canvas.height = video.videoHeight || 240;
-        const ctx = canvas.getContext('2d');
+      const generateCover = new Promise((resolve) => {
+        const coverTimeout = setTimeout(() => resolve(null), 5000);
         
-        try {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const coverImage = canvas.toDataURL('image/jpeg', 0.6);
-          addVideo(coverImage, video.duration);
-        } catch (err) {
-          // 如果生成失败，使用默认占位
-          addVideo(null, video.duration);
-        }
-        // 释放视频元素
-        video.src = '';
-        video.remove();
-      };
+        video.onloadeddata = () => {
+          clearTimeout(coverTimeout);
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 320;
+          canvas.height = video.videoHeight || 240;
+          const ctx = canvas.getContext('2d');
+          
+          try {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const coverImage = canvas.toDataURL('image/jpeg', 0.6);
+            resolve({ cover: coverImage, duration: video.duration });
+          } catch (err) {
+            resolve({ cover: null, duration: video.duration });
+          }
+        };
+        
+        video.onerror = () => {
+          clearTimeout(coverTimeout);
+          resolve({ cover: null, duration: 0 });
+        };
+      });
       
-      video.onerror = () => {
-        clearTimeout(coverTimeout);
-        // 即使封面失败，也保存视频
-        addVideo(null, 0);
-      };
-    };
-    
-    videoReader.onerror = () => {
-      alert('读取视频文件失败，请重试');
+      const { cover, duration } = await generateCover;
+      
+      // 释放临时URL
+      URL.revokeObjectURL(coverUrl);
+      video.src = '';
+      video.remove();
+      
+      if (useOPFS) {
+        // OPFS模式：存文件，不存base64
+        const { filename } = await saveVideoToOPFS(file);
+        
+        setVideos(prev => [...prev, {
+          filename,        // OPFS文件名
+          cover: cover,
+          name: file.name,
+          size: file.size,
+          duration: duration,
+        }]);
+      } else {
+        // Base64模式：传统方式
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setVideos(prev => [...prev, {
+            url: event.target.result, // Base64数据
+            cover: cover,
+            name: file.name,
+            size: file.size,
+            duration: duration,
+          }]);
+        };
+        reader.readAsDataURL(file);
+      }
+      
+    } catch (error) {
+      console.error('[MomentForm] 视频上传失败:', error);
+      alert('视频上传失败，请重试');
+    } finally {
       setSaving(false);
-    };
+    }
     
-    videoReader.readAsDataURL(file);
     e.target.value = '';
   };
 
@@ -669,7 +686,17 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
   
-  const removeVideo = (index) => {
+  const removeVideo = async (index) => {
+    const video = videos[index];
+    // 如果是OPFS存储的视频，删除文件
+    if (video && video.filename) {
+      try {
+        await deleteVideoFromOPFS(video.filename);
+        await deleteFileMetadata(video.filename);
+      } catch (e) {
+        console.error('[MomentForm] 删除视频文件失败:', e);
+      }
+    }
     setVideos(prev => prev.filter((_, i) => i !== index));
   };
 

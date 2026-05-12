@@ -30,6 +30,8 @@ import { handleRecordLink } from './utils/linkService';
 import { FloatingButton } from './components/FloatingButton';
 import { AIChoiceModal } from './components/AIChoiceModal';
 import { GrowthRecordForm } from './components/GrowthRecordForm';
+import { cleanupOrphanFiles } from './utils/opfs';
+import { STORAGE_CONFIG } from './config/storage';
 
 // 登录保护
 function AuthGuard({ children }) {
@@ -47,7 +49,7 @@ function RoutePersistence({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // 页面加载时恢复上次路由
+  // 页面加载时：恢复上次路由 + 清理孤儿视频文件
   useEffect(() => {
     const savedPath = localStorage.getItem('lastRoute');
     if (savedPath && savedPath !== location.pathname) {
@@ -55,6 +57,21 @@ function RoutePersistence({ children }) {
       if (location.pathname === '/' || location.pathname === '/timeline') {
         navigate(savedPath, { replace: true });
       }
+    }
+
+    // 启动时清理OPFS孤儿文件（延迟执行，不影响首屏加载）
+    if (STORAGE_CONFIG.AUTO_CLEANUP_ORPHANS) {
+      setTimeout(async () => {
+        try {
+          const allMoments = await getMomentsByBaby(currentBaby?.id);
+          const deletedCount = await cleanupOrphanFiles(allMoments);
+          if (deletedCount > 0 && STORAGE_CONFIG.DEBUG_MODE) {
+            console.log(`[App] 清理了${deletedCount}个孤儿视频文件`);
+          }
+        } catch (e) {
+          console.warn('[App] 清理孤儿文件失败:', e);
+        }
+      }, 2000);
     }
   }, []);
   

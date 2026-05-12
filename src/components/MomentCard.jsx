@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { formatDateFriendly, formatTime } from '../utils/dateUtils';
 import { Smile, CloudSun, MapPin, MoreHorizontal, Trash2, Edit3, Play, Pause, Mic, Share2 } from 'lucide-react';
+import { readVideoFromOPFS } from '../utils/opfs';
 
 // 懒加载图片组件
 function LazyImage({ src, alt, className }) {
@@ -95,6 +96,73 @@ const milestoneTypes = {
   learning: { label: '学习', className: 'learning', emoji: '📚' },
   daily: { label: '日常', className: 'daily', emoji: '✨' },
 };
+
+// 视频子组件 - 支持OPFS和Base64两种模式
+function VideoItem({ video }) {
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const objectUrlRef = useRef(null);
+
+  // 根据视频类型加载
+  useEffect(() => {
+    if (video.url) {
+      // Base64模式：直接使用url
+      setVideoUrl(video.url);
+    } else if (video.filename) {
+      // OPFS模式：从文件系统加载
+      loadOPFSVideo();
+    }
+
+    // 清理：组件卸载时释放Blob URL
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, [video.url, video.filename]);
+
+  const loadOPFSVideo = async () => {
+    try {
+      setLoading(true);
+      const file = await readVideoFromOPFS(video.filename);
+      const url = URL.createObjectURL(file);
+      objectUrlRef.current = url;
+      setVideoUrl(url);
+    } catch (e) {
+      console.error('[MomentCard] OPFS视频加载失败:', e);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative rounded-xl overflow-hidden bg-gray-800 aspect-video">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-white border-t-transparent"></div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10">
+          <span className="text-3xl mb-2">⚠️</span>
+          <span className="text-sm">视频加载失败</span>
+        </div>
+      )}
+      {videoUrl && (
+        <video
+          src={videoUrl}
+          poster={video.cover}
+          controls
+          className="w-full h-full object-cover"
+          playsInline
+          preload="metadata"
+        />
+      )}
+    </div>
+  );
+}
 
 export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -207,23 +275,11 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
         </div>
       )}
       
-      {/* 视频 - 使用videos字段 */}
+      {/* 视频 - 使用videos字段，支持OPFS和Base64两种模式 */}
       {moment.type === 'video' && moment.videos && moment.videos.length > 0 && (
         <div className="mb-3 space-y-2">
           {moment.videos.map((video, index) => (
-            <div 
-              key={index} 
-              className="relative rounded-xl overflow-hidden bg-gray-800 aspect-video"
-            >
-              <video
-                src={video.url}
-                poster={video.cover}
-                controls
-                className="w-full h-full object-cover"
-                playsInline
-                preload="metadata"
-              />
-            </div>
+            <VideoItem key={index} video={video} />
           ))}
         </div>
       )}

@@ -94,6 +94,7 @@ export function ProfilePage(
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
 { label: '', emoji: '⭐', color: '#FF7B70' });
+  const [showStorageModal, setShowStorageModal] = useState(false); // 存储优化弹窗
   
   // 心情标签管理状态
   const [showMoodModal, setShowMoodModal] = useState(false);
@@ -767,6 +768,19 @@ export function ProfilePage(
                   {isImportingSample ? '导入中...' : '选择模板，添加照片、视频、语音、文字'}
                 </p>
               </div>
+            </button>
+
+            {/* 存储优化 */}
+            <button
+              onClick={() => setShowStorageModal(true)}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <Database className="w-5 h-5 text-blue-500" />
+              <div className="flex-1 text-left">
+                <span className="text-sm text-gray-700 dark:text-white">存储优化</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">视频存储优化与迁移</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* 导出数据 */}
@@ -1654,6 +1668,49 @@ export function ProfilePage(
           </div>
         </div>
       )}
+
+        {/* 存储优化弹窗 */}
+        {showStorageModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-bold dark:text-white">💾 存储优化</h3>
+                <button
+                  onClick={() => setShowStorageModal(false)}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">OPFS存储优势</h4>
+                  <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                    <li>• 减少约33%的存储空间占用</li>
+                    <li>• 页面加载更快，内存占用更低</li>
+                    <li>• 支持超大视频文件</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                  <h4 className="font-medium text-gray-800 dark:text-white mb-2">迁移说明</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    新上传的视频已自动使用OPFS存储。
+                    历史视频迁移功能会在后续版本完善。
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => setShowStorageModal(false)}
+                  className="w-full py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600"
+                >
+                  我知道了
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

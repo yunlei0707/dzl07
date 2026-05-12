@@ -6,7 +6,7 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'BabyTimeDB';
-const DB_VERSION = 5; // 版本升级以支持成长记录功能
+const DB_VERSION = 6; // v6: 新增file-metadata表支持OPFS
 
 // 初始化数据库
 export async function initDB() {
@@ -69,6 +69,13 @@ export async function initDB() {
         const growthStore = db.createObjectStore('growthRecords', { keyPath: 'id', autoIncrement: true });
         growthStore.createIndex('babyId', 'babyId');
         growthStore.createIndex('date', 'date');
+      }
+
+      // 文件元数据表（OPFS存储支持）
+      if (!db.objectStoreNames.contains('file-metadata')) {
+        const fileMetadataStore = db.createObjectStore('file-metadata', { keyPath: 'filename' });
+        fileMetadataStore.createIndex('momentId', 'momentId');
+        fileMetadataStore.createIndex('createdAt', 'createdAt');
       }
     },
   });
@@ -1738,4 +1745,61 @@ export async function deleteGrowthRecord(id) {
   const db = await initDB();
   await db.delete('growthRecords', id);
   return true;
+}
+
+// ==================== 文件元数据操作（OPFS支持） ====================
+
+/**
+ * 保存文件元数据
+ * @param {Object} metadata 文件元数据
+ * @returns {Promise<Object>}
+ */
+export async function saveFileMetadata(metadata) {
+  const db = await initDB();
+  const meta = {
+    ...metadata,
+    createdAt: new Date().toISOString(),
+  };
+  await db.put('file-metadata', meta);
+  return meta;
+}
+
+/**
+ * 获取文件元数据
+ * @param {string} filename 文件名
+ * @returns {Promise<Object|null>}
+ */
+export async function getFileMetadata(filename) {
+  const db = await initDB();
+  return await db.get('file-metadata', filename);
+}
+
+/**
+ * 删除文件元数据
+ * @param {string} filename 文件名
+ * @returns {Promise<boolean>}
+ */
+export async function deleteFileMetadata(filename) {
+  const db = await initDB();
+  await db.delete('file-metadata', filename);
+  return true;
+}
+
+/**
+ * 根据动态ID获取所有关联的文件元数据
+ * @param {number} momentId 动态ID
+ * @returns {Promise<Array>}
+ */
+export async function getFileMetadataByMomentId(momentId) {
+  const db = await initDB();
+  return await db.getAllFromIndex('file-metadata', 'momentId', momentId);
+}
+
+/**
+ * 获取所有文件元数据
+ * @returns {Promise<Array>}
+ */
+export async function getAllFileMetadata() {
+  const db = await initDB();
+  return await db.getAll('file-metadata');
 }
