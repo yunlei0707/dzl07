@@ -438,14 +438,7 @@ export function ProfilePage(
       if (isInApp()) {
         try {
           const { jsBridgeFS } = await import('../utils/jsBridge');
-          filePath = `fs://download/宝宝时光备份/${filename}`;
-          
-          // 确保目录存在
-          try {
-            await jsBridgeFS.mkdir('fs://download/宝宝时光备份');
-          } catch (e) {
-            // 目录可能已存在
-          }
+          filePath = `fs://download/${filename}`;
           
           // Blob转Base64写入
           const reader = new FileReader();
@@ -509,7 +502,7 @@ export function ProfilePage(
     if (!fullPath) {
       console.warn('[ProfilePage] 文件路径为空，尝试从文件名构建路径');
       if (zipSuccessFilename) {
-        fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename}`;
+        fullPath = `fs://download/${zipSuccessFilename}`;
         console.log('[ProfilePage] 构建路径:', fullPath);
       } else {
         showToast('文件路径无效，请重新导出备份', 'warning');
@@ -517,10 +510,10 @@ export function ProfilePage(
       }
     }
     
-    // 确保路径格式正确（以 fs://download/宝宝时光备份/ 开头）
+    // 确保路径格式正确（以 fs://download/ 开头）
     if (!fullPath.startsWith('fs://')) {
       console.warn('[ProfilePage] 路径格式不正确，修正路径');
-      fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename || fullPath}`;
+      fullPath = `fs://download/${zipSuccessFilename || fullPath}`;
       console.log('[ProfilePage] 修正后路径:', fullPath);
     }
     
@@ -549,7 +542,7 @@ export function ProfilePage(
           } else {
             console.error('[ProfilePage] ❌ 打开文件失败:', msg);
             const errorDetail = msg ? `: ${msg}` : '（原生方法返回失败）';
-            showToast(`打开文件失败${errorDetail}，请在文件管理器的"下载/宝宝时光备份"目录中手动打开`, 'error');
+            showToast(`打开文件失败${errorDetail}，请在文件管理器的"下载"目录中手动打开`, 'error');
           }
         });
       } else {
@@ -560,7 +553,7 @@ export function ProfilePage(
       console.error('[ProfilePage] ❌ 打开文件异常:', e);
       console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
-      showToast(`打开文件失败: ${errorMsg}，请在文件管理器的"下载/宝宝时光备份"目录中查看`, 'error');
+      showToast(`打开文件失败: ${errorMsg}，请在文件管理器的"下载"目录中查看`, 'error');
     }
     console.log('[ProfilePage] ============== 打开备份文件结束 ==============');
   }, [zipSuccessFilePath, zipSuccessFilename, showToast]);
@@ -582,7 +575,7 @@ export function ProfilePage(
     if (!fullPath) {
       console.warn('[ProfilePage] 文件路径为空，尝试从文件名构建路径');
       if (zipSuccessFilename) {
-        fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename}`;
+        fullPath = `fs://download/${zipSuccessFilename}`;
         console.log('[ProfilePage] 构建路径:', fullPath);
       } else {
         showToast('文件路径无效，请重新导出备份', 'warning');
@@ -590,10 +583,10 @@ export function ProfilePage(
       }
     }
     
-    // 确保路径格式正确（以 fs://download/宝宝时光备份/ 开头）
+    // 确保路径格式正确（以 fs://download/ 开头）
     if (!fullPath.startsWith('fs://')) {
       console.warn('[ProfilePage] 路径格式不正确，修正路径');
-      fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename || fullPath}`;
+      fullPath = `fs://download/${zipSuccessFilename || fullPath}`;
       console.log('[ProfilePage] 修正后路径:', fullPath);
     }
     
@@ -622,7 +615,7 @@ export function ProfilePage(
           } else {
             console.error('[ProfilePage] ❌ 分享文件失败:', msg);
             const errorDetail = msg ? `: ${msg}` : '（原生方法返回失败）';
-            showToast(`分享文件失败${errorDetail}，请在文件管理器的"下载/宝宝时光备份"目录中手动分享`, 'error');
+            showToast(`分享文件失败${errorDetail}，请在文件管理器的"下载"目录中手动分享`, 'error');
           }
         });
       } else {
@@ -633,7 +626,7 @@ export function ProfilePage(
       console.error('[ProfilePage] ❌ 分享文件异常:', e);
       console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
-      showToast(`分享文件失败: ${errorMsg}，请在文件管理器的"下载/宝宝时光备份"目录中分享`, 'error');
+      showToast(`分享文件失败: ${errorMsg}，请在文件管理器的"下载"目录中分享`, 'error');
     }
     console.log('[ProfilePage] ============== 分享备份文件结束 ==============');
   }, [zipSuccessFilePath, zipSuccessFilename, showToast]);
