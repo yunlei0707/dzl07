@@ -24,26 +24,30 @@ export function RecycleBin({ onClose }) {
   const loadDeletedMoments = async () => {
     setIsLoading(true);
     try {
-      // 检查是否为 v2 账号系统（有 v2 宝宝信息）
-      const v2BabyInfo = getCurrentBabyInfo();
-      const isV2Account = !!v2BabyInfo;
-      
-      setHasV2Baby(isV2Account);
-      
-      if (isV2Account) {
-        // v2 账号（系统账号或用户账号）：从 timeline 中获取已删除的记录
-        const account = getCurrentV2Account();
-        if (account?.accountData?.timeline) {
-          const deleted = account.accountData.timeline.filter(m => m.isDeleted) || [];
-          setDeletedMoments(deleted);
-        } else {
-          setDeletedMoments([]);
-        }
+      // ✅ 修复数据隔离：与 TimelinePage 保持一致，优先判断 currentBaby
+      // 有普通宝宝（currentBaby 存在）时，使用 IndexedDB 的回收站数据
+      // 只有没有普通宝宝但有 v2 宝宝时，才使用 v2 账号的回收站数据
+      if (currentBaby?.id) {
+        // 普通宝宝：从 IndexedDB 获取
+        setHasV2Baby(false);
+        const moments = await getDeletedMomentsByBaby(currentBaby.id);
+        setDeletedMoments(moments);
       } else {
-        // 非 v2 系统：从 IndexedDB 获取
-        if (currentBaby?.id) {
-          const moments = await getDeletedMomentsByBaby(currentBaby.id);
-          setDeletedMoments(moments);
+        // 检查是否为 v2 账号系统
+        const v2BabyInfo = getCurrentBabyInfo();
+        const isV2Account = !!v2BabyInfo;
+        
+        setHasV2Baby(isV2Account);
+        
+        if (isV2Account) {
+          // v2 账号：从 timeline 中获取已删除的记录
+          const account = getCurrentV2Account();
+          if (account?.accountData?.timeline) {
+            const deleted = account.accountData.timeline.filter(m => m.isDeleted) || [];
+            setDeletedMoments(deleted);
+          } else {
+            setDeletedMoments([]);
+          }
         } else {
           setDeletedMoments([]);
         }
@@ -60,7 +64,16 @@ export function RecycleBin({ onClose }) {
   const handleRestore = async (momentId) => {
     setActionLoading(momentId);
     try {
-      if (hasV2Baby) {
+      // ✅ 修复数据隔离：与 TimelinePage 保持一致，优先判断 currentBaby
+      if (currentBaby?.id) {
+        // 普通宝宝：恢复 IndexedDB 数据
+        await restoreMoment(momentId);
+        
+        // 刷新时光轴
+        const { getMomentsByBaby } = await import('../utils/db');
+        const moments = await getMomentsByBaby(currentBaby.id);
+        setMoments(moments);
+      } else if (hasV2Baby) {
         // v2 账号：恢复 v2 数据
         const account = getCurrentV2Account();
         if (account?.accountData?.timeline) {
@@ -71,14 +84,6 @@ export function RecycleBin({ onClose }) {
           // 触发 TimelinePage 刷新
           window.dispatchEvent(new Event('v2-moment-updated'));
         }
-      } else {
-        // 普通账号：恢复 IndexedDB 数据
-        await restoreMoment(momentId);
-        
-        // 刷新时光轴
-        const { getMomentsByBaby } = await import('../utils/db');
-        const moments = await getMomentsByBaby(currentBaby.id);
-        setMoments(moments);
       }
       
       showToast('已还原到时光轴');
@@ -97,12 +102,13 @@ export function RecycleBin({ onClose }) {
 
     setActionLoading(momentId);
     try {
-      if (hasV2Baby) {
+      // ✅ 修复数据隔离：与 TimelinePage 保持一致，优先判断 currentBaby
+      if (currentBaby?.id) {
+        // 普通宝宝：永久删除 IndexedDB 数据
+        await deleteMomentPermanently(momentId);
+      } else if (hasV2Baby) {
         // v2 账号：永久删除
         deleteMomentFromCurrentAccount(momentId);
-      } else {
-        // 普通账号：永久删除 IndexedDB 数据
-        await deleteMomentPermanently(momentId);
       }
       
       showToast('已永久删除');
@@ -120,16 +126,17 @@ export function RecycleBin({ onClose }) {
     if (!confirm('确定要清空回收站吗？所有已删除的记录将被永久删除！')) return;
 
     try {
-      if (hasV2Baby) {
+      // ✅ 修复数据隔离：与 TimelinePage 保持一致，优先判断 currentBaby
+      if (currentBaby?.id) {
+        // 普通宝宝：清空 IndexedDB 回收站
+        await emptyRecycleBin(currentBaby.id);
+      } else if (hasV2Baby) {
         // v2 账号：清空所有已删除的 v2 记录
         const account = getCurrentV2Account();
         if (account?.accountData?.timeline) {
           const timeline = account.accountData.timeline.filter(m => !m.isDeleted);
           updateV2AccountData(account.identityName, account.accountId, { timeline });
         }
-      } else {
-        // 普通账号：清空 IndexedDB 回收站
-        await emptyRecycleBin(currentBaby.id);
       }
       
       showToast('回收站已清空');
