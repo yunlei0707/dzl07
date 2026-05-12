@@ -202,7 +202,7 @@ function VideoItem({ video }) {
   };
 
   return (
-    <div className="relative rounded-xl overflow-hidden bg-gray-800 aspect-video">
+    <div className="relative rounded-xl overflow-hidden bg-gray-800 max-h-[600px] flex items-center justify-center">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
           <div className="animate-spin rounded-full h-10 w-10 border-4 border-white border-t-transparent"></div>
@@ -219,7 +219,7 @@ function VideoItem({ video }) {
           src={videoUrl}
           poster={video.cover}
           controls
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain max-h-[600px]"
           playsInline
           preload="metadata"
         />
