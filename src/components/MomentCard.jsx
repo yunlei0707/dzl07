@@ -265,9 +265,9 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
         audioRef.current.pause();
       }
       // 播客模式 (index = -1)
-      if (index === -1 && moment.podcast && moment.podcast.url) {
+      if (index === -1 && moment.podcast && moment.podcast.audio?.url) {
         console.log('[MomentCard] 播放播客:', moment.podcast.title);
-        audioRef.current = new Audio(moment.podcast.url);
+        audioRef.current = new Audio(moment.podcast.audio.url);
       }
       // 普通音频模式
       else if (index >= 0 && moment.audios && moment.audios[index]) {
