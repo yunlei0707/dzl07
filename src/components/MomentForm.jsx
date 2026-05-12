@@ -11,6 +11,7 @@ import { saveVideoToOPFS, deleteVideoFromOPFS } from '../utils/opfs';
 import { shouldUseOPFS } from '../utils/storageCheck';
 import { saveFileMetadata, deleteFileMetadata } from '../utils/db';
 import { STORAGE_CONFIG } from '../config/storage';
+import { savePhotoToFS, deletePhotoFromFS } from '../utils/photoFS';
 
 const moodOptions = [
   { value: 'happy', emoji: '😊', label: '开心', score: 2 },
@@ -680,16 +681,33 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     );
   };
 
-  // 照片上传处理
-  const handlePhotoUpload = (e) => {
+  // 照片上传处理 - 智能选择存储方式（FS或Base64）
+  const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
+    
+    for (const file of files) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotos(prev => [...prev, event.target.result]);
-      };
-      reader.readAsDataURL(file);
-    });
+      
+      const loadPromise = new Promise((resolve) => {
+        reader.onload = (event) => resolve(event.target.result);
+        reader.readAsDataURL(file);
+      });
+      
+      const base64 = await loadPromise;
+      
+      // 尝试保存到文件系统
+      const fileInfo = await savePhotoToFS(base64);
+      
+      if (fileInfo) {
+        // FS模式：存储文件信息
+        setPhotos(prev => [...prev, fileInfo]);
+      } else {
+        // Base64模式：传统方式
+        setPhotos(prev => [...prev, base64]);
+      }
+    }
+    
+    e.target.value = '';
   };
 
   // 视频上传 - 智能选择存储方式（OPFS或Base64）
@@ -793,7 +811,16 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     e.target.value = '';
   };
 
-  const removePhoto = (index) => {
+  const removePhoto = async (index) => {
+    const photo = photos[index];
+    // 如果是FS存储的照片，删除文件
+    if (photo && typeof photo === 'object' && photo.filename) {
+      try {
+        await deletePhotoFromFS(photo.filename);
+      } catch (e) {
+        console.error('[MomentForm] 删除照片文件失败:', e);
+      }
+    }
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
   

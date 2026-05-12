@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { formatDateFriendly, formatTime } from '../utils/dateUtils';
 import { Smile, CloudSun, MapPin, MoreHorizontal, Trash2, Edit3, Play, Pause, Mic, Share2 } from 'lucide-react';
 import { readVideoFromOPFS } from '../utils/opfs';
+import { readPhotoFromFS } from '../utils/photoFS';
 
 // 懒加载图片组件
 function LazyImage({ src, alt, className }) {
@@ -96,6 +97,64 @@ const milestoneTypes = {
   learning: { label: '学习', className: 'learning', emoji: '📚' },
   daily: { label: '日常', className: 'daily', emoji: '✨' },
 };
+
+// 照片子组件 - 支持FS和Base64两种模式
+function PhotoItem({ photo, alt, className }) {
+  const [photoUrl, setPhotoUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  // 根据照片类型加载
+  useEffect(() => {
+    if (typeof photo === 'string') {
+      // Base64模式：直接使用
+      setPhotoUrl(photo);
+    } else if (photo && typeof photo === 'object' && photo.filename) {
+      // FS模式：从文件系统加载
+      loadFSPhoto();
+    }
+  }, [photo]);
+
+  const loadFSPhoto = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      const base64 = await readPhotoFromFS(photo.filename);
+      if (base64) {
+        setPhotoUrl(base64);
+      } else {
+        setError(true);
+      }
+    } catch (e) {
+      console.error('[MomentCard] FS照片加载失败:', e);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={`relative rounded-xl overflow-hidden bg-cream-100 dark:bg-gray-700 ${className || ''}`}>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-cream-100 dark:bg-gray-700">
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent"></div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-cream-100 dark:bg-gray-700">
+          <span className="text-3xl mb-1">⚠️</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">加载失败</span>
+        </div>
+      )}
+      {photoUrl && (
+        <LazyImage
+          src={photoUrl}
+          alt={alt || '照片'}
+        />
+      )}
+    </div>
+  );
+}
 
 // 视频子组件 - 支持OPFS和Base64两种模式
 function VideoItem({ video }) {
@@ -429,7 +488,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
         </div>
       )}
       
-      {/* 照片 */}
+      {/* 照片 - 支持FS和Base64两种模式 */}
       {moment.type !== 'video' && moment.type !== 'audio' && moment.type !== 'podcast' && moment.photos && moment.photos.length > 0 && (
         <div 
           className={`grid gap-2 mb-3 ${moment.photos.length === 1 ? 'grid-cols-1' : moment.photos.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}
@@ -438,16 +497,16 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
           {moment.photos.slice(0, 4).map((photo, index) => (
             <div 
               key={index} 
-              className={`relative rounded-xl overflow-hidden bg-cream-100 dark:bg-gray-700 ${
+              className={`${
                 moment.photos.length === 1 ? 'aspect-video' : 'aspect-square'
               } ${moment.photos.length === 3 && index === 0 ? 'row-span-2 aspect-auto' : ''}`}
             >
-              <LazyImage
-                src={photo}
+              <PhotoItem
+                photo={photo}
                 alt={`照片 ${index + 1}`}
               />
               {index === 3 && moment.photos.length > 4 && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-bold">
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-bold z-20 rounded-xl">
                   +{moment.photos.length - 4}
                 </div>
               )}

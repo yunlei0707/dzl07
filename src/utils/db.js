@@ -4,6 +4,7 @@
  */
 
 import { openDB } from 'idb';
+import { deletePhotoFromFS } from './photoFS';
 
 const DB_NAME = 'BabyTimeDB';
 const DB_VERSION = 6; // v6: 新增file-metadata表支持OPFS
@@ -1160,6 +1161,23 @@ export async function restoreMoment(momentId) {
  */
 export async function deleteMomentPermanently(momentId) {
   const db = await initDB();
+  
+  // 先获取动态数据，删除FS中的照片文件
+  try {
+    const moment = await db.get('moments', momentId);
+    if (moment && moment.photos && Array.isArray(moment.photos)) {
+      for (const photo of moment.photos) {
+        if (photo && typeof photo === 'object' && photo.filename) {
+          await deletePhotoFromFS(photo.filename).catch(e => {
+            console.error('[db] 删除FS照片失败:', e);
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[db] 获取动态数据失败:', e);
+  }
+  
   await db.delete('moments', momentId);
   return true;
 }
@@ -1183,6 +1201,19 @@ export async function getDeletedMomentsByBaby(babyId) {
 export async function emptyRecycleBin(babyId) {
   const db = await initDB();
   const deletedMoments = await getDeletedMomentsByBaby(babyId);
+  
+  // 先删除所有FS中的照片文件
+  for (const moment of deletedMoments) {
+    if (moment.photos && Array.isArray(moment.photos)) {
+      for (const photo of moment.photos) {
+        if (photo && typeof photo === 'object' && photo.filename) {
+          await deletePhotoFromFS(photo.filename).catch(e => {
+            console.error('[db] 清空回收站时删除FS照片失败:', e);
+          });
+        }
+      }
+    }
+  }
   
   const tx = db.transaction('moments', 'readwrite');
   for (const moment of deletedMoments) {

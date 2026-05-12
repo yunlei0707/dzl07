@@ -21,6 +21,7 @@ import {
 
 // 导入虚拟时光默认数据
 import { virtualTimeTopics } from '../data/virtualTimeData';
+import { deletePhotoFromFS } from './photoFS';
 
 // 重新导出，确保可以被其他文件导入
 export {
@@ -385,6 +386,19 @@ export function deleteMomentFromCurrentAccount(momentId) {
   const { identityName, accountId, accountData } = current;
   
   const timeline = accountData.timeline || [];
+  
+  // 先找到要删除的动态，删除FS中的照片文件
+  const momentToDelete = timeline.find(m => m.id === momentId);
+  if (momentToDelete && momentToDelete.photos && Array.isArray(momentToDelete.photos)) {
+    for (const photo of momentToDelete.photos) {
+      if (photo && typeof photo === 'object' && photo.filename) {
+        deletePhotoFromFS(photo.filename).catch(e => {
+          console.error('[dbV2] 删除FS照片失败:', e);
+        });
+      }
+    }
+  }
+  
   const filteredTimeline = timeline.filter(m => m.id !== momentId);
   
   updateV2AccountData(identityName, accountId, {
