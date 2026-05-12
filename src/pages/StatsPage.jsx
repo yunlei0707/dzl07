@@ -28,7 +28,7 @@ const moodOptions = [
 
 // 成长曲线图组件
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, onAddGrowthRecord, onEditGrowthRecord }) {
-  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones, growthRecords, refreshGrowthRecords } = useApp();
+  const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones, growthRecords, refreshGrowthRecords, dataVersion } = useApp();
   
   // v2 账号系统：获取当前账号信息
   const [v2Moments, setV2Moments] = useState([]);
@@ -228,7 +228,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
       topMood,
       moodStats,
     };
-  }, [currentBaby, moments, capsules, v2Moments, hasV2Baby]);
+  }, [currentBaby, moments, capsules, v2Moments, hasV2Baby, dataVersion]);
   
   // 名场面列表
   const milestones = useMemo(() => {
@@ -236,7 +236,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
       ? v2Moments
       : (moments && moments.length > 0 ? moments : []);
     return sourceMoments.filter(m => m.milestone && !m.isDeleted).slice(0, 5);
-  }, [moments, v2Moments, hasV2Baby]);
+  }, [moments, v2Moments, hasV2Baby, dataVersion]);
 
   // 名场面类型统计
   const milestoneStats = useMemo(() => {
@@ -282,7 +282,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     
     // 按数量降序
     return result.sort((a, b) => b.count - a.count);
-  }, [moments, v2Moments, hasV2Baby, getAllMilestones]);
+  }, [moments, v2Moments, hasV2Baby, getAllMilestones, dataVersion]);
 
   // 月龄神预言统计
   const predictionStats = useMemo(() => {
@@ -411,7 +411,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
     });
     
     return { points, distribution, groupDays };
-  }, [moments, v2Moments, hasV2Baby, moodTimeRange, moodScoreMap]);
+  }, [moments, v2Moments, hasV2Baby, moodTimeRange, moodScoreMap, dataVersion]);
 
   if (!displayBaby || !stats) {
     return (

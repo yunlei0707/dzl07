@@ -4,6 +4,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { getPerformanceConfig, getDeviceLevel, setCache, getCache } from '../utils/performance';
+import { calculateAge } from '../utils/dateUtils';
 import {
   getAllBabies,
   getBabiesByUser,
@@ -60,6 +61,7 @@ const DEFAULT_MILESTONES = [
 export function AppProvider({ children }) {
   // 状态
   const [isLoading, setIsLoading] = useState(true);
+  const [dataVersion, setDataVersion] = useState(0);
   const [babies, setBabies] = useState([]);
   const [currentBaby, setCurrentBaby] = useState(null);
   const [moments, setMoments] = useState([]);
@@ -238,8 +240,9 @@ export function AppProvider({ children }) {
       // 性能优化：只加载最新20条
       const babyMoments = await getMomentsByBaby(currentBaby.id, 0, 20);
       setMoments(babyMoments);
+      bumpDataVersion(); // 刷新后也要更新版本
     }
-  }, [currentBaby]);
+  }, [currentBaby, bumpDataVersion]);
 
   // 刷新胶囊
   const refreshCapsules = useCallback(async () => {
@@ -279,18 +282,24 @@ export function AppProvider({ children }) {
     }
   }, [currentBaby]);
 
+  // 数据版本递增：触发所有依赖数据的组件重新计算
+  const bumpDataVersion = useCallback(() => {
+    setDataVersion(prev => prev + 1);
+  }, []);
+
   // 添加动态
   const addMomentToContext = useCallback(async (momentData) => {
     try {
       const newMoment = await addMoment(momentData);
       setMoments(prev => [newMoment, ...prev]);
+      bumpDataVersion(); // 数据版本+1，触发统计重新计算
       return newMoment;
     } catch (error) {
       console.error('添加动态失败:', error);
       showToast('添加失败', 'error');
       throw error;
     }
-  }, [showToast]);
+  }, [showToast, bumpDataVersion]);
 
   // 删除宝宝
   const deleteBaby = useCallback(async (babyId) => {
@@ -464,6 +473,8 @@ export function AppProvider({ children }) {
 
   const value = {
     isLoading,
+    dataVersion,
+    bumpDataVersion,
     babies,
     setBabies,
     currentBaby,
