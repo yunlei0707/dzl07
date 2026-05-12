@@ -231,6 +231,7 @@ function VideoItem({ video }) {
 export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
   const [showMenu, setShowMenu] = useState(false);
   const [playingIndex, setPlayingIndex] = useState(null);
+  const [podcastError, setPodcastError] = useState(null);
   const audioRef = useRef(null);
   
   const typeIcons = {
@@ -278,6 +279,9 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
         urlLength: audio.url?.length || 0
       });
       
+      // 清除之前的错误
+      setPodcastError(null);
+      
       try {
         let audioUrl;
         // OPFS模式：从文件系统加载
@@ -296,20 +300,24 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
           audioRef.current = new Audio(audioUrl);
           audioRef.current.onended = () => setPlayingIndex(null);
           audioRef.current.onerror = (e) => {
-            console.error('[MomentCard] 音频播放错误:', e);
+            const errMsg = '音频解码失败，文件格式可能不支持';
+            console.error('[MomentCard] 音频播放错误:', e, errMsg);
+            setPodcastError(errMsg);
             setPlayingIndex(null);
           };
           await audioRef.current.play();
           setPlayingIndex(index);
           console.log('[MomentCard] 播客播放成功');
         } else {
-          console.error('[MomentCard] 无法获取播客音频URL');
-          alert('播客音频加载失败，请重试');
+          const errMsg = '找不到音频数据，storage=' + audio.storage + ', hasUrl=' + !!audio.url + ', hasFilename=' + !!audio.filename;
+          console.error('[MomentCard] 无法获取播客音频URL:', errMsg);
+          setPodcastError(errMsg);
         }
       } catch (e) {
+        const errMsg = e.message || '未知错误';
         console.error('[MomentCard] 播客播放失败:', e);
+        setPodcastError(errMsg);
         setPlayingIndex(null);
-        alert('播客播放失败：' + e.message);
       }
     }
     // 普通音频模式
@@ -498,10 +506,12 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => togglePlayAudio(-1)}
-                  className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-primary-600 transition-colors"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${podcastError ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'}`}
                 >
                   {playingIndex === -1 ? (
                     <Pause className="w-5 h-5 text-white" />
+                  ) : podcastError ? (
+                    <span className="text-white text-sm">!</span>
                   ) : (
                     <Play className="w-5 h-5 text-white ml-0.5" />
                   )}
@@ -512,20 +522,26 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
                       {moment.podcast.duration ? formatTime2(moment.podcast.duration) : '--:--'}
                     </span>
                   </div>
-                  {/* 波形显示 */}
-                  <div className="h-4 flex items-center gap-0.5 overflow-hidden">
-                    {moment.podcast.waveform?.length > 0 ? (
-                      moment.podcast.waveform.slice(-60).map((frame, i) => (
-                        <div
-                          key={i}
-                          className="w-0.5 bg-primary-300 dark:bg-primary-600 rounded-full"
-                          style={{ height: `${Math.max(8, ((frame || 0) / 255) * 100)}%` }}
-                        />
-                      ))
-                    ) : (
-                      <div className="w-full h-1.5 bg-primary-200 dark:bg-primary-700 rounded" />
-                    )}
-                  </div>
+                  {/* 波形显示或错误信息 */}
+                  {podcastError ? (
+                    <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded break-all">
+                      ❌ {podcastError}
+                    </div>
+                  ) : (
+                    <div className="h-4 flex items-center gap-0.5 overflow-hidden">
+                      {moment.podcast.waveform?.length > 0 ? (
+                        moment.podcast.waveform.slice(-60).map((frame, i) => (
+                          <div
+                            key={i}
+                            className="w-0.5 bg-primary-300 dark:bg-primary-600 rounded-full"
+                            style={{ height: `${Math.max(8, ((frame || 0) / 255) * 100)}%` }}
+                          />
+                        ))
+                      ) : (
+                        <div className="w-full h-1.5 bg-primary-200 dark:bg-primary-700 rounded" />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
