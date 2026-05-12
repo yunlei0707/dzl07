@@ -2131,6 +2131,7 @@ export function ProfilePage(
             </div>
           </div>
 
+      )}
       {/* 错误提示弹窗 */}
       {showErrorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -2173,7 +2174,6 @@ export function ProfilePage(
           </div>
         </div>
       )}
-        )}
     </div>
   );
 }
