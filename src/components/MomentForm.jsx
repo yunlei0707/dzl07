@@ -443,7 +443,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     setAudios(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 播客音频上传（简化版，先确保基本功能可用）
+  // 播客音频上传（直接保存File对象，避免FileReader问题）
   const handlePodcastAudioUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -457,26 +457,23 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       return;
     }
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.error) {
-        console.error('[播客上传] 读取失败:', reader.error);
-        alert('读取失败: ' + reader.error.message);
-        e.target.value = '';
-        return;
-      }
-      
-      console.log('[播客上传] 读取成功');
-      // 简化：不获取音频时长，直接保存
+    try {
+      // 直接用Blob URL，不需要FileReader读取整个文件
+      // 保存时db.js会处理File对象的存储
+      const blobUrl = URL.createObjectURL(file);
       setPodcastAudio({
-        url: reader.result,
+        url: blobUrl,
+        file: file,  // 直接保存File对象，db会处理
         name: file.name,
         size: file.size,
         duration: 0
       });
-      e.target.value = '';
-    };
-    reader.readAsDataURL(file);
+      console.log('[播客上传] 成功');
+    } catch (err) {
+      console.error('[播客上传] 失败:', err);
+      alert('上传失败: ' + err.message);
+    }
+    e.target.value = '';
   };
   
   // 播客封面上传（简化版）
