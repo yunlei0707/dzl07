@@ -16,8 +16,9 @@ import
   HelpCircle, Shield, FileText, Info, RotateCcw
 } from 'lucide-react';
 import 
-{ exportAllData, importAllData, clearAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
+{ exportAllData as exportAllIDBData, importAllData, clearAllData, PRESET_AVATARS, getAllBabies, getMomentsByBaby, getCapsulesByBaby, addMoment, deleteBaby } from '../utils/db';
 import { exportV2AccountData, importV2AccountData, isSystemAccount } from '../utils/dbV2';
+import { exportAllData, triggerDownload } from '../utils/zipExport';
 import 
 { calculateAge } from '../utils/dateUtils';
 import 
@@ -90,6 +91,12 @@ export function ProfilePage(
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportData, setExportData] = useState('');
+  // ZIP导出状态
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportProgressMessage, setExportProgressMessage] = useState('');
+  const [exportStats, setExportStats] = useState(null);
+  const [showZipExportModal, setShowZipExportModal] = useState(false);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
@@ -365,14 +372,16 @@ export function ProfilePage(
     setPullDistance(0);
   }, [pullDistance, refreshData]);
   
-  // 导出数据
-  const handleExport = useCallback(async () => 
-{
-    try 
-{
-      const idbData = await exportAllData();
+  // 显示导出选择弹窗
+  const handleExport = useCallback(() => {
+    setShowZipExportModal(true);
+  }, []);
+
+  // 原JSON导出（保持向后兼容）
+  const handleExportJSON = useCallback(async () => {
+    try {
+      const idbData = await exportAllIDBData();
       const v2Data = exportV2AccountData();
-      // 合并两份数据
       const mergedData = {
         ...idbData,
         v2AccountData: v2Data,
@@ -381,20 +390,60 @@ export function ProfilePage(
       setExportData(jsonStr);
       setShowExportModal(true);
       
-      // APP环境下自动保存并分享
       if (isInApp()) {
         try {
           await exportToFile(jsonStr);
         } catch (e) {
-          // 静默失败，不影响原有导出流程
           console.log('APP文件分享失败，将使用传统方式');
         }
       }
-    } catch (error) 
-{
+    } catch (error) {
       console.error('导出失败:', error);
       showToast('导出失败', 'error');
     }
+  }, [showToast]);
+
+  // ZIP导出（包含视频）
+  const handleExportZIP = useCallback(async (includeVideos = true) => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    setExportProgress(0);
+    setExportProgressMessage('准备导出...');
+    setExportStats(null);
+    
+    try {
+      const zipBlob = await exportAllData({
+        includeVideos,
+        onProgress: ({ progress, message, stats }) => {
+          setExportProgress(progress);
+          setExportProgressMessage(message);
+          if (stats) {
+            setExportStats(stats);
+          }
+        }
+      });
+      
+      // 触发下载
+      const filename = `宝贝时光备份_${new Date().toISOString().slice(0, 10)}.zip`;
+      triggerDownload(zipBlob, filename);
+      
+      showToast(`导出成功！${includeVideos ? '包含视频文件' : '仅数据'}`, 'success');
+      setShowZipExportModal(false);
+    } catch (error) {
+      console.error('ZIP导出失败:', error);
+      showToast(error.message || '导出失败，请重试', 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting, showToast]);
+
+  // 取消ZIP导出
+  const handleCancelExport = useCallback(() => {
+    setShowZipExportModal(false);
+    setIsExporting(false);
+    setExportProgress(0);
+    setExportProgressMessage('');
   }, []);
   
   // 复制到剪贴板
@@ -1099,6 +1148,118 @@ export function ProfilePage(
             >
               关闭
             </button>
+          </div>
+        </div>
+      )}
+      
+      {/* ZIP导出选择弹窗 */}
+      {showZipExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-6">
+            <h3 className="text-lg font-bold mb-4 dark:text-white">📦 选择导出方式</h3>
+            
+            {!isExporting ? (
+              <>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  ZIP格式可同时导出数据和视频文件，推荐使用
+                </p>
+                
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleExportZIP(true)}
+                    className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors"
+                  >
+                    <FileText className="w-5 h-5" />
+                    <div className="text-left">
+                      <div>导出为ZIP（推荐）</div>
+                      <div className="text-xs opacity-80">包含所有数据 + 视频文件</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleExportZIP(false)}
+                    className="w-full py-3 bg-blue-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
+                  >
+                    <FileText className="w-5 h-5" />
+                    <div className="text-left">
+                      <div>仅导出数据</div>
+                      <div className="text-xs opacity-80">不含视频，文件较小</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setShowZipExportModal(false);
+                      handleExportJSON();
+                    }}
+                    className="w-full py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Shield className="w-5 h-5" />
+                    <div className="text-left">
+                      <div>传统JSON导出</div>
+                      <div className="text-xs opacity-80">纯文本格式</div>
+                    </div>
+                  </button>
+                </div>
+                
+                <button
+                  onClick={handleCancelExport}
+                  className="mt-4 w-full py-2 text-gray-500 dark:text-gray-400 text-sm font-medium"
+                >
+                  取消
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 导出进度显示 */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600 dark:text-gray-400">{exportProgressMessage}</span>
+                    <span className="font-medium text-primary-500">{exportProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div 
+                      className="bg-primary-500 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${exportProgress}%` }}
+                    />
+                  </div>
+                </div>
+                
+                {exportStats && (
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mb-4 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-gray-500 dark:text-gray-400">动态数量:</div>
+                      <div className="font-medium dark:text-white">{exportStats.v2Timeline || exportStats.oldMoments} 条</div>
+                      <div className="text-gray-500 dark:text-gray-400">视频数量:</div>
+                      <div className="font-medium dark:text-white">{exportStats.totalVideos} 个</div>
+                      {exportStats.opfsVideos > 0 && (
+                        <>
+                          <div className="text-gray-500 dark:text-gray-400">OPFS视频:</div>
+                          <div className="font-medium dark:text-white">{exportStats.opfsVideos} 个</div>
+                        </>
+                      )}
+                      {exportStats.base64Videos > 0 && (
+                        <>
+                          <div className="text-gray-500 dark:text-gray-400">Base64视频:</div>
+                          <div className="font-medium dark:text-white">{exportStats.base64Videos} 个</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <p className="text-xs text-gray-400 text-center mb-4">
+                  ⚠️ 导出过程中请勿关闭页面
+                </p>
+                
+                <button
+                  disabled={true}
+                  className="w-full py-3 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-medium cursor-not-allowed"
+                >
+                  正在导出...
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
