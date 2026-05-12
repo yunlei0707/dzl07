@@ -425,10 +425,12 @@ export function ProfilePage(
       });
       
       // 触发下载
-      const filename = `宝贝时光备份_${new Date().toISOString().slice(0, 10)}.zip`;
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+      const filename = `宝宝时光数据备份_${timestamp}.zip`;
       triggerDownload(zipBlob, filename);
       
-      showToast(`导出成功！${includeVideos ? '包含视频文件' : '仅数据'}`, 'success');
+      showToast(`备份文件已下载完成！\n\n文件名：${filename}\n\n保存位置：手机/电脑的"下载"文件夹\n\n请在文件管理中查看，解压后包含数据文件${includeVideos ? '和所有视频' : ''}。`, 'success');
       setShowZipExportModal(false);
     } catch (error) {
       console.error('ZIP导出失败:', error);
@@ -870,16 +872,17 @@ export function ProfilePage(
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
 
-            {/* 清除缓存 - 已锁定，等用户确认后启用 */}
+            {/* 清除缓存 */}
             <button
-              disabled
-              className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex items-center gap-3 opacity-50 cursor-not-allowed"
+              onClick={() => setShowClearConfirm(true)}
+              className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <RotateCcw className="w-5 h-5 text-gray-400" />
+              <RotateCcw className="w-5 h-5 text-red-400" />
               <div className="flex-1 text-left">
                 <span className="text-sm text-gray-700 dark:text-white">清除缓存</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">谨慎操作，将清除所有本地数据</p>
               </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
             {/* 退出登录 */}
             <button
