@@ -71,6 +71,28 @@ if (rootElement) {
   console.error('找不到根元素 #root');
 }
 
+// 监听来自SW的强制刷新消息（用于清除旧缓存修复白屏）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'FORCE_REFRESH_AND_UNREGISTER_SW') {
+      console.log('[主程序] 收到强制刷新指令，正在清除SW并刷新...');
+      // 注销所有Service Worker
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        Promise.all(registrations.map((r) => r.unregister())).then(() => {
+          // 清除所有缓存
+          if ('caches' in window) {
+            caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name)))).then(() => {
+              window.location.reload(true);
+            });
+          } else {
+            window.location.reload(true);
+          }
+        });
+      });
+    }
+  });
+}
+
 // 注册 Service Worker (PWA)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

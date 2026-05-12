@@ -1,4 +1,6 @@
 {
-  "version": "2.32.0",
-  "buildTime": "2026-05-07T18:31:00+08:00"
+  "version": "2.45.1-clear-cache-force-refresh",
+  "buildTime": "2026-05-12T15:32:00+08:00",
+  "forceRefresh": true,
+  "note": "强制清除所有旧缓存，修复白屏问题"
 }
