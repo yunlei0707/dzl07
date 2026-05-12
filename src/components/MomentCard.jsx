@@ -174,6 +174,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
     video: '🎬',
     audio: '🎤',
     diary: '📝',
+    podcast: '🎙️',
   };
   
   const handleDelete = () => {
@@ -190,7 +191,7 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
     setShowMenu(false);
   };
   
-  // 播放/暂停音频
+  // 播放/暂停音频/播客
   const togglePlayAudio = (index) => {
     if (playingIndex === index) {
       audioRef.current?.pause();
@@ -199,10 +200,23 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      audioRef.current = new Audio(moment.audios[index].url);
-      audioRef.current.onended = () => setPlayingIndex(null);
-      audioRef.current.play();
-      setPlayingIndex(index);
+      // 播客模式 (index = -1)
+      if (index === -1 && moment.podcast && moment.podcast.url) {
+        console.log('[MomentCard] 播放播客:', moment.podcast.title);
+        audioRef.current = new Audio(moment.podcast.url);
+      }
+      // 普通音频模式
+      else if (index >= 0 && moment.audios && moment.audios[index]) {
+        console.log('[MomentCard] 播放音频:', moment.audios[index].fileName);
+        audioRef.current = new Audio(moment.audios[index].url);
+      }
+      if (audioRef.current) {
+        audioRef.current.onended = () => setPlayingIndex(null);
+        audioRef.current.play().catch(e => {
+          console.error('[MomentCard] 播放失败:', e);
+        });
+        setPlayingIndex(index);
+      }
     }
   };
   
@@ -341,8 +355,82 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
         </div>
       )}
       
+      {/* 播客 */}
+      {moment.type === 'podcast' && moment.podcast && (
+        <div className="mb-3">
+          <div className="bg-cream-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+            {/* 播客封面 */}
+            {moment.podcast.cover && (
+              <div className="relative aspect-video bg-cream-100 dark:bg-gray-700">
+                <LazyImage
+                  src={moment.podcast.cover}
+                  alt={moment.podcast.title || '播客封面'}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button
+                    onClick={() => togglePlayAudio(-1)}
+                    className="w-16 h-16 bg-white/90 dark:bg-gray-800/90 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-colors shadow-lg"
+                  >
+                    {playingIndex === -1 ? (
+                      <Pause className="w-8 h-8 text-primary-500" />
+                    ) : (
+                      <Play className="w-8 h-8 text-primary-500 ml-1" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* 播客信息 */}
+            <div className="p-3">
+              <h4 className="text-base font-medium text-gray-800 dark:text-gray-100 mb-1 truncate">
+                {moment.podcast.title || '播客记录'}
+              </h4>
+              {moment.podcast.description && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                  {moment.podcast.description}
+                </p>
+              )}
+              {/* 播放控制 */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => togglePlayAudio(-1)}
+                  className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-primary-600 transition-colors"
+                >
+                  {playingIndex === -1 ? (
+                    <Pause className="w-5 h-5 text-white" />
+                  ) : (
+                    <Play className="w-5 h-5 text-white ml-0.5" />
+                  )}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-400">
+                      {moment.podcast.duration ? formatTime2(moment.podcast.duration) : '--:--'}
+                    </span>
+                  </div>
+                  {/* 波形显示 */}
+                  <div className="h-4 flex items-center gap-0.5 overflow-hidden">
+                    {moment.podcast.waveform?.length > 0 ? (
+                      moment.podcast.waveform.slice(-60).map((frame, i) => (
+                        <div
+                          key={i}
+                          className="w-0.5 bg-primary-300 dark:bg-primary-600 rounded-full"
+                          style={{ height: `${Math.max(8, ((frame || 0) / 255) * 100)}%` }}
+                        />
+                      ))
+                    ) : (
+                      <div className="w-full h-1.5 bg-primary-200 dark:bg-primary-700 rounded" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 照片 */}
-      {moment.type !== 'video' && moment.type !== 'audio' && moment.photos && moment.photos.length > 0 && (
+      {moment.type !== 'video' && moment.type !== 'audio' && moment.type !== 'podcast' && moment.photos && moment.photos.length > 0 && (
         <div 
           className={`grid gap-2 mb-3 ${moment.photos.length === 1 ? 'grid-cols-1' : moment.photos.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}
           onClick={() => onClick && onClick(moment.photos)}

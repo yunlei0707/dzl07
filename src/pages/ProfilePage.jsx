@@ -105,7 +105,20 @@ export function ProfilePage(
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState(
 { label: '', emoji: '⭐', color: '#FF7B70' });
-  const [showStorageModal, setShowStorageModal] = useState(false); // 存储优化弹窗
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  // 错误提示弹窗
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalTitle, setErrorModalTitle] = useState('');
+  const [errorModalMessage, setErrorModalMessage] = useState('');
+  const [errorModalType, setErrorModalType] = useState('error');
+
+  // 显示错误弹窗
+  const showErrorModalFunc = useCallback((title, message, type = 'error') => {
+    setErrorModalTitle(title);
+    setErrorModalMessage(message);
+    setErrorModalType(type);
+    setShowErrorModal(true);
+  }, []); // 存储优化弹窗
   
   // 心情标签管理状态
   const [showMoodModal, setShowMoodModal] = useState(false);
@@ -435,20 +448,10 @@ export function ProfilePage(
       
       // APP环境：写入系统下载目录
       let filePath = '';
-      let writeSuccess = false;
       if (isInApp()) {
         try {
           const { jsBridgeFS } = await import('../utils/jsBridge');
-          filePath = `fs://download/宝宝时光备份/${filename}`;
-          console.log('[ProfilePage] 准备写入文件, 路径:', filePath);
-          
-          // 确保目录存在
-          try {
-            await jsBridgeFS.mkdir('fs://download/宝宝时光备份');
-            console.log('[ProfilePage] 目录创建成功');
-          } catch (e) {
-            console.log('[ProfilePage] 目录可能已存在:', e);
-          }
+          filePath = `fs://file/BabyTimeBackup/${filename}`;
           
           // Blob转Base64写入
           const reader = new FileReader();
@@ -456,33 +459,24 @@ export function ProfilePage(
             reader.onload = async () => {
               try {
                 const base64 = reader.result.split(',')[1];
-                console.log('[ProfilePage] 开始写入文件, base64长度:', base64?.length);
                 await jsBridgeFS.writeBinary(filePath, base64);
-                console.log('[ProfilePage] 文件写入成功');
-                writeSuccess = true;
                 resolve();
               } catch (e) {
-                console.error('[ProfilePage] writeBinary失败:', e);
                 reject(e);
               }
             };
-            reader.onerror = (e) => {
-              console.error('[ProfilePage] FileReader失败:', e);
-              reject(e);
-            };
+            reader.onerror = reject;
             reader.readAsDataURL(zipBlob);
           });
         } catch (e) {
-          console.error('APP写入失败，将使用传统方式:', e);
+          console.log('APP写入失败，将使用传统方式');
           triggerDownload(zipBlob, filename);
-          filePath = ''; // 写入失败时清空路径，避免后续操作失败
         }
       } else {
         triggerDownload(zipBlob, filename);
       }
       
       // 显示成功弹窗
-      console.log('[ProfilePage] 导出完成, filePath:', filePath, 'writeSuccess:', writeSuccess);
       setZipSuccessFilename(filename);
       setZipSuccessFilePath(filePath);
       setZipIncludeVideos(includeVideos);
@@ -490,12 +484,11 @@ export function ProfilePage(
       setShowZipExportModal(false);
     } catch (error) {
       console.error('ZIP导出失败:', error);
-      showToast(error.message || '导出失败，请重试', 'error');
+      showErrorModalFunc('导出失败', error.message || '导出失败，请重试', 'error');
     } finally {
       setIsExporting(false);
     }
-  }, [isExporting, showToast, setZipSuccessFilename, setZipSuccessFilePath, setZipIncludeVideos, setShowZipSuccessModal]);
-
+  }, [isExporting, showErrorModalFunc, setZipSuccessFilename, setZipSuccessFilePath, setZipIncludeVideos, setShowZipSuccessModal]);
   // 取消ZIP导出
   const handleCancelExport = useCallback(() => {
     setShowZipExportModal(false);
@@ -506,95 +499,149 @@ export function ProfilePage(
 
   // 打开备份文件
   const handleOpenBackupFile = useCallback(() => {
-    console.log('[ProfilePage] 开始打开备份文件, 当前路径:', zipSuccessFilePath);
-    console.log('[ProfilePage] isInApp:', isInApp());
-    console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
-    console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
-
+    console.log('[ProfilePage] ============== 开始打开备份文件 ==============');
+    console.log('[ProfilePage] 当前zipSuccessFilePath:', zipSuccessFilePath);
+    console.log('[ProfilePage] 当前文件名:', zipSuccessFilename);
+    
     if (!isInApp()) {
-      showToast('当前环境不支持直接打开，请在文件管理中查看', 'warning');
+      console.warn('[ProfilePage] 当前不在APP环境中，无法打开文件');
+      showErrorModalFunc('提示', '当前环境不支持直接打开，请在文件管理中查看', 'warning');
       return;
     }
-    if (!zipSuccessFilePath) {
-      showToast('文件路径无效', 'warning');
-      return;
+    
+    // 确保路径格式正确
+    let fullPath = zipSuccessFilePath;
+    if (!fullPath) {
+      console.warn('[ProfilePage] 文件路径为空，尝试从文件名构建路径');
+      if (zipSuccessFilename) {
+        fullPath = `fs://file/BabyTimeBackup/${zipSuccessFilename}`;
+        console.log('[ProfilePage] 构建路径:', fullPath);
+      } else {
+        showErrorModalFunc('提示', '文件路径无效，请重新导出备份', 'warning');
+        return;
+      }
     }
+    
+    // 确保路径格式正确（以 fs://file/BabyTimeBackup/ 开头）
+    if (!fullPath.startsWith('fs://')) {
+      console.warn('[ProfilePage] 路径格式不正确，修正路径');
+      fullPath = `fs://file/BabyTimeBackup/${zipSuccessFilename || fullPath}`;
+      console.log('[ProfilePage] 修正后路径:', fullPath);
+    }
+    
+    console.log('[ProfilePage] 最终打开路径:', fullPath);
+    
     try {
+      console.log('[ProfilePage] 检查jsBridge状态...');
+      console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
+      console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
+      console.log('[ProfilePage] window.jsBridge.fs.open:', typeof window.jsBridge?.fs?.open);
+      
       // 使用一门APP官方原生回调方式，不使用Promise封装
       if (window.jsBridge && window.jsBridge.fs) {
-        console.log('[ProfilePage] 调用window.jsBridge.fs.open, 路径:', zipSuccessFilePath);
         if (typeof window.jsBridge.fs.open !== 'function') {
-          console.error('[ProfilePage] window.jsBridge.fs.open 不是函数');
-          showToast('open方法不存在，请升级APP', 'error');
+          console.error('[ProfilePage] fs.open方法不存在');
+          showErrorModalFunc('打开失败', '当前APP版本不支持直接打开文件，请升级APP或在文件管理器中查看', 'error');
           return;
         }
-        window.jsBridge.fs.open(zipSuccessFilePath, function(succ, msg) {
-          console.log('[ProfilePage] open回调 - succ:', succ, 'msg:', msg);
+        
+        console.log('[ProfilePage] 调用fs.open方法...');
+        window.jsBridge.fs.open(fullPath, function(succ, msg) {
+          console.log('[ProfilePage] fs.open回调 - succ:', succ, ', msg:', msg);
           if (succ) {
-            console.log('[ProfilePage] 打开文件成功');
-            showToast('正在打开文件...', 'success');
+            console.log('[ProfilePage] ✅ 打开文件成功');
+            showErrorModalFunc('提示', '正在打开文件...', 'success');
           } else {
-            console.error('[ProfilePage] 打开文件失败:', msg);
-            showToast(`打开文件失败: ${msg || '未知错误'}`, 'error');
+            console.error('[ProfilePage] ❌ 打开文件失败:', msg);
+            const errorDetail = msg ? `: ${msg}` : '（原生方法返回失败）';
+            showErrorModalFunc('打开失败', `打开文件失败${errorDetail}，请在文件管理器的"下载"目录中手动打开`, 'error');
           }
         });
       } else {
-        console.error('[ProfilePage] jsBridge未初始化, window.jsBridge:', window.jsBridge);
-        showToast('jsBridge未初始化，请重启APP', 'error');
+        console.error('[ProfilePage] jsBridge或fs模块未初始化');
+        showErrorModalFunc('错误', 'APP原生服务未就绪，请重启APP后重试', 'error');
       }
     } catch (e) {
-      console.error('[ProfilePage] 打开文件异常:', e);
+      console.error('[ProfilePage] ❌ 打开文件异常:', e);
       console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
-      showToast(`打开文件失败: ${errorMsg}`, 'error');
+      showErrorModalFunc('打开失败', `打开文件失败: ${errorMsg}，请在文件管理器的"下载"目录中查看`, 'error');
     }
-  }, [zipSuccessFilePath, showToast]);
+    console.log('[ProfilePage] ============== 打开备份文件结束 ==============');
+  }, [zipSuccessFilePath, zipSuccessFilename, showErrorModalFunc]);
 
   // 分享备份文件
   const handleShareBackupFile = useCallback(() => {
-    console.log('[ProfilePage] 开始分享备份文件, 当前路径:', zipSuccessFilePath);
-    console.log('[ProfilePage] isInApp:', isInApp());
-    console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
-    console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
-
+    console.log('[ProfilePage] ============== 开始分享备份文件 ==============');
+    console.log('[ProfilePage] 当前zipSuccessFilePath:', zipSuccessFilePath);
+    console.log('[ProfilePage] 当前文件名:', zipSuccessFilename);
+    
     if (!isInApp()) {
-      showToast('当前环境不支持直接分享，请在文件管理中查看', 'warning');
+      console.warn('[ProfilePage] 当前不在APP环境中，无法分享文件');
+      showErrorModalFunc('提示', '当前环境不支持直接分享，请在文件管理中查看', 'warning');
       return;
     }
-    if (!zipSuccessFilePath) {
-      showToast('文件路径无效', 'warning');
-      return;
+    
+    // 确保路径格式正确
+    let fullPath = zipSuccessFilePath;
+    if (!fullPath) {
+      console.warn('[ProfilePage] 文件路径为空，尝试从文件名构建路径');
+      if (zipSuccessFilename) {
+        fullPath = `fs://file/BabyTimeBackup/${zipSuccessFilename}`;
+        console.log('[ProfilePage] 构建路径:', fullPath);
+      } else {
+        showErrorModalFunc('提示', '文件路径无效，请重新导出备份', 'warning');
+        return;
+      }
     }
+    
+    // 确保路径格式正确（以 fs://file/BabyTimeBackup/ 开头）
+    if (!fullPath.startsWith('fs://')) {
+      console.warn('[ProfilePage] 路径格式不正确，修正路径');
+      fullPath = `fs://file/BabyTimeBackup/${zipSuccessFilename || fullPath}`;
+      console.log('[ProfilePage] 修正后路径:', fullPath);
+    }
+    
+    console.log('[ProfilePage] 最终分享路径:', fullPath);
+    
     try {
+      console.log('[ProfilePage] 检查jsBridge状态...');
+      console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
+      console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
+      console.log('[ProfilePage] window.jsBridge.fs.share:', typeof window.jsBridge?.fs?.share);
+      
       // 使用一门APP官方原生回调方式，不使用Promise封装
       if (window.jsBridge && window.jsBridge.fs) {
-        console.log('[ProfilePage] 调用window.jsBridge.fs.share, 路径:', zipSuccessFilePath);
         if (typeof window.jsBridge.fs.share !== 'function') {
-          console.error('[ProfilePage] window.jsBridge.fs.share 不是函数');
-          showToast('share方法不存在，请升级APP', 'error');
+          console.error('[ProfilePage] fs.share方法不存在');
+          showErrorModalFunc('分享失败', '当前APP版本不支持直接分享，请升级APP或在文件管理器中分享', 'error');
           return;
         }
-        window.jsBridge.fs.share(zipSuccessFilePath, function(succ, msg) {
-          console.log('[ProfilePage] share回调 - succ:', succ, 'msg:', msg);
+        
+        console.log('[ProfilePage] 调用fs.share方法...');
+        window.jsBridge.fs.share(fullPath, function(succ, msg) {
+          console.log('[ProfilePage] fs.share回调 - succ:', succ, ', msg:', msg);
           if (succ) {
-            console.log('[ProfilePage] 分享文件成功');
-            showToast('正在打开分享面板...', 'success');
+            console.log('[ProfilePage] ✅ 分享文件成功');
+            showErrorModalFunc('提示', '正在打开分享面板...', 'success');
           } else {
-            console.error('[ProfilePage] 分享文件失败:', msg);
-            showToast(`分享文件失败: ${msg || '未知错误'}`, 'error');
+            console.error('[ProfilePage] ❌ 分享文件失败:', msg);
+            const errorDetail = msg ? `: ${msg}` : '（原生方法返回失败）';
+            showErrorModalFunc('分享失败', `分享文件失败${errorDetail}，请在文件管理器的"下载"目录中手动分享`, 'error');
           }
         });
       } else {
-        console.error('[ProfilePage] jsBridge未初始化, window.jsBridge:', window.jsBridge);
-        showToast('jsBridge未初始化，请重启APP', 'error');
+        console.error('[ProfilePage] jsBridge或fs模块未初始化');
+        showErrorModalFunc('错误', 'APP原生服务未就绪，请重启APP后重试', 'error');
       }
     } catch (e) {
-      console.error('[ProfilePage] 分享文件异常:', e);
+      console.error('[ProfilePage] ❌ 分享文件异常:', e);
       console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
-      showToast(`分享文件失败: ${errorMsg}`, 'error');
+      showErrorModalFunc('分享失败', `分享文件失败: ${errorMsg}，请在文件管理器的"下载"目录中分享`, 'error');
     }
-  }, [zipSuccessFilePath, showToast]);
+    console.log('[ProfilePage] ============== 分享备份文件结束 ==============');
+  }, [zipSuccessFilePath, zipSuccessFilename, showErrorModalFunc]);
   
   // 复制到剪贴板
   const handleCopyToClipboard = useCallback(async () => 
@@ -634,7 +681,7 @@ export function ProfilePage(
     URL.revokeObjectURL(url);
     showToast('文件已下载', 'success');
   }, [exportData, showToast]);
-  
+
   // 从ZIP文件中解压并读取data.json
   const extractDataFromZip = async (file) => {
     // 检查JSZip是否可用
@@ -655,7 +702,7 @@ export function ProfilePage(
     const jsonContent = await dataJsonFile.async('string');
     return JSON.parse(jsonContent);
   };
-
+  
   // 导入数据
   const handleImport = useCallback(async () => 
 {
@@ -667,7 +714,7 @@ export function ProfilePage(
       try {
         data = JSON.parse(importText.trim());
       } catch (e) {
-        showToast('粘贴的数据格式错误，请检查', 'error');
+        showErrorModalFunc('导入失败', '粘贴的数据格式错误，请检查', 'error');
         return;
       }
     } else if (importFile) {
@@ -681,7 +728,7 @@ export function ProfilePage(
           } catch (e) {
             console.error('ZIP解压失败:', e);
             const errorMsg = e?.message || '未知错误';
-            showToast('ZIP解压失败: ' + errorMsg, 'error');
+            showErrorModalFunc('导入失败', 'ZIP解压失败: ' + errorMsg, 'error');
             return;
           }
         } else if (fileName.endsWith('.json')) {
@@ -689,15 +736,15 @@ export function ProfilePage(
           const text = await importFile.text();
           data = JSON.parse(text);
         } else {
-          showToast('不支持的文件格式，请选择.json或.zip文件', 'error');
+          showErrorModalFunc('导入失败', '不支持的文件格式，请选择.json或.zip文件', 'error');
           return;
         }
       } catch (e) {
-        showToast('文件格式错误', 'error');
+        showErrorModalFunc('导入失败', '文件格式错误', 'error');
         return;
       }
     } else {
-      showToast('请先选择备份文件或粘贴备份数据', 'warning');
+      showErrorModalFunc('提示', '请先选择备份文件或粘贴备份数据', 'warning');
       return;
     }
     
@@ -722,12 +769,12 @@ export function ProfilePage(
 {
       console.error('导入失败:', error);
       const errorMsg = error?.message || error?.toString() || '未知错误';
-      showToast('导入失败: ' + errorMsg, 'error');
+      showErrorModalFunc('导入失败', '导入失败: ' + errorMsg, 'error');
     } finally 
 {
       setIsImporting(false);
     }
-  }, [importFile, importText, importMode, showToast, refreshData, extractDataFromZip]);
+  }, [importFile, importText, importMode, showErrorModalFunc, refreshData, extractDataFromZip]);
   
   
   // 退出登录
@@ -749,7 +796,7 @@ export function ProfilePage(
       window.location.reload();
     } catch (error) {
       console.error('清除缓存失败:', error);
-      showToast('清除失败', 'error');
+      showErrorModalFunc('清除失败', '清除失败', 'error');
     }
   }, [showToast]);
   
@@ -774,7 +821,7 @@ export function ProfilePage(
     } catch (error) 
 {
       console.error('保存失败:', error);
-      showToast('保存失败', 'error');
+      showErrorModalFunc('保存失败', '保存失败', 'error');
     }
   }, [editingMilestone, milestoneForm, addMilestone, updateMilestone, showToast]);
 
@@ -799,7 +846,7 @@ export function ProfilePage(
     } catch (error) 
 {
       console.error('保存失败:', error);
-      showToast('保存失败', 'error');
+      showErrorModalFunc('保存失败', '保存失败', 'error');
     }
   }, [editingMood, moodForm, addMood, updateMood, showToast]);
 
@@ -1227,7 +1274,7 @@ export function ProfilePage(
               <div className="flex gap-2 mb-2">
                 <button
                   onClick=
-{async () => { try { const text = await navigator.clipboard.readText(); setImportText(text); setImportFile(null); } catch(e) { showToast('无法读取剪贴板，请手动粘贴', 'warning'); } }}
+{async () => { try { const text = await navigator.clipboard.readText(); setImportText(text); setImportFile(null); } catch(e) { showErrorModalFunc('提示', '无法读取剪贴板，请手动粘贴', 'warning'); } }}
                   className="px-3 py-1.5 text-xs bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400"
                 >
                   读取剪贴板
@@ -2122,7 +2169,50 @@ export function ProfilePage(
               </div>
             </div>
           </div>
-        )}
+
+      )}
+      {/* 错误提示弹窗 */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div className={`p-4 ${
+              errorModalType === 'error' ? 'bg-red-50 dark:bg-red-900/30' : 
+              errorModalType === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/30' : 
+              'bg-green-50 dark:bg-green-900/30'
+            }`}>
+              <div className="flex items-center justify-center mb-2">
+                {errorModalType === 'error' ? (
+                  <X className="w-12 h-12 text-red-500" />
+                ) : errorModalType === 'warning' ? (
+                  <HelpCircle className="w-12 h-12 text-yellow-500" />
+                ) : (
+                  <Check className="w-12 h-12 text-green-500" />
+                )}
+              </div>
+              <h3 className="text-lg font-bold text-center text-gray-800 dark:text-gray-200">
+                {errorModalTitle}
+              </h3>
+            </div>
+            <div className="p-4">
+              <p className="text-gray-600 dark:text-gray-400 text-center whitespace-pre-wrap">
+                {errorModalMessage}
+              </p>
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className={`w-full py-3 rounded-xl font-semibold text-white ${
+                  errorModalType === 'error' ? 'bg-red-500 hover:bg-red-600' : 
+                  errorModalType === 'warning' ? 'bg-yellow-500 hover:bg-yellow-600' : 
+                  'bg-green-500 hover:bg-green-600'
+                } transition-colors`}
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
