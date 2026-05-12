@@ -30,11 +30,6 @@ const moodOptions = [
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, onAddGrowthRecord, onEditGrowthRecord }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones, growthRecords, refreshGrowthRecords } = useApp();
   
-  // 根据账号类型选择成长数据源
-  const activeGrowthRecords = hasV2Baby 
-    ? (v2Growth?.records || []).sort((a, b) => new Date(b.date) - new Date(a.date))
-    : growthRecords;
-  
   // v2 账号系统：获取当前账号信息
   const [v2Moments, setV2Moments] = useState([]);
   const [v2Growth, setV2Growth] = useState(null);
@@ -42,6 +37,11 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
   const [isSystemAccount, setIsSystemAccount] = useState(false);
   const [hasV2Baby, setHasV2Baby] = useState(false);
   const [v2AccountInfo, setV2AccountInfo] = useState(null);
+  
+  // 根据账号类型选择成长数据源（必须放在变量定义之后）
+  const activeGrowthRecords = hasV2Baby 
+    ? (v2Growth?.records || []).sort((a, b) => new Date(b.date) - new Date(a.date))
+    : growthRecords;
   
   // 监听账号切换，刷新 v2 数据（和 TimelinePage 完全一致）
   useEffect(() => {
