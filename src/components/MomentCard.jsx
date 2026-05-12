@@ -391,6 +391,7 @@ function PodcastAudioItem({ audio, onPlayEnd }) {
 export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
   const [showMenu, setShowMenu] = useState(false);
   const [playingIndex, setPlayingIndex] = useState(null);
+  const [fullscreenPodcast, setFullscreenPodcast] = useState(null);
   
   const typeIcons = {
     photo: '📷',
@@ -583,13 +584,20 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
       {moment.type === 'podcast' && moment.podcast && (
         <div className="mb-3">
           <div className="bg-cream-50 dark:bg-gray-800 rounded-xl overflow-hidden">
-            {/* 播客封面 */}
+            {/* 播客封面 - 点击进入全屏播放 */}
             {moment.podcast.cover && (
-              <div className="relative aspect-video bg-cream-100 dark:bg-gray-700">
+              <div 
+                className="relative aspect-video bg-cream-100 dark:bg-gray-700 cursor-pointer"
+                onClick={() => setFullscreenPodcast(moment)}
+              >
                 <LazyImage
                   src={moment.podcast.cover}
                   alt={moment.podcast.title || '播客封面'}
                 />
+                {/* 播放图标遮罩 */}
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <Play className="w-12 h-12 text-white" />
+                </div>
               </div>
             )}
             {/* 播客信息 */}
@@ -699,6 +707,70 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
           </span>
         )}
       </div>
+
+      {/* 全屏播客播放器 - 模糊背景效果 */}
+      {fullscreenPodcast && (
+        <div 
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
+          onClick={() => setFullscreenPodcast(null)}
+        >
+          {/* 模糊背景层 - 用封面图放大模糊 */}
+          {fullscreenPodcast.podcast.cover && (
+            <div 
+              className="absolute inset-0 bg-cover bg-center scale-110"
+              style={{
+                backgroundImage: `url(${fullscreenPodcast.podcast.cover})`,
+                filter: 'blur(20px) brightness(0.4)',
+              }}
+            />
+          )}
+          
+          {/* 如果没有封面，用深色渐变 */}
+          {!fullscreenPodcast.podcast.cover && (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-black" />
+          )}
+
+          {/* 内容层 - 放在背景上面 */}
+          <div className="relative z-10 flex flex-col items-center">
+            {/* 关闭按钮 */}
+            <button 
+              className="absolute -top-16 right-0 text-white text-3xl hover:opacity-80"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreenPodcast(null);
+              }}
+            >
+              ×
+            </button>
+
+            {/* 大封面 */}
+            {fullscreenPodcast.podcast.cover && (
+              <img
+                src={fullscreenPodcast.podcast.cover}
+                alt=""
+                className="w-64 h-64 object-cover rounded-xl mb-8 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+
+            {/* 标题 */}
+            <h3 className="text-white text-xl font-bold mb-4 text-center px-4">
+              {fullscreenPodcast.podcast.title || '播客'}
+            </h3>
+
+            {/* 播客音频组件 - 复用PodcastAudioItem */}
+            <div 
+              className="w-full max-w-md px-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PodcastAudioItem
+                audio={fullscreenPodcast.podcast.audio}
+                onPlayEnd={() => {}}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
