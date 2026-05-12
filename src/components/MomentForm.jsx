@@ -448,6 +448,8 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     const file = e.target.files[0];
     if (!file) return;
     
+    console.log('[播客上传] 选择文件:', file.name, '大小:', file.size, '类型:', file.type);
+    
     // 限制音频大小
     if (file.size > 50 * 1024 * 1024) {
       alert('音频文件不能超过50MB');
@@ -456,16 +458,44 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     
     const reader = new FileReader();
     reader.onload = (event) => {
+      console.log('[播客上传] 文件读取完成，长度:', event.target.result?.length);
       // 创建音频元素获取时长
-      const audio = new Audio(event.target.result);
-      audio.addEventListener('loadedmetadata', () => {
+      try {
+        const audio = new Audio(event.target.result);
+        audio.addEventListener('loadedmetadata', () => {
+          console.log('[播客上传] 音频元数据加载完成，时长:', audio.duration);
+          setPodcastAudio({
+            url: event.target.result,
+            name: file.name,
+            size: file.size,
+            duration: audio.duration
+          });
+        });
+        audio.addEventListener('error', (err) => {
+          console.error('[播客上传] 音频加载失败:', err);
+          alert('音频文件格式不支持或已损坏，请选择其他文件');
+          // 即使获取时长失败，也保存音频文件
+          setPodcastAudio({
+            url: event.target.result,
+            name: file.name,
+            size: file.size,
+            duration: 0
+          });
+        });
+      } catch (err) {
+        console.error('[播客上传] 创建音频对象失败:', err);
+        // 即使获取时长失败，也保存音频文件
         setPodcastAudio({
           url: event.target.result,
           name: file.name,
           size: file.size,
-          duration: audio.duration
+          duration: 0
         });
-      });
+      }
+    };
+    reader.onerror = (err) => {
+      console.error('[播客上传] 文件读取失败:', err);
+      alert('读取文件失败，请重试');
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -476,9 +506,16 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
     const file = e.target.files[0];
     if (!file) return;
     
+    console.log('[播客封面] 选择文件:', file.name);
+    
     const reader = new FileReader();
     reader.onload = (event) => {
+      console.log('[播客封面] 读取完成');
       setPodcastCover(event.target.result);
+    };
+    reader.onerror = (err) => {
+      console.error('[播客封面] 读取失败:', err);
+      alert('封面图片读取失败');
     };
     reader.readAsDataURL(file);
     e.target.value = '';
