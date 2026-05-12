@@ -494,6 +494,10 @@ export function ProfilePage(
 
   // 打开备份文件
   const handleOpenBackupFile = useCallback(async () => {
+    if (!isInApp()) {
+      showToast('当前环境不支持直接打开，请在文件管理中查看', 'warning');
+      return;
+    }
     if (!zipSuccessFilePath) {
       showToast('文件路径无效', 'warning');
       return;
@@ -509,6 +513,10 @@ export function ProfilePage(
 
   // 分享备份文件
   const handleShareBackupFile = useCallback(async () => {
+    if (!isInApp()) {
+      showToast('当前环境不支持直接分享，请在文件管理中查看', 'warning');
+      return;
+    }
     if (!zipSuccessFilePath) {
       showToast('文件路径无效', 'warning');
       return;
@@ -1370,33 +1378,31 @@ export function ProfilePage(
               </div>
             </div>
             
-            {/* APP环境下显示打开和分享按钮 */}
-            {zipSuccessFilePath && (
-              <div className="flex gap-3 mb-3">
-                <button
-                  onClick={handleOpenBackupFile}
-                  className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
-                  </svg>
-                  立即打开
-                </button>
-                <button
-                  onClick={handleShareBackupFile}
-                  className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  分享文件
-                </button>
-              </div>
-            )}
+            {/* 打开和分享按钮 - 始终显示，非APP环境点击时提示 */}
+            <div className="flex gap-3 mb-3">
+              <button
+                onClick={handleOpenBackupFile}
+                className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                </svg>
+                立即打开
+              </button>
+              <button
+                onClick={handleShareBackupFile}
+                className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                分享文件
+              </button>
+            </div>
             
             <button
               onClick={() => setShowZipSuccessModal(false)}
-              className={`w-full py-3 ${zipSuccessFilePath ? 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300' : 'bg-primary-500 text-white'} rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
+              className="w-full py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               我知道了
             </button>
