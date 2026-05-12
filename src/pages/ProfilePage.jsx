@@ -99,6 +99,7 @@ export function ProfilePage(
   const [showZipExportModal, setShowZipExportModal] = useState(false);
   const [showZipSuccessModal, setShowZipSuccessModal] = useState(false);
   const [zipSuccessFilename, setZipSuccessFilename] = useState('');
+  const [zipSuccessFilePath, setZipSuccessFilePath] = useState('');
   const [zipIncludeVideos, setZipIncludeVideos] = useState(true);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
@@ -431,10 +432,47 @@ export function ProfilePage(
       const now = new Date();
       const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
       const filename = `宝宝时光数据备份_${timestamp}.zip`;
-      triggerDownload(zipBlob, filename);
+      
+      // APP环境：写入系统下载目录
+      let filePath = '';
+      if (isInApp()) {
+        try {
+          const { jsBridgeFS } = await import('../utils/jsBridge');
+          filePath = `fs://download/宝宝时光备份/${filename}`;
+          
+          // 确保目录存在
+          try {
+            await jsBridgeFS.mkdir('fs://download/宝宝时光备份');
+          } catch (e) {
+            // 目录可能已存在
+          }
+          
+          // Blob转Base64写入
+          const reader = new FileReader();
+          await new Promise((resolve, reject) => {
+            reader.onload = async () => {
+              try {
+                const base64 = reader.result.split(',')[1];
+                await jsBridgeFS.writeBinary(filePath, base64);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(zipBlob);
+          });
+        } catch (e) {
+          console.log('APP写入失败，将使用传统方式');
+          triggerDownload(zipBlob, filename);
+        }
+      } else {
+        triggerDownload(zipBlob, filename);
+      }
       
       // 显示成功弹窗
       setZipSuccessFilename(filename);
+      setZipSuccessFilePath(filePath);
       setZipIncludeVideos(includeVideos);
       setShowZipSuccessModal(true);
       setShowZipExportModal(false);
@@ -444,7 +482,7 @@ export function ProfilePage(
     } finally {
       setIsExporting(false);
     }
-  }, [isExporting, showToast, setZipSuccessFilename, setZipIncludeVideos, setShowZipSuccessModal]);
+  }, [isExporting, showToast, setZipSuccessFilename, setZipSuccessFilePath, setZipIncludeVideos, setShowZipSuccessModal]);
 
   // 取消ZIP导出
   const handleCancelExport = useCallback(() => {
@@ -453,6 +491,36 @@ export function ProfilePage(
     setExportProgress(0);
     setExportProgressMessage('');
   }, []);
+
+  // 打开备份文件
+  const handleOpenBackupFile = useCallback(async () => {
+    if (!zipSuccessFilePath) {
+      showToast('文件路径无效', 'warning');
+      return;
+    }
+    try {
+      const { jsBridgeFS } = await import('../utils/jsBridge');
+      await jsBridgeFS.open(zipSuccessFilePath);
+    } catch (e) {
+      console.error('打开文件失败:', e);
+      showToast('打开文件失败', 'error');
+    }
+  }, [zipSuccessFilePath, showToast]);
+
+  // 分享备份文件
+  const handleShareBackupFile = useCallback(async () => {
+    if (!zipSuccessFilePath) {
+      showToast('文件路径无效', 'warning');
+      return;
+    }
+    try {
+      const { jsBridgeFS } = await import('../utils/jsBridge');
+      await jsBridgeFS.share(zipSuccessFilePath);
+    } catch (e) {
+      console.error('分享文件失败:', e);
+      showToast('分享文件失败', 'error');
+    }
+  }, [zipSuccessFilePath, showToast]);
   
   // 复制到剪贴板
   const handleCopyToClipboard = useCallback(async () => 
@@ -1293,18 +1361,42 @@ export function ProfilePage(
               </div>
               <div>
                 <div className="text-gray-500 dark:text-gray-400 mb-1">保存位置：</div>
-                <div className="font-medium dark:text-white">手机/电脑的"下载"文件夹</div>
+                <div className="font-medium dark:text-white">系统下载文件夹，可在文件管理中查看</div>
               </div>
               <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
                 <div className="text-gray-500 dark:text-gray-400 text-xs">
-                  💡 提示：请在文件管理中查看，解压后包含数据文件{zipIncludeVideos ? '和所有视频' : ''}。
+                  💡 提示：解压后包含数据文件{zipIncludeVideos ? '和所有视频' : ''}。
                 </div>
               </div>
             </div>
             
+            {/* APP环境下显示打开和分享按钮 */}
+            {zipSuccessFilePath && (
+              <div className="flex gap-3 mb-3">
+                <button
+                  onClick={handleOpenBackupFile}
+                  className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                  </svg>
+                  立即打开
+                </button>
+                <button
+                  onClick={handleShareBackupFile}
+                  className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  分享文件
+                </button>
+              </div>
+            )}
+            
             <button
               onClick={() => setShowZipSuccessModal(false)}
-              className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors"
+              className={`w-full py-3 ${zipSuccessFilePath ? 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300' : 'bg-primary-500 text-white'} rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
             >
               我知道了
             </button>

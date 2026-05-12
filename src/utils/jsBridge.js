@@ -138,8 +138,8 @@ export const jsBridgeFS = {
 // ==================== 高级封装 ====================
 
 // 导出目录基础路径
-const EXPORT_BASE_PATH = 'fs://file/BabyTime';
-const EXPORT_DIR = `${EXPORT_BASE_PATH}/export`;
+const EXPORT_BASE_PATH = 'fs://download/宝宝时光备份';
+const EXPORT_DIR = `${EXPORT_BASE_PATH}`;
 
 /**
  * 导出数据到本地文件并分享
