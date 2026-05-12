@@ -494,67 +494,149 @@ export function ProfilePage(
 
   // 打开备份文件
   const handleOpenBackupFile = useCallback(() => {
+    console.log('[ProfilePage] ============== 开始打开备份文件 ==============');
+    console.log('[ProfilePage] 当前zipSuccessFilePath:', zipSuccessFilePath);
+    console.log('[ProfilePage] 当前文件名:', zipSuccessFilename);
+    
     if (!isInApp()) {
+      console.warn('[ProfilePage] 当前不在APP环境中，无法打开文件');
       showToast('当前环境不支持直接打开，请在文件管理中查看', 'warning');
       return;
     }
-    if (!zipSuccessFilePath) {
-      showToast('文件路径无效', 'warning');
-      return;
+    
+    // 确保路径格式正确
+    let fullPath = zipSuccessFilePath;
+    if (!fullPath) {
+      console.warn('[ProfilePage] 文件路径为空，尝试从文件名构建路径');
+      if (zipSuccessFilename) {
+        fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename}`;
+        console.log('[ProfilePage] 构建路径:', fullPath);
+      } else {
+        showToast('文件路径无效，请重新导出备份', 'warning');
+        return;
+      }
     }
+    
+    // 确保路径格式正确（以 fs://download/宝宝时光备份/ 开头）
+    if (!fullPath.startsWith('fs://')) {
+      console.warn('[ProfilePage] 路径格式不正确，修正路径');
+      fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename || fullPath}`;
+      console.log('[ProfilePage] 修正后路径:', fullPath);
+    }
+    
+    console.log('[ProfilePage] 最终打开路径:', fullPath);
+    
     try {
+      console.log('[ProfilePage] 检查jsBridge状态...');
+      console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
+      console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
+      console.log('[ProfilePage] window.jsBridge.fs.open:', typeof window.jsBridge?.fs?.open);
+      
       // 使用一门APP官方原生回调方式，不使用Promise封装
       if (window.jsBridge && window.jsBridge.fs) {
-        window.jsBridge.fs.open(zipSuccessFilePath, function(succ, msg) {
+        if (typeof window.jsBridge.fs.open !== 'function') {
+          console.error('[ProfilePage] fs.open方法不存在');
+          showToast('当前APP版本不支持直接打开文件，请升级APP或在文件管理器中查看', 'error');
+          return;
+        }
+        
+        console.log('[ProfilePage] 调用fs.open方法...');
+        window.jsBridge.fs.open(fullPath, function(succ, msg) {
+          console.log('[ProfilePage] fs.open回调 - succ:', succ, ', msg:', msg);
           if (succ) {
-            console.log('[ProfilePage] 打开文件成功');
+            console.log('[ProfilePage] ✅ 打开文件成功');
             showToast('正在打开文件...', 'success');
           } else {
-            console.error('[ProfilePage] 打开文件失败:', msg);
-            showToast(`打开文件失败: ${msg}`, 'error');
+            console.error('[ProfilePage] ❌ 打开文件失败:', msg);
+            const errorDetail = msg ? `: ${msg}` : '（原生方法返回失败）';
+            showToast(`打开文件失败${errorDetail}，请在文件管理器的"下载/宝宝时光备份"目录中手动打开`, 'error');
           }
         });
       } else {
-        showToast('jsBridge未初始化', 'error');
+        console.error('[ProfilePage] jsBridge或fs模块未初始化');
+        showToast('APP原生服务未就绪，请重启APP后重试', 'error');
       }
     } catch (e) {
-      console.error('[ProfilePage] 打开文件失败:', e);
+      console.error('[ProfilePage] ❌ 打开文件异常:', e);
+      console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
-      showToast(`打开文件失败: ${errorMsg}`, 'error');
+      showToast(`打开文件失败: ${errorMsg}，请在文件管理器的"下载/宝宝时光备份"目录中查看`, 'error');
     }
-  }, [zipSuccessFilePath, showToast]);
+    console.log('[ProfilePage] ============== 打开备份文件结束 ==============');
+  }, [zipSuccessFilePath, zipSuccessFilename, showToast]);
 
   // 分享备份文件
   const handleShareBackupFile = useCallback(() => {
+    console.log('[ProfilePage] ============== 开始分享备份文件 ==============');
+    console.log('[ProfilePage] 当前zipSuccessFilePath:', zipSuccessFilePath);
+    console.log('[ProfilePage] 当前文件名:', zipSuccessFilename);
+    
     if (!isInApp()) {
+      console.warn('[ProfilePage] 当前不在APP环境中，无法分享文件');
       showToast('当前环境不支持直接分享，请在文件管理中查看', 'warning');
       return;
     }
-    if (!zipSuccessFilePath) {
-      showToast('文件路径无效', 'warning');
-      return;
+    
+    // 确保路径格式正确
+    let fullPath = zipSuccessFilePath;
+    if (!fullPath) {
+      console.warn('[ProfilePage] 文件路径为空，尝试从文件名构建路径');
+      if (zipSuccessFilename) {
+        fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename}`;
+        console.log('[ProfilePage] 构建路径:', fullPath);
+      } else {
+        showToast('文件路径无效，请重新导出备份', 'warning');
+        return;
+      }
     }
+    
+    // 确保路径格式正确（以 fs://download/宝宝时光备份/ 开头）
+    if (!fullPath.startsWith('fs://')) {
+      console.warn('[ProfilePage] 路径格式不正确，修正路径');
+      fullPath = `fs://download/宝宝时光备份/${zipSuccessFilename || fullPath}`;
+      console.log('[ProfilePage] 修正后路径:', fullPath);
+    }
+    
+    console.log('[ProfilePage] 最终分享路径:', fullPath);
+    
     try {
+      console.log('[ProfilePage] 检查jsBridge状态...');
+      console.log('[ProfilePage] window.jsBridge:', !!window.jsBridge);
+      console.log('[ProfilePage] window.jsBridge.fs:', !!window.jsBridge?.fs);
+      console.log('[ProfilePage] window.jsBridge.fs.share:', typeof window.jsBridge?.fs?.share);
+      
       // 使用一门APP官方原生回调方式，不使用Promise封装
       if (window.jsBridge && window.jsBridge.fs) {
-        window.jsBridge.fs.share(zipSuccessFilePath, function(succ, msg) {
+        if (typeof window.jsBridge.fs.share !== 'function') {
+          console.error('[ProfilePage] fs.share方法不存在');
+          showToast('当前APP版本不支持直接分享，请升级APP或在文件管理器中分享', 'error');
+          return;
+        }
+        
+        console.log('[ProfilePage] 调用fs.share方法...');
+        window.jsBridge.fs.share(fullPath, function(succ, msg) {
+          console.log('[ProfilePage] fs.share回调 - succ:', succ, ', msg:', msg);
           if (succ) {
-            console.log('[ProfilePage] 分享文件成功');
+            console.log('[ProfilePage] ✅ 分享文件成功');
             showToast('正在打开分享面板...', 'success');
           } else {
-            console.error('[ProfilePage] 分享文件失败:', msg);
-            showToast(`分享文件失败: ${msg}`, 'error');
+            console.error('[ProfilePage] ❌ 分享文件失败:', msg);
+            const errorDetail = msg ? `: ${msg}` : '（原生方法返回失败）';
+            showToast(`分享文件失败${errorDetail}，请在文件管理器的"下载/宝宝时光备份"目录中手动分享`, 'error');
           }
         });
       } else {
-        showToast('jsBridge未初始化', 'error');
+        console.error('[ProfilePage] jsBridge或fs模块未初始化');
+        showToast('APP原生服务未就绪，请重启APP后重试', 'error');
       }
     } catch (e) {
-      console.error('[ProfilePage] 分享文件失败:', e);
+      console.error('[ProfilePage] ❌ 分享文件异常:', e);
+      console.error('[ProfilePage] 错误堆栈:', e?.stack);
       const errorMsg = e?.message || '未知错误';
-      showToast(`分享文件失败: ${errorMsg}`, 'error');
+      showToast(`分享文件失败: ${errorMsg}，请在文件管理器的"下载/宝宝时光备份"目录中分享`, 'error');
     }
-  }, [zipSuccessFilePath, showToast]);
+    console.log('[ProfilePage] ============== 分享备份文件结束 ==============');
+  }, [zipSuccessFilePath, zipSuccessFilename, showToast]);
   
   // 复制到剪贴板
   const handleCopyToClipboard = useCallback(async () => 
