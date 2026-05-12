@@ -199,3 +199,75 @@ export async function getOPFSUsage() {
     return { totalSize: 0, fileCount: 0 };
   }
 }
+
+/**
+ * 保存播客音频到OPFS
+ * @param {File} file 音频文件
+ * @returns {Promise<{filename: string, size: number, type: string}>}
+ */
+export async function saveAudioToOPFS(file) {
+  try {
+    const root = await navigator.storage.getDirectory();
+    const filename = generateUniqueFilename(file.name);
+    const fileHandle = await root.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(file);
+    await writable.close();
+
+    if (STORAGE_CONFIG.DEBUG_MODE) {
+      console.log(`[OPFS] 音频已保存: ${filename}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    }
+
+    return {
+      filename,
+      size: file.size,
+      type: file.type,
+    };
+  } catch (e) {
+    console.error('[OPFS] 保存音频失败:', e);
+    throw new Error('音频保存失败，请重试');
+  }
+}
+
+/**
+ * 从OPFS读取音频文件
+ * @param {string} filename 文件名
+ * @returns {Promise<File>}
+ */
+export async function readAudioFromOPFS(filename) {
+  try {
+    const root = await navigator.storage.getDirectory();
+    const fileHandle = await root.getFileHandle(filename);
+    const file = await fileHandle.getFile();
+
+    if (STORAGE_CONFIG.DEBUG_MODE) {
+      console.log(`[OPFS] 读取音频: ${filename}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    }
+
+    return file;
+  } catch (e) {
+    console.error(`[OPFS] 读取音频失败: ${filename}`, e);
+    throw new Error('音频文件丢失或损坏');
+  }
+}
+
+/**
+ * 从OPFS删除音频文件
+ * @param {string} filename 文件名
+ * @returns {Promise<boolean>}
+ */
+export async function deleteAudioFromOPFS(filename) {
+  try {
+    const root = await navigator.storage.getDirectory();
+    await root.removeEntry(filename);
+
+    if (STORAGE_CONFIG.DEBUG_MODE) {
+      console.log(`[OPFS] 音频已删除: ${filename}`);
+    }
+
+    return true;
+  } catch (e) {
+    console.warn(`[OPFS] 删除音频失败: ${filename}`, e);
+    return false;
+  }
+}

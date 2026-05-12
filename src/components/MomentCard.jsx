@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { formatDateFriendly, formatTime } from '../utils/dateUtils';
 import { Smile, CloudSun, MapPin, MoreHorizontal, Trash2, Edit3, Play, Pause, Mic, Share2 } from 'lucide-react';
-import { readVideoFromOPFS } from '../utils/opfs';
+import { readVideoFromOPFS, readAudioFromOPFS } from '../utils/opfs';
 import { readPhotoFromFS } from '../utils/photoFS';
 
 // 懒加载图片组件
@@ -256,33 +256,55 @@ export function MomentCard({ moment, onEdit, onDelete, onClick, onShare }) {
   };
   
   // 播放/暂停音频/播客
-  const togglePlayAudio = (index) => {
+  const togglePlayAudio = useCallback(async (index) => {
     if (playingIndex === index) {
       audioRef.current?.pause();
       setPlayingIndex(null);
-    } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      // 播客模式 (index = -1)
-      if (index === -1 && moment.podcast && moment.podcast.audio?.url) {
-        console.log('[MomentCard] 播放播客:', moment.podcast.title);
-        audioRef.current = new Audio(moment.podcast.audio.url);
-      }
-      // 普通音频模式
-      else if (index >= 0 && moment.audios && moment.audios[index]) {
-        console.log('[MomentCard] 播放音频:', moment.audios[index].fileName);
-        audioRef.current = new Audio(moment.audios[index].url);
-      }
-      if (audioRef.current) {
-        audioRef.current.onended = () => setPlayingIndex(null);
-        audioRef.current.play().catch(e => {
-          console.error('[MomentCard] 播放失败:', e);
-        });
-        setPlayingIndex(index);
+      return;
+    }
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    // 播客模式 (index = -1)
+    if (index === -1 && moment.podcast?.audio) {
+      const audio = moment.podcast.audio;
+      console.log('[MomentCard] 播放播客:', moment.podcast.title);
+      
+      try {
+        let audioUrl;
+        // OPFS模式：从文件系统加载
+        if (audio.storage === 'opfs' && audio.filename) {
+          const file = await readAudioFromOPFS(audio.filename);
+          audioUrl = URL.createObjectURL(file);
+        }
+        // Base64模式：直接用url
+        else if (audio.url) {
+          audioUrl = audio.url;
+        }
+        
+        if (audioUrl) {
+          audioRef.current = new Audio(audioUrl);
+          audioRef.current.onended = () => setPlayingIndex(null);
+          await audioRef.current.play();
+          setPlayingIndex(index);
+        }
+      } catch (e) {
+        console.error('[MomentCard] 播客播放失败:', e);
       }
     }
-  };
+    // 普通音频模式
+    else if (index >= 0 && moment.audios && moment.audios[index]) {
+      console.log('[MomentCard] 播放音频:', moment.audios[index].fileName);
+      audioRef.current = new Audio(moment.audios[index].url);
+      audioRef.current.onended = () => setPlayingIndex(null);
+      audioRef.current.play().catch(e => {
+        console.error('[MomentCard] 播放失败:', e);
+      });
+      setPlayingIndex(index);
+    }
+  }, [playingIndex, moment.podcast, moment.audios]);
   
   return (
     <div className="card mb-4 animate-fade-in">

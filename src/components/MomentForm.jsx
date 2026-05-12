@@ -7,7 +7,7 @@ import { X, Image, Video, FileText, Star, MapPin, AlertCircle, Mic, Square, Play
 import { useApp } from '../store/AppContext';
 import { getCurrentBabyInfo } from '../utils/dbV2';
 import { isInApp, jsBridgeAudioRecorder } from '../utils/jsBridge';
-import { saveVideoToOPFS, deleteVideoFromOPFS } from '../utils/opfs';
+import { saveVideoToOPFS, deleteVideoFromOPFS, saveAudioToOPFS } from '../utils/opfs';
 import { shouldUseOPFS } from '../utils/storageCheck';
 import { saveFileMetadata, deleteFileMetadata } from '../utils/db';
 import { STORAGE_CONFIG } from '../config/storage';
@@ -444,7 +444,7 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
   };
 
   // 播客音频上传
-  const handlePodcastAudioUpload = (e) => {
+  const handlePodcastAudioUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -457,25 +457,46 @@ export function MomentForm({ moment, onSave, onCancel, babyId }) {
       return;
     }
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.error) {
-        console.error('[播客上传] 读取失败:', reader.error);
-        alert('读取失败，请重试');
-        e.target.value = '';
-        return;
+    try {
+      // 检测是否使用OPFS
+      const useOPFS = await shouldUseOPFS();
+      if (STORAGE_CONFIG.DEBUG_MODE) {
+        console.log('[播客上传] 存储模式:', useOPFS ? 'OPFS' : 'Base64');
       }
       
-      console.log('[播客上传] 读取成功');
-      setPodcastAudio({
-        url: reader.result,  // base64，可持久化存储
-        name: file.name,
-        size: file.size,
-        duration: 0
-      });
-      e.target.value = '';
-    };
-    reader.readAsDataURL(file);
+      if (useOPFS) {
+        // OPFS模式：保存到文件系统
+        const { filename, size, type } = await saveAudioToOPFS(file);
+        setPodcastAudio({
+          filename,
+          name: file.name,
+          size,
+          type,
+          duration: 0,
+          storage: 'opfs'
+        });
+      } else {
+        // Base64模式：直接转base64存储
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPodcastAudio({
+            url: reader.result,
+            name: file.name,
+            size: file.size,
+            duration: 0,
+            storage: 'base64'
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      console.log('[播客上传] 成功');
+    } catch (err) {
+      console.error('[播客上传] 失败:', err);
+      alert('上传失败，请重试');
+    }
+    
+    e.target.value = '';
   };
   
   // 播客封面上传（简化版）
