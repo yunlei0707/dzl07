@@ -30,6 +30,11 @@ const moodOptions = [
 export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, onAddGrowthRecord, onEditGrowthRecord }) {
   const { currentBaby, currentUser, moments, capsules, setMoments, setCapsules, showToast, getAllMilestones, growthRecords, refreshGrowthRecords } = useApp();
   
+  // 根据账号类型选择成长数据源
+  const activeGrowthRecords = hasV2Baby 
+    ? (v2Growth?.records || []).sort((a, b) => new Date(b.date) - new Date(a.date))
+    : growthRecords;
+  
   // v2 账号系统：获取当前账号信息
   const [v2Moments, setV2Moments] = useState([]);
   const [v2Growth, setV2Growth] = useState(null);
@@ -689,7 +694,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
             </div>
             
             {/* 播客记录 - 有数据时才显示 */}
-            {stats.podcastMoments > 0 && (
+            
             <div 
               className="flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform rounded-lg p-1 -m-1 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => onStatClick({ type: 'filter', filterType: 'podcast' })}
@@ -708,7 +713,6 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                 <span className="text-sm font-medium text-gray-700 w-8 text-right">{stats.podcastMoments}</span>
               </div>
             </div>
-            )}
           </div>
           )}
         </div>
@@ -955,12 +959,12 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
           {showGrowthRecords && (
             <div className="space-y-4">
               {/* 最新数据卡片 */}
-              {growthRecords.length > 0 ? (
+              {activeGrowthRecords.length > 0 ? (
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     {['height', 'weight', 'headCircumference', 'footLength'].map((field) => {
-                      const latest = growthRecords[0];
-                      const previous = growthRecords[1];
+                      const latest = activeGrowthRecords[0];
+                      const previous = activeGrowthRecords[1];
                       const value = latest?.[field];
                       const oldValue = previous?.[field];
                       const change = value && oldValue ? (value - oldValue).toFixed(1) : null;
@@ -998,7 +1002,7 @@ export function StatsPage({ onOpenCapsules, onStatClick, onOpenMonthlyReport, on
                   
                   {/* 历史记录列表 */}
                   <div className="space-y-2">
-                    {growthRecords.map((record, index) => (
+                    {activeGrowthRecords.map((record, index) => (
                       <div key={record.id} className="bg-cream-50 dark:bg-gray-800 rounded-xl p-3">
                         <div 
                           className="flex items-center justify-between cursor-pointer"
